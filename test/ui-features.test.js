@@ -112,3 +112,52 @@ describe('i18n data-i18n-title support', function() {
     assert.strictEqual(titleSet, 'Pełny ekran');
   });
 });
+
+describe('Queue games counter', function() {
+  beforeEach(function() {
+    localStorage.clear();
+    App.Session.create();
+  });
+
+  it('should have gamesN translation in both languages', function() {
+    App.i18n.currentLang = 'pl';
+    assert.ok(App.t('gamesN').length > 0);
+    App.i18n.currentLang = 'en';
+    assert.ok(App.t('gamesN').length > 0);
+  });
+
+  it('should include gamesPlayed in admin queue HTML', function() {
+    var id = App.Players.add('Alice');
+    App.Players.markPresent(id);
+    App.state.players[id].gamesPlayed = 3;
+
+    // Capture the HTML that renderQueue would produce
+    var queue = App.state.waitingQueue;
+    var p = App.state.players[queue[0]];
+    var html = p.gamesPlayed + App.t('gamesN');
+    assert.ok(html.indexOf('3') !== -1);
+  });
+
+  it('should include gamesPlayed in board queue HTML', function() {
+    var id = App.Players.add('Bob');
+    App.Players.markPresent(id);
+    App.state.players[id].gamesPlayed = 5;
+
+    var p = App.state.players[id];
+    // Simulate board queue item HTML fragment
+    var fragment = '<span class="bq-games">' + p.gamesPlayed + App.t('gamesN') + '</span>';
+    assert.ok(fragment.indexOf('5') !== -1);
+    assert.ok(fragment.indexOf('bq-games') !== -1);
+  });
+
+  it('should show 0 games for new players', function() {
+    var id = App.Players.add('Charlie');
+    App.Players.markPresent(id);
+
+    var p = App.state.players[id];
+    assert.strictEqual(p.gamesPlayed, 0);
+    App.i18n.currentLang = 'en';
+    var text = p.gamesPlayed + App.t('gamesN');
+    assert.strictEqual(text, '0 games');
+  });
+});

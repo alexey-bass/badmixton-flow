@@ -111,7 +111,7 @@ Team split scoring (3 algorithmic options + custom):
 - 4th "Custom" option: tap-to-swap players between teams or with bench players from queue
 
 ### Two UI Modes
-- **Board** (player-facing): Courts with teams + timer, queue list, results. One-tap "Finish" with score input.
+- **Board** (player-facing): Courts with teams + timer, queue list with games played counter, results. One-tap "Finish" with score input.
 - **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
 
 Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated).

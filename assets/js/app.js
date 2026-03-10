@@ -2054,6 +2054,7 @@ App.UI = {
         '<span class="bq-pos">' + (idx + 1) + '.</span>' +
         '<span class="bq-number">#' + (p.number || '?') + '</span>' +
         '<span class="bq-name">' + App.UI._esc(p.name) + '</span>' +
+        '<span class="bq-games">' + p.gamesPlayed + App.t('gamesN') + '</span>' +
         '</div>';
     });
 

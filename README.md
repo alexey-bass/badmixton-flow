@@ -7,7 +7,7 @@ Web app for managing player queues and court assignments during amateur badminto
 ## Features
 
 - **Player management** — add, remove, mark present/absent, multiple partner wishes
-- **Living queue** — automatic arrival numbering, auto-requeue after each game
+- **Living queue** — automatic arrival numbering, games played counter, auto-requeue after each game
 - **Smart suggestions** — algorithm picks next 4 players based on queue position, games balance, and wishes
 - **Court management** — 1–5 configurable courts, finish confirmation with optional score
 - **Team splitting** — minimizes pair/opponent repeats, respects wish pairings, custom swap option with bench
