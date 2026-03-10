@@ -111,7 +111,7 @@ Team split scoring (3 algorithmic options + custom):
 - 4th "Custom" option: tap-to-swap players between teams or with bench players from queue
 
 ### Two UI Modes
-- **Board** (player-facing): Courts with teams + timer, queue list with games played counter, results. One-tap "Finish" with score input.
+- **Board** (player-facing): Courts with teams + timer, queue list with games played counter and live wait timer, results. One-tap "Finish" with score input.
 - **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
 
 Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated).
@@ -158,7 +158,7 @@ Session state stored in `localStorage` as `badminton_session_YYYY-MM-DD`:
 }
 ```
 
-**Player:** `{ id, number, name, present, gamesPlayed, lastGameEndTime, queueEntryTime, partnerHistory, opponentHistory, wishedPartners: [id, ...], wishesFulfilled: [id, ...], wins, losses, pointsScored, pointsConceded }`
+**Player:** `{ id, number, name, present, gamesPlayed, lastGameEndTime, queueEntryTime, partnerHistory, opponentHistory, wishedPartners: [id, ...], wishesFulfilled: [id, ...], wins, losses, pointsScored, pointsConceded, totalWaitTime, waitCount }`
 
 **Court:** `{ id, displayNumber, active, occupied, currentMatch, gameStartTime }`
 

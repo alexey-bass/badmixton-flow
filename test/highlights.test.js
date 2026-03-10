@@ -159,4 +159,54 @@ describe('_buildHighlights', function() {
     var h = findHighlight(App.UI._buildHighlights(players), '⚔️');
     assert.strictEqual(h, undefined);
   });
+
+  it('should detect most patient player waiting > 1 min', function() {
+    var p1 = addPlayer('Alice');
+    var p2 = addPlayer('Bob');
+    App.Players.markPresent(p1);
+    App.Players.markPresent(p2);
+    App.state.players[p1].gamesPlayed = 1;
+    App.state.players[p2].gamesPlayed = 1;
+    // Alice has been waiting 2 minutes, Bob 30 seconds
+    App.state.players[p1].queueEntryTime = Date.now() - 120000;
+    App.state.players[p2].queueEntryTime = Date.now() - 30000;
+    var players = Object.values(App.state.players).filter(function(p) { return p.gamesPlayed > 0; });
+    var h = findHighlight(App.UI._buildHighlights(players), '⏳');
+    assert.ok(h, 'most patient highlight should exist');
+    assert.ok(h.value.indexOf('2:0') !== -1, 'should show ~2min wait time');
+  });
+
+  it('should not show most patient when wait < 1 min', function() {
+    var p1 = addPlayer('Alice');
+    App.Players.markPresent(p1);
+    App.state.players[p1].gamesPlayed = 1;
+    App.state.players[p1].queueEntryTime = Date.now() - 10000;
+    var players = [App.state.players[p1]];
+    var h = findHighlight(App.UI._buildHighlights(players), '⏳');
+    assert.strictEqual(h, undefined);
+  });
+
+  it('should show average wait time when > 30 sec', function() {
+    var p1 = addPlayer('Alice');
+    var p2 = addPlayer('Bob');
+    App.state.players[p1].gamesPlayed = 2;
+    App.state.players[p1].totalWaitTime = 120000;
+    App.state.players[p1].waitCount = 2;
+    App.state.players[p2].gamesPlayed = 1;
+    App.state.players[p2].totalWaitTime = 60000;
+    App.state.players[p2].waitCount = 1;
+    var players = [App.state.players[p1], App.state.players[p2]];
+    var h = findHighlight(App.UI._buildHighlights(players), '⏱️');
+    assert.ok(h, 'avg wait time highlight should exist');
+  });
+
+  it('should not show average wait time when < 30 sec', function() {
+    var p1 = addPlayer('Alice');
+    App.state.players[p1].gamesPlayed = 1;
+    App.state.players[p1].totalWaitTime = 10000;
+    App.state.players[p1].waitCount = 1;
+    var players = [App.state.players[p1]];
+    var h = findHighlight(App.UI._buildHighlights(players), '⏱️');
+    assert.strictEqual(h, undefined);
+  });
 });

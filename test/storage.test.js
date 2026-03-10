@@ -54,6 +54,8 @@ describe('App.Storage', function() {
       assert.strictEqual(p.losses, 0);
       assert.strictEqual(p.pointsScored, 0);
       assert.strictEqual(p.pointsConceded, 0);
+      assert.strictEqual(p.totalWaitTime, 0);
+      assert.strictEqual(p.waitCount, 0);
     });
 
     it('should not overwrite existing fields', function() {

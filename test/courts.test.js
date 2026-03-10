@@ -51,6 +51,40 @@ describe('App.Courts', function() {
       });
     });
 
+    it('should accumulate wait time when starting game', function() {
+      var ids = setupGameSession();
+      // Set queue entry times to 60 seconds ago
+      ids.forEach(function(id) {
+        App.state.players[id].queueEntryTime = Date.now() - 60000;
+      });
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      ids.forEach(function(id) {
+        var p = App.state.players[id];
+        assert.ok(p.totalWaitTime >= 59000, 'totalWaitTime should be ~60s, got ' + p.totalWaitTime);
+        assert.strictEqual(p.waitCount, 1);
+      });
+    });
+
+    it('should accumulate wait time across multiple games', function() {
+      var ids = setupGameSession();
+      // First game: waited 60s
+      ids.forEach(function(id) {
+        App.state.players[id].queueEntryTime = Date.now() - 60000;
+      });
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1');
+      // Second game: waited another 30s
+      ids.forEach(function(id) {
+        App.state.players[id].queueEntryTime = Date.now() - 30000;
+      });
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      ids.forEach(function(id) {
+        var p = App.state.players[id];
+        assert.strictEqual(p.waitCount, 2);
+        assert.ok(p.totalWaitTime >= 85000, 'totalWaitTime should be ~90s, got ' + p.totalWaitTime);
+      });
+    });
+
     it('should not start game on occupied court', function() {
       var ids = setupGameSession();
       App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);

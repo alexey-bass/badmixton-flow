@@ -117,6 +117,8 @@ App.Storage = {
       if (p.losses === undefined) p.losses = 0;
       if (p.pointsScored === undefined) p.pointsScored = 0;
       if (p.pointsConceded === undefined) p.pointsConceded = 0;
+      if (p.totalWaitTime === undefined) p.totalWaitTime = 0;
+      if (p.waitCount === undefined) p.waitCount = 0;
       // Migrate wishedPartner (single) → wishedPartners (array)
       if (!Array.isArray(p.wishedPartners)) {
         if (p.wishedPartner) {
@@ -293,7 +295,9 @@ App.Players = {
       wins: 0,
       losses: 0,
       pointsScored: 0,
-      pointsConceded: 0
+      pointsConceded: 0,
+      totalWaitTime: 0,
+      waitCount: 0
     };
 
     App.save();
@@ -507,6 +511,16 @@ App.Courts = {
       }
     }
 
+    // Accumulate wait time before removing from queue
+    var now = Date.now();
+    allPlayers.forEach(function(pid) {
+      var p = App.state.players[pid];
+      if (p && p.queueEntryTime) {
+        p.totalWaitTime = (p.totalWaitTime || 0) + (now - p.queueEntryTime);
+        p.waitCount = (p.waitCount || 0) + 1;
+      }
+    });
+
     // Remove all 4 from queue
     allPlayers.forEach(function(pid) {
       App.Queue.remove(pid);
@@ -514,7 +528,6 @@ App.Courts = {
 
     // Create match
     var matchId = App.Utils.generateId('m');
-    var now = Date.now();
     App.state.matches[matchId] = {
       id: matchId,
       startTime: now,
@@ -1488,6 +1501,8 @@ App.UI = {
         '<span class="queue-number">#' + (p.number || '?') + '</span>' +
         '<span class="queue-name">' + App.UI._esc(p.name) + '</span>' +
         '<span class="queue-wait">' + p.gamesPlayed + App.t('gamesN') + '</span>' +
+        '<span class="queue-timer" data-queue-start="' + (p.queueEntryTime || 0) + '">' +
+          (p.queueEntryTime ? App.Utils.formatTime(Date.now() - p.queueEntryTime) : '') + '</span>' +
         '<button class="btn btn-secondary btn-xs" data-action="queue-to-end" data-pid="' + pid + '">&darr;</button>' +
         '<button class="btn btn-danger btn-xs" data-action="queue-remove" data-pid="' + pid + '">&#10005;</button>' +
         '</div>';
@@ -2055,6 +2070,8 @@ App.UI = {
         '<span class="bq-number">#' + (p.number || '?') + '</span>' +
         '<span class="bq-name">' + App.UI._esc(p.name) + '</span>' +
         '<span class="bq-games">' + p.gamesPlayed + App.t('gamesN') + '</span>' +
+        '<span class="bq-timer" data-queue-start="' + (p.queueEntryTime || 0) + '">' +
+          (p.queueEntryTime ? App.Utils.formatTime(Date.now() - p.queueEntryTime) : '') + '</span>' +
         '</div>';
     });
 
@@ -2341,6 +2358,40 @@ App.UI = {
         label: App.t('hlRivals'),
         value: esc(App.state.players[rivalBest.a].name) + ' & ' + esc(App.state.players[rivalBest.b].name) + ' (' + rivalBest.count + ')'
       });
+    }
+
+    // 6. Most patient — longest current wait in queue
+    var now = Date.now();
+    var queuePlayers = App.state.waitingQueue
+      .map(function(pid) { return App.state.players[pid]; })
+      .filter(function(p) { return p && p.queueEntryTime; });
+    if (queuePlayers.length > 0) {
+      var mostPatient = queuePlayers.reduce(function(a, b) {
+        return a.queueEntryTime < b.queueEntryTime ? a : b;
+      });
+      var waitMs = now - mostPatient.queueEntryTime;
+      if (waitMs > 60000) {
+        highlights.push({
+          icon: '⏳',
+          label: App.t('hlMostPatient'),
+          value: esc(mostPatient.name) + ' (' + App.Utils.formatTime(waitMs) + ')'
+        });
+      }
+    }
+
+    // 7. Average wait time (across players who have played)
+    var waitPlayers = players.filter(function(p) { return (p.waitCount || 0) > 0; });
+    if (waitPlayers.length > 0) {
+      var totalWait = waitPlayers.reduce(function(sum, p) { return sum + (p.totalWaitTime || 0); }, 0);
+      var totalCount = waitPlayers.reduce(function(sum, p) { return sum + (p.waitCount || 0); }, 0);
+      var avgWait = totalWait / totalCount;
+      if (avgWait > 30000) {
+        highlights.push({
+          icon: '⏱️',
+          label: App.t('hlAvgWaitTime'),
+          value: App.Utils.formatTime(avgWait)
+        });
+      }
     }
 
     return highlights;
@@ -2670,11 +2721,19 @@ App.UI = {
   // --- Timers ---
   startTimers: function() {
     this.timerInterval = setInterval(function() {
+      var now = Date.now();
       // Update court timers
       document.querySelectorAll('.court-timer, .board-court-timer').forEach(function(el) {
         var start = parseInt(el.dataset.start);
         if (start) {
-          el.textContent = App.Utils.formatTime(Date.now() - start);
+          el.textContent = App.Utils.formatTime(now - start);
+        }
+      });
+      // Update queue wait timers
+      document.querySelectorAll('.queue-timer, .bq-timer').forEach(function(el) {
+        var start = parseInt(el.dataset.queueStart);
+        if (start) {
+          el.textContent = App.Utils.formatTime(now - start);
         }
       });
     }, 1000);

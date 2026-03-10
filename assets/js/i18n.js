@@ -63,6 +63,8 @@ App.i18n = {
       hlTopScorer: 'Najlepszy strzelec',
       hlSocialButterfly: 'Grał z każdym',
       hlRivals: 'Rywale dnia',
+      hlMostPatient: 'Najcierpliwszy',
+      hlAvgWaitTime: 'Średni czas oczekiwania',
 
       // Finish confirm
       finishGameTitle: 'Zakończ grę — kort',
@@ -296,6 +298,8 @@ App.i18n = {
       hlTopScorer: 'Top scorer',
       hlSocialButterfly: 'Social butterfly',
       hlRivals: 'Rivals of the day',
+      hlMostPatient: 'Most patient',
+      hlAvgWaitTime: 'Avg wait time',
 
       // Finish confirm
       finishGameTitle: 'Finish game — court',

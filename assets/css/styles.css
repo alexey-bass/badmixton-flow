@@ -515,6 +515,14 @@ body {
   color: var(--text-secondary);
 }
 
+.queue-timer {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+}
+
 /* --- Courts --- */
 .courts-grid {
   display: flex;
@@ -883,6 +891,12 @@ body {
 .board-queue-item .bq-games {
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+.board-queue-item .bq-timer {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* --- History --- */
