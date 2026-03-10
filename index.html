@@ -46,8 +46,7 @@
     <button class="tab" data-tab="courts" data-i18n="tabCourts"></button>
     <button class="tab" data-tab="history" data-i18n="tabHistory"></button>
     <button class="tab" data-tab="results" data-i18n="tabResults"></button>
-    <button class="tab" data-tab="sync" data-i18n="tabSync"></button>
-    <button class="tab" data-tab="debug" data-i18n="tabDebug"></button>
+<button class="tab" data-tab="debug" data-i18n="tabDebug"></button>
   </nav>
 
   <!-- ===== CONTENT ===== -->
@@ -78,6 +77,29 @@
         <button class="btn btn-primary" id="btnApplyCourts" data-i18n="applyCourts"></button>
       </div>
 
+
+      <div class="section-block">
+        <h3 data-i18n="syncFirebase"></h3>
+        <div id="syncSection">
+          <div class="form-row">
+            <label data-i18n="sessionIdLabel"></label>
+            <input type="text" id="sessionIdInput" placeholder="badminton-2026-03-09">
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnCreateSession" data-i18n="createSession"></button>
+            <button class="btn btn-secondary" id="btnJoinSession" data-i18n="joinSession"></button>
+            <button class="btn btn-danger" id="btnDisconnect" hidden data-i18n="disconnect"></button>
+          </div>
+          <div id="syncStatus" class="sync-status"></div>
+          <div id="syncShareLink" class="sync-share-link" hidden>
+            <label data-i18n="shareLink"></label>
+            <div class="share-link-row">
+              <input type="text" id="syncShareUrl" readonly>
+              <button class="btn btn-secondary btn-sm" id="btnCopyLink" data-i18n="copyLink"></button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="section-block">
         <h3 data-i18n="actions"></h3>
@@ -135,30 +157,6 @@
     </section>
 
     <!-- SYNC -->
-    <section class="panel" id="panel-sync">
-      <div class="section-block">
-        <h3 data-i18n="syncFirebase"></h3>
-        <div id="syncSection">
-          <div class="form-row">
-            <label data-i18n="sessionIdLabel"></label>
-            <input type="text" id="sessionIdInput" placeholder="badminton-2026-03-09">
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" id="btnCreateSession" data-i18n="createSession"></button>
-            <button class="btn btn-secondary" id="btnJoinSession" data-i18n="joinSession"></button>
-            <button class="btn btn-danger" id="btnDisconnect" hidden data-i18n="disconnect"></button>
-          </div>
-          <div id="syncStatus" class="sync-status"></div>
-          <div id="syncShareLink" class="sync-share-link" hidden>
-            <label data-i18n="shareLink"></label>
-            <div class="share-link-row">
-              <input type="text" id="syncShareUrl" readonly>
-              <button class="btn btn-secondary btn-sm" id="btnCopyLink" data-i18n="copyLink"></button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- DEBUG -->
     <section class="panel" id="panel-debug">
