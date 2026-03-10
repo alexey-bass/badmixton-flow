@@ -125,6 +125,8 @@ Toggle between modes with the gear icon in the header. Help button (`?`) in head
 - Two languages: Polish (default) and English
 - Static text uses `data-i18n` attributes on HTML elements (also `data-i18n-placeholder`, `data-i18n-title`, `data-i18n-opt`)
 - Dynamic text uses `App.t('key')` function calls
+- Pluralization via `App.i18n.plural(n, {one, few, many, other})` — handles Polish grammar (1→one, 2-4→few, 5+→many)
+- `App.tGames(n)` shortcut for games plural (e.g., "1 gra", "2 gry", "5 gier")
 - Language preference saved in `localStorage` (`badminton_lang`)
 - Switcher in header with flag buttons
 

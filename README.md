@@ -19,7 +19,7 @@ Web app for managing player queues and court assignments during amateur badminto
 - **Two UI modes** — Board (player-facing: courts, queue, results) and Management (admin: full control)
 - **Multi-device sync** — Firebase Realtime Database, shareable session links with auto-join
 - **Quick help** — in-app instructions modal, translated
-- **i18n** — Polish (default) and English
+- **i18n** — Polish (default) and English, with proper plural forms
 - **JSON export/import** — backup and restore session data
 - **Analytics** — Google Analytics event tracking for user flow analysis
 - **Debug tools** — session inspector, localStorage viewer, clear data
