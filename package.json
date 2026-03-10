@@ -2,6 +2,9 @@
   "name": "kort-flow",
   "private": true,
   "scripts": {
-    "start": "python3 -m http.server 8080"
+    "start": "python3 -m http.server 8080",
+    "test": "node --test test/*.test.js",
+    "check": "node --check app.js && node --check i18n.js && node --check firebase-config.js",
+    "validate": "npm run check && npm test"
   }
 }
