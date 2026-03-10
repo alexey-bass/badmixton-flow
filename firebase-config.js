@@ -1,5 +1,5 @@
 var FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB2UAnJDGmF7g0OGlmOhOx7HvrjTRhaQac",
-  databaseURL: "https://kort-flow-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "kort-flow"
+  apiKey: "AIzaSyDQV3njrl8xcpaC9X9weZknzlx2zzxoD9k",
+  databaseURL: "https://badmixton-flow-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "badmixton-flow"
 };
