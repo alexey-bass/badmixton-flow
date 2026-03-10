@@ -714,6 +714,24 @@ body {
   color: #9d174d;
 }
 
+.custom-split-bench {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  text-align: center;
+}
+
+.custom-split-bench h5 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.bench-chip {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
 .custom-split-chip.swap-selected {
   outline: 3px solid var(--primary);
   outline-offset: 1px;

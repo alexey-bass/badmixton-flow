@@ -167,7 +167,8 @@ App.i18n = {
       suggestionFor: 'Propozycja dla kortu ',
       teamSplit: 'Podział na zespoły:',
       customSplit: 'Własny',
-      customSplitHint: 'Kliknij dwóch graczy z różnych zespołów, aby ich zamienić',
+      customSplitHint: 'Kliknij gracza, potem drugiego — zamienią się miejscami',
+      customBench: 'Dostępni:',
       startGame: 'Rozpocznij grę',
       cancelAction: 'Anuluj',
 
@@ -380,7 +381,8 @@ App.i18n = {
       suggestionFor: 'Suggestion for court ',
       teamSplit: 'Team split:',
       customSplit: 'Custom',
-      customSplitHint: 'Tap two players from different teams to swap them',
+      customSplitHint: 'Tap a player, then another — they swap places',
+      customBench: 'Available:',
       startGame: 'Start game',
       cancelAction: 'Cancel',
 

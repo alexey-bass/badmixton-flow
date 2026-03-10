@@ -1626,6 +1626,18 @@ App.UI = {
   },
 
   _buildCustomSplitHtml: function(teamA, teamB) {
+    // Gather bench players: present, not on court, not in teamA/teamB
+    var onTeam = teamA.concat(teamB);
+    var bench = App.state.waitingQueue.filter(function(id) {
+      return onTeam.indexOf(id) === -1 && !App.Players.isOnCourt(id);
+    });
+    // Also add present players not in queue and not on court
+    App.Players.getPresent().forEach(function(p) {
+      if (onTeam.indexOf(p.id) === -1 && bench.indexOf(p.id) === -1 && !App.Players.isOnCourt(p.id)) {
+        bench.push(p.id);
+      }
+    });
+
     var html = '<div class="custom-split-area" id="customSplitArea">';
     html += '<div class="custom-split-teams">';
     html += '<div class="custom-split-team custom-split-team-a" id="customTeamA">';
@@ -1641,6 +1653,14 @@ App.UI = {
     });
     html += '</div>';
     html += '</div>';
+    if (bench.length > 0) {
+      html += '<div class="custom-split-bench" id="customBench">';
+      html += '<h5>' + App.t('customBench') + '</h5>';
+      bench.forEach(function(id) {
+        html += '<span class="custom-split-chip bench-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+      });
+      html += '</div>';
+    }
     html += '<div class="custom-split-hint">' + App.t('customSplitHint') + '</div>';
     html += '</div>';
     return html;
@@ -1649,6 +1669,7 @@ App.UI = {
   _syncCustomSplit: function(area, splitObj) {
     var teamAEl = area.querySelector('#customTeamA') || area.querySelector('.custom-split-team-a');
     var teamBEl = area.querySelector('#customTeamB') || area.querySelector('.custom-split-team-b');
+    var benchEl = area.querySelector('#customBench') || area.querySelector('.custom-split-bench');
     teamAEl.innerHTML = '<h5>Team A</h5>';
     teamBEl.innerHTML = '<h5>Team B</h5>';
     splitObj.teamA.forEach(function(id) {
@@ -1657,6 +1678,22 @@ App.UI = {
     splitObj.teamB.forEach(function(id) {
       teamBEl.innerHTML += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
     });
+    if (benchEl) {
+      var onTeam = splitObj.teamA.concat(splitObj.teamB);
+      var bench = App.state.waitingQueue.filter(function(id) {
+        return onTeam.indexOf(id) === -1 && !App.Players.isOnCourt(id);
+      });
+      App.Players.getPresent().forEach(function(p) {
+        if (onTeam.indexOf(p.id) === -1 && bench.indexOf(p.id) === -1 && !App.Players.isOnCourt(p.id)) {
+          bench.push(p.id);
+        }
+      });
+      benchEl.innerHTML = '<h5>' + App.t('customBench') + '</h5>';
+      bench.forEach(function(id) {
+        benchEl.innerHTML += '<span class="custom-split-chip bench-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+      });
+      benchEl.style.display = bench.length > 0 ? '' : 'none';
+    }
   },
 
   _customSwapTarget: null,
@@ -1665,30 +1702,48 @@ App.UI = {
     var pid = chip.dataset.pid;
     var inA = splitObj.teamA.indexOf(pid) !== -1;
     var inB = splitObj.teamB.indexOf(pid) !== -1;
+    var onBench = !inA && !inB;
 
     if (this._customSwapTarget) {
-      // Second click — swap the two players
       var first = this._customSwapTarget;
       var firstInA = splitObj.teamA.indexOf(first) !== -1;
-      var secondInA = inA;
+      var firstInB = splitObj.teamB.indexOf(first) !== -1;
+      var firstOnBench = !firstInA && !firstInB;
 
-      // Only swap if they're on different teams
-      if (firstInA !== secondInA) {
-        var idxFirst = firstInA ? splitObj.teamA.indexOf(first) : splitObj.teamB.indexOf(first);
-        var idxSecond = secondInA ? splitObj.teamA.indexOf(pid) : splitObj.teamB.indexOf(pid);
+      var swapped = false;
 
-        if (firstInA) {
-          splitObj.teamA[idxFirst] = pid;
-          splitObj.teamB[idxSecond] = first;
-        } else {
-          splitObj.teamB[idxFirst] = pid;
-          splitObj.teamA[idxSecond] = first;
-        }
+      if (firstInA && inB) {
+        // Swap between Team A and Team B
+        splitObj.teamA[splitObj.teamA.indexOf(first)] = pid;
+        splitObj.teamB[splitObj.teamB.indexOf(pid)] = first;
+        swapped = true;
+      } else if (firstInB && inA) {
+        splitObj.teamB[splitObj.teamB.indexOf(first)] = pid;
+        splitObj.teamA[splitObj.teamA.indexOf(pid)] = first;
+        swapped = true;
+      } else if (firstInA && onBench) {
+        // Replace team A player with bench player
+        splitObj.teamA[splitObj.teamA.indexOf(first)] = pid;
+        swapped = true;
+      } else if (firstInB && onBench) {
+        // Replace team B player with bench player
+        splitObj.teamB[splitObj.teamB.indexOf(first)] = pid;
+        swapped = true;
+      } else if (firstOnBench && inA) {
+        // Replace team A player with bench player
+        splitObj.teamA[splitObj.teamA.indexOf(pid)] = first;
+        swapped = true;
+      } else if (firstOnBench && inB) {
+        // Replace team B player with bench player
+        splitObj.teamB[splitObj.teamB.indexOf(pid)] = first;
+        swapped = true;
       }
 
       this._customSwapTarget = null;
       area.querySelectorAll('.custom-split-chip').forEach(function(c) { c.classList.remove('swap-selected'); });
-      this._syncCustomSplit(area, splitObj);
+      if (swapped) {
+        this._syncCustomSplit(area, splitObj);
+      }
     } else {
       // First click — highlight and wait for second
       this._customSwapTarget = pid;
