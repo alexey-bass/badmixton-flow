@@ -2333,8 +2333,13 @@ App.UI = {
 
   // --- Modal ---
   showModal: function(html) {
-    document.getElementById('modalContent').innerHTML = html;
+    // Clone-replace to remove stale event listeners from previous modals
+    var old = document.getElementById('modalContent');
+    var fresh = old.cloneNode(false);
+    fresh.innerHTML = html;
+    old.parentNode.replaceChild(fresh, old);
     document.getElementById('modalOverlay').hidden = false;
+    this._customSwapTarget = null;
   },
 
   hideModal: function() {
