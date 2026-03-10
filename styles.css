@@ -183,7 +183,9 @@ body {
 .tabs.player-mode .tab[data-tab="dashboard"],
 .tabs.player-mode .tab[data-tab="queue"],
 .tabs.player-mode .tab[data-tab="courts"],
-.tabs.player-mode .tab[data-tab="history"] {
+.tabs.player-mode .tab[data-tab="history"],
+.tabs.player-mode .tab[data-tab="sync"],
+.tabs.player-mode .tab[data-tab="debug"] {
   display: none;
 }
 
@@ -962,6 +964,192 @@ body {
 .sync-status.error {
   background: var(--danger-light);
   color: var(--danger);
+}
+
+.sync-share-link {
+  margin-top: 12px;
+}
+
+.sync-share-link label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.share-link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.share-link-row input {
+  flex: 1;
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+}
+
+/* --- Finish confirm --- */
+.finish-teams {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.finish-vs {
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.finish-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+
+.score-input {
+  width: 60px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  padding: 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  -moz-appearance: textfield;
+}
+
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.finish-score-sep {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.finish-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 4px 0 16px;
+}
+
+/* --- Results table --- */
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.results-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 6px;
+  border-bottom: 2px solid var(--border);
+}
+
+.results-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.results-rank {
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 30px;
+}
+
+.results-name {
+  font-weight: 600;
+}
+
+.results-wins {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.results-losses {
+  color: var(--danger);
+}
+
+.results-diff.positive {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.results-diff.negative {
+  color: var(--danger);
+}
+
+tr.results-gold .results-rank { color: #b8860b; }
+tr.results-silver .results-rank { color: #808080; }
+tr.results-bronze .results-rank { color: #cd7f32; }
+
+tr.results-gold .results-name { color: #b8860b; }
+
+/* --- Debug --- */
+.debug-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.debug-table td,
+.debug-table th {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.debug-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.debug-table code {
+  font-size: 12px;
+  background: var(--bg-secondary);
+  padding: 1px 4px;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+.debug-table-keys td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.debug-json {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  max-height: 400px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.debug-info p {
+  margin: 0;
+  font-size: 13px;
 }
 
 /* --- Player selection for court --- */

@@ -1,433 +1,8 @@
 /* ============================================================
    Badminton 2x2 — Queue Manager
-   Main application logic
+   Main application logic (App object defined in i18n.js)
    ============================================================ */
 
-// Global application object
-var App = {};
-
-// ============================================================
-// I18N — Internationalization
-// ============================================================
-App.i18n = {
-  currentLang: 'pl',
-  STORAGE_KEY: 'badminton_lang',
-
-  translations: {
-    pl: {
-      // Tabs
-      tabBoard: 'Tablica',
-      tabToday: 'Dzisiaj',
-      tabPlayers: 'Gracze',
-      tabQueue: 'Kolejka',
-      tabCourts: 'Korty',
-      tabHistory: 'Historia',
-
-      // Queue label
-      queue: 'Kolejka',
-
-      // Dashboard stats
-      statPresent: 'Obecni',
-      statPlaying: 'Grają',
-      statInQueue: 'W kolejce',
-      statCourtsOccupied: 'Korty zajęte',
-      statGamesPlayed: 'Rozegranych',
-
-      // Session settings
-      sessionSettings: 'Ustawienia sesji',
-      sessionNameLabel: 'Nazwa sesji',
-      dayFriday: 'Piątek',
-      daySunday: 'Niedziela',
-      sessionTraining: 'Trening',
-      sessionOther: 'Inne',
-      courtNumbersLabel: 'Numery kortów',
-      applyCourts: 'Zastosuj korty',
-
-      // Sync
-      syncFirebase: 'Synchronizacja Firebase',
-      roomIdLabel: 'ID pokoju',
-      createRoom: 'Utwórz pokój',
-      joinRoom: 'Dołącz',
-      disconnect: 'Rozłącz',
-
-      // Actions
-      actions: 'Działania',
-      newSession: 'Nowa sesja',
-      resetDay: 'Resetuj dzień',
-      exportJSON: 'Eksport JSON',
-      importJSON: 'Import JSON',
-
-      // Players
-      addPlayer: 'Dodaj',
-      playerNamePlaceholder: 'Imię gracza',
-      arrived: 'Przyszedł',
-      left: 'Wyszedł',
-      toQueue: 'Do kolejki',
-      fromQueue: 'Z kolejki',
-      gamesN: ' gier',
-      court: 'Kort ',
-      queuePos: 'Kolejka #',
-      absent: 'Nieobecny',
-      presentStatus: 'Obecny',
-      pairWith: 'Para z ',
-      wishFulfilled: ' (spełnione)',
-      addPlayersHint: 'Dodaj graczy',
-      cantDeletePlaying: 'Nie można usunąć gracza podczas gry',
-      playerOnCourt: 'Gracz jest na korcie',
-      playerAdded: ' dodany',
-      wishPlayWith: 'Chcę grać z...',
-
-      // Queue
-      inQueue: 'W kolejce',
-      queueEmpty: 'Kolejka pusta',
-
-      // Courts
-      finish: 'Zakończ',
-      cancel: 'Anuluj',
-      courtFree: 'Kort wolny',
-      suggestLineup: 'Zaproponuj skład',
-      selectManually: 'Wybierz ręcznie',
-      courtOccupied: 'Kort zajęty',
-      playersDuplicate: 'Gracze nie mogą się powtarzać',
-      alreadyOnCourt: ' już jest na innym korcie',
-      gameStartedOn: 'Gra rozpoczęta na korcie ',
-      noActiveGame: 'Brak aktywnej gry na korcie',
-      gameFinishedOn: 'Gra na korcie ',
-      gameFinishedSuffix: ' zakończona',
-      gameCancelled: 'Gra anulowana, gracze wrócili do kolejki',
-
-      // Board
-      boardFinish: 'Zakończ',
-      boardFree: 'Wolny',
-      boardSuggest: 'Zaproponuj',
-
-      // History
-      allCourts: 'Wszystkie korty',
-      allPlayers: 'Wszyscy gracze',
-      undoLastMatch: 'Cofnij ostatni',
-      noMatches: 'Brak meczów',
-      noFinishedMatches: 'Brak zakończonych meczów',
-      lastMatchUndone: 'Ostatni mecz cofnięty',
-
-      // Suggest
-      notEnoughPlayers: 'Za mało graczy w kolejce (min. 4, jest ',
-      notEnoughPlayersSuffix: ')',
-      selectedPlayers: 'Wybrani: ',
-      firstInQueue: 'Pierwsi w kolejce',
-      wantsPlayWith: 'chce grać z ',
-      alreadyPaired: ' już w parze ',
-      timesN: ' razy',
-      wishLabel: 'Życzenie: ',
-
-      // Suggest modal
-      suggestionFor: 'Propozycja dla kortu ',
-      teamSplit: 'Podział na zespoły:',
-      startGame: 'Rozpocznij grę',
-      cancelAction: 'Anuluj',
-
-      // Player select modal
-      selectPlayersFor: 'Wybór graczy — kort ',
-      select4Players: 'Wybierz 4 graczy:',
-      inQueueLabel: 'w kolejce',
-      splitHeading: 'Podział:',
-      already4Selected: 'Już wybrano 4 graczy',
-
-      // Wish dialog
-      wishFor: 'Życzenie: ',
-      selectPartner: 'Wybierz partnera do gry:',
-      noWish: 'Bez życzenia',
-      closeBtn: 'Zamknij',
-      wishSet: 'Życzenie ustawione',
-      wishRemoved: 'Życzenie usunięte',
-
-      // Confirm dialog
-      yes: 'Tak',
-      no: 'Nie',
-
-      // Session actions
-      confirmNewSession: 'Utworzyć nową sesję? Obecne dane zostaną zapisane.',
-      newSessionCreated: 'Nowa sesja utworzona',
-      confirmResetDay: 'Zresetować dane za dzisiaj?',
-      dayReset: 'Dzień zresetowany',
-
-      // Export/Import
-      exportDone: 'Eksport zakończony',
-      importDone: 'Import zakończony',
-      invalidFile: 'Nieprawidłowy format pliku',
-      fileReadError: 'Błąd odczytu pliku',
-
-      // Courts settings
-      enterCourtNumbers: 'Wprowadź numery kortów',
-      maxCourts: 'Maksymalnie 5 kortów',
-      courtsUpdated: 'Korty zaktualizowane: ',
-
-      // Sync messages
-      firebaseNotLoaded: 'Firebase SDK nie załadowane. Sprawdź połączenie.',
-      configureFirebase: 'Skonfiguruj Firebase w app.js (sekcja App.Sync.init)',
-      roomCreated: 'Pokój utworzony: ',
-      enterRoomId: 'Wprowadź ID pokoju',
-      connectedToRoom: 'Połączono z pokojem: ',
-      disconnectedMsg: 'Rozłączono',
-      syncDisconnected: 'Rozłączono z synchronizacją',
-
-      // Confirm actions
-      confirmCancelGame: 'Anulować grę? Gracze wrócą do kolejki.',
-      confirmDeletePlayer: 'Usunąć gracza ',
-      confirmDeleteSuffix: '?',
-      confirmUndoMatch: 'Cofnąć ostatni zakończony mecz?',
-
-      // Day names
-      days: ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota']
-    },
-
-    en: {
-      // Tabs
-      tabBoard: 'Board',
-      tabToday: 'Today',
-      tabPlayers: 'Players',
-      tabQueue: 'Queue',
-      tabCourts: 'Courts',
-      tabHistory: 'History',
-
-      // Queue label
-      queue: 'Queue',
-
-      // Dashboard stats
-      statPresent: 'Present',
-      statPlaying: 'Playing',
-      statInQueue: 'In queue',
-      statCourtsOccupied: 'Courts busy',
-      statGamesPlayed: 'Games played',
-
-      // Session settings
-      sessionSettings: 'Session settings',
-      sessionNameLabel: 'Session name',
-      dayFriday: 'Friday',
-      daySunday: 'Sunday',
-      sessionTraining: 'Training',
-      sessionOther: 'Other',
-      courtNumbersLabel: 'Court numbers',
-      applyCourts: 'Apply courts',
-
-      // Sync
-      syncFirebase: 'Firebase Sync',
-      roomIdLabel: 'Room ID',
-      createRoom: 'Create room',
-      joinRoom: 'Join',
-      disconnect: 'Disconnect',
-
-      // Actions
-      actions: 'Actions',
-      newSession: 'New session',
-      resetDay: 'Reset day',
-      exportJSON: 'Export JSON',
-      importJSON: 'Import JSON',
-
-      // Players
-      addPlayer: 'Add',
-      playerNamePlaceholder: 'Player name',
-      arrived: 'Arrived',
-      left: 'Left',
-      toQueue: 'To queue',
-      fromQueue: 'From queue',
-      gamesN: ' games',
-      court: 'Court ',
-      queuePos: 'Queue #',
-      absent: 'Absent',
-      presentStatus: 'Present',
-      pairWith: 'Pair with ',
-      wishFulfilled: ' (done)',
-      addPlayersHint: 'Add players',
-      cantDeletePlaying: 'Cannot delete player during game',
-      playerOnCourt: 'Player is on court',
-      playerAdded: ' added',
-      wishPlayWith: 'Want to play with...',
-
-      // Queue
-      inQueue: 'In queue',
-      queueEmpty: 'Queue empty',
-
-      // Courts
-      finish: 'Finish',
-      cancel: 'Cancel',
-      courtFree: 'Court free',
-      suggestLineup: 'Suggest lineup',
-      selectManually: 'Select manually',
-      courtOccupied: 'Court occupied',
-      playersDuplicate: 'Players must be unique',
-      alreadyOnCourt: ' is already on another court',
-      gameStartedOn: 'Game started on court ',
-      noActiveGame: 'No active game on court',
-      gameFinishedOn: 'Game on court ',
-      gameFinishedSuffix: ' finished',
-      gameCancelled: 'Game cancelled, players returned to queue',
-
-      // Board
-      boardFinish: 'Finish',
-      boardFree: 'Free',
-      boardSuggest: 'Suggest',
-
-      // History
-      allCourts: 'All courts',
-      allPlayers: 'All players',
-      undoLastMatch: 'Undo last',
-      noMatches: 'No matches',
-      noFinishedMatches: 'No finished matches',
-      lastMatchUndone: 'Last match undone',
-
-      // Suggest
-      notEnoughPlayers: 'Not enough players in queue (need 4, have ',
-      notEnoughPlayersSuffix: ')',
-      selectedPlayers: 'Selected: ',
-      firstInQueue: 'First in queue',
-      wantsPlayWith: 'wants to play with ',
-      alreadyPaired: ' already paired ',
-      timesN: ' times',
-      wishLabel: 'Wish: ',
-
-      // Suggest modal
-      suggestionFor: 'Suggestion for court ',
-      teamSplit: 'Team split:',
-      startGame: 'Start game',
-      cancelAction: 'Cancel',
-
-      // Player select modal
-      selectPlayersFor: 'Select players — court ',
-      select4Players: 'Select 4 players:',
-      inQueueLabel: 'in queue',
-      splitHeading: 'Split:',
-      already4Selected: 'Already selected 4 players',
-
-      // Wish dialog
-      wishFor: 'Wish: ',
-      selectPartner: 'Select partner:',
-      noWish: 'No preference',
-      closeBtn: 'Close',
-      wishSet: 'Wish set',
-      wishRemoved: 'Wish removed',
-
-      // Confirm dialog
-      yes: 'Yes',
-      no: 'No',
-
-      // Session actions
-      confirmNewSession: 'Create new session? Current data will be saved.',
-      newSessionCreated: 'New session created',
-      confirmResetDay: 'Reset today\'s data?',
-      dayReset: 'Day reset',
-
-      // Export/Import
-      exportDone: 'Export complete',
-      importDone: 'Import complete',
-      invalidFile: 'Invalid file format',
-      fileReadError: 'File read error',
-
-      // Courts settings
-      enterCourtNumbers: 'Enter court numbers',
-      maxCourts: 'Maximum 5 courts',
-      courtsUpdated: 'Courts updated: ',
-
-      // Sync messages
-      firebaseNotLoaded: 'Firebase SDK not loaded. Check your connection.',
-      configureFirebase: 'Configure Firebase in app.js (App.Sync.init section)',
-      roomCreated: 'Room created: ',
-      enterRoomId: 'Enter room ID',
-      connectedToRoom: 'Connected to room: ',
-      disconnectedMsg: 'Disconnected',
-      syncDisconnected: 'Disconnected from sync',
-
-      // Confirm actions
-      confirmCancelGame: 'Cancel game? Players will return to queue.',
-      confirmDeletePlayer: 'Delete player ',
-      confirmDeleteSuffix: '?',
-      confirmUndoMatch: 'Undo last finished match?',
-
-      // Day names
-      days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    }
-  },
-
-  // Get translation by key
-  t: function(key) {
-    var dict = this.translations[this.currentLang] || this.translations.pl;
-    return dict[key] !== undefined ? dict[key] : key;
-  },
-
-  // Apply translations to DOM elements with data-i18n attributes
-  apply: function() {
-    var self = this;
-
-    // data-i18n — set textContent
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n');
-      var val = self.t(key);
-      if (val !== key) el.textContent = val;
-    });
-
-    // data-i18n-placeholder — set placeholder
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n-placeholder');
-      var val = self.t(key);
-      if (val !== key) el.placeholder = val;
-    });
-
-    // data-i18n-opt — set option text
-    document.querySelectorAll('[data-i18n-opt]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n-opt');
-      var val = self.t(key);
-      if (val !== key) el.textContent = val;
-    });
-  },
-
-  // Set language and re-render
-  setLang: function(lang) {
-    if (!this.translations[lang]) return;
-    this.currentLang = lang;
-    localStorage.setItem(this.STORAGE_KEY, lang);
-
-    // Update active state on buttons
-    document.querySelectorAll('.lang-btn').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.lang === lang);
-    });
-
-    this.apply();
-
-    // Re-render dynamic content
-    if (App.state) {
-      App.UI.renderAll();
-    }
-  },
-
-  // Initialize: load saved language, bind switcher
-  init: function() {
-    var saved = localStorage.getItem(this.STORAGE_KEY);
-    if (saved && this.translations[saved]) {
-      this.currentLang = saved;
-    }
-
-    // Set active button
-    document.querySelectorAll('.lang-btn').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.lang === App.i18n.currentLang);
-    });
-
-    // Bind switcher clicks
-    var switcher = document.getElementById('langSwitcher');
-    if (switcher) {
-      switcher.addEventListener('click', function(e) {
-        var btn = e.target.closest('.lang-btn');
-        if (!btn) return;
-        App.i18n.setLang(btn.dataset.lang);
-      });
-    }
-
-    this.apply();
-  }
-};
-
-// Shortcut for translation
-App.t = function(key) {
-  return App.i18n.t(key);
-};
 
 // ============================================================
 // UTILS — Helper functions
@@ -501,12 +76,38 @@ App.Storage = {
     var data = localStorage.getItem(key);
     if (data) {
       try {
-        return JSON.parse(data);
+        var parsed = JSON.parse(data);
+        return this._ensureState(parsed);
       } catch (e) {
         console.error('Load error:', e);
       }
     }
     return null;
+  },
+
+  // Ensure all required state fields exist (migration/corruption safety)
+  _ensureState: function(state) {
+    if (!state || typeof state !== 'object') return null;
+    if (!state.players || typeof state.players !== 'object') state.players = {};
+    if (!Array.isArray(state.waitingQueue)) state.waitingQueue = [];
+    if (!state.courts || typeof state.courts !== 'object') state.courts = {};
+    if (!state.matches || typeof state.matches !== 'object') state.matches = {};
+    if (!state.settings || typeof state.settings !== 'object') {
+      state.settings = { courtNumbers: [1,2,3,4], syncEnabled: false, syncRoomId: null };
+    }
+    if (!state.nextPlayerNumber) state.nextPlayerNumber = 1;
+    if (!state.date) state.date = App.Utils.getISODate(new Date());
+    if (state.isAdmin === undefined) state.isAdmin = true;
+    // Ensure player fields (migration)
+    Object.values(state.players).forEach(function(p) {
+      if (!p.partnerHistory) p.partnerHistory = {};
+      if (!p.opponentHistory) p.opponentHistory = {};
+      if (p.wins === undefined) p.wins = 0;
+      if (p.losses === undefined) p.losses = 0;
+      if (p.pointsScored === undefined) p.pointsScored = 0;
+      if (p.pointsConceded === undefined) p.pointsConceded = 0;
+    });
+    return state;
   },
 
   getIndex: function() {
@@ -664,7 +265,11 @@ App.Players = {
       partnerHistory: {},
       opponentHistory: {},
       wishedPartner: null,
-      wishFulfilled: false
+      wishFulfilled: false,
+      wins: 0,
+      losses: 0,
+      pointsScored: 0,
+      pointsConceded: 0
     };
 
     App.save();
@@ -894,6 +499,33 @@ App.Courts = {
       p.lastGameEndTime = match.endTime;
     });
 
+    // Track win/loss/points if score provided (e.g. "21-15")
+    if (score) {
+      var parts = score.split('-').map(function(s) { return parseInt(s.trim()); });
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        var scoreA = parts[0], scoreB = parts[1];
+        var winnersTeam = scoreA >= scoreB ? match.teamA : match.teamB;
+        var losersTeam = scoreA >= scoreB ? match.teamB : match.teamA;
+        var winnerScore = Math.max(scoreA, scoreB);
+        var loserScore = Math.min(scoreA, scoreB);
+
+        winnersTeam.forEach(function(pid) {
+          var p = App.state.players[pid];
+          if (!p) return;
+          p.wins = (p.wins || 0) + 1;
+          p.pointsScored = (p.pointsScored || 0) + winnerScore;
+          p.pointsConceded = (p.pointsConceded || 0) + loserScore;
+        });
+        losersTeam.forEach(function(pid) {
+          var p = App.state.players[pid];
+          if (!p) return;
+          p.losses = (p.losses || 0) + 1;
+          p.pointsScored = (p.pointsScored || 0) + loserScore;
+          p.pointsConceded = (p.pointsConceded || 0) + winnerScore;
+        });
+      }
+    }
+
     // Update partner and opponent history
     this._updatePairStats(match.teamA[0], match.teamA[1], 'partner');
     this._updatePairStats(match.teamB[0], match.teamB[1], 'partner');
@@ -949,11 +581,17 @@ App.Courts = {
     var p2 = App.state.players[id2];
     if (!p1 || !p2) return;
 
-    var history1 = type === 'partner' ? p1.partnerHistory : p1.opponentHistory;
-    var history2 = type === 'partner' ? p2.partnerHistory : p2.opponentHistory;
-
-    history1[id2] = (history1[id2] || 0) + 1;
-    history2[id1] = (history2[id1] || 0) + 1;
+    if (type === 'partner') {
+      if (!p1.partnerHistory) p1.partnerHistory = {};
+      if (!p2.partnerHistory) p2.partnerHistory = {};
+      p1.partnerHistory[id2] = (p1.partnerHistory[id2] || 0) + 1;
+      p2.partnerHistory[id1] = (p2.partnerHistory[id1] || 0) + 1;
+    } else {
+      if (!p1.opponentHistory) p1.opponentHistory = {};
+      if (!p2.opponentHistory) p2.opponentHistory = {};
+      p1.opponentHistory[id2] = (p1.opponentHistory[id2] || 0) + 1;
+      p2.opponentHistory[id1] = (p2.opponentHistory[id1] || 0) + 1;
+    }
   },
 
   _checkWishes: function(teamIds) {
@@ -1278,13 +916,6 @@ App.Sync = {
   _pushing: false,
 
   init: function(roomId, asAdmin) {
-    // Firebase config — REPLACE WITH YOUR OWN
-    var firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      databaseURL: "YOUR_DATABASE_URL",
-      projectId: "YOUR_PROJECT_ID"
-    };
-
     // Check if Firebase SDK is loaded
     if (typeof firebase === 'undefined' || !firebase.database) {
       App.UI.showToast(App.t('firebaseNotLoaded'));
@@ -1293,12 +924,12 @@ App.Sync = {
 
     // Initialize Firebase (if not already)
     if (!firebase.apps.length) {
-      // Check config is filled in
-      if (firebaseConfig.apiKey === 'YOUR_API_KEY') {
+      // Check config is filled in (loaded from firebase-config.js)
+      if (typeof FIREBASE_CONFIG === 'undefined' || !FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.databaseURL) {
         App.UI.showToast(App.t('configureFirebase'));
         return false;
       }
-      firebase.initializeApp(firebaseConfig);
+      firebase.initializeApp(FIREBASE_CONFIG);
     }
 
     this.db = firebase.database();
@@ -1348,7 +979,7 @@ App.Sync = {
   _merge: function(remote) {
     // Preserve local data that should not be overwritten
     var localIsAdmin = App.state.isAdmin;
-    App.state = remote;
+    App.state = App.Storage._ensureState(remote);
     App.state.isAdmin = localIsAdmin;
     App.Storage.save();
   },
@@ -1409,6 +1040,7 @@ App.UI = {
     this._bindCourts();
     this._bindHistory();
     this._bindSync();
+    this._bindDebug();
     this._bindModeToggle();
     this.startTimers();
   },
@@ -1448,6 +1080,9 @@ App.UI = {
       case 'queue': this.renderQueue(); break;
       case 'courts': this.renderCourts(); break;
       case 'history': this.renderHistory(); break;
+      case 'results': this.renderResults(); break;
+      case 'sync': this.renderSync(); break;
+      case 'debug': this.renderDebug(); break;
     }
   },
 
@@ -1801,8 +1436,7 @@ App.UI = {
           self._showPlayerSelectForCourt(courtId);
           break;
         case 'finish':
-          App.Courts.finishGame(courtId);
-          App.UI.renderAll();
+          self._showFinishConfirm(courtId);
           break;
         case 'cancel':
           self.showConfirm(App.t('confirmCancelGame'), function() {
@@ -2147,8 +1781,7 @@ App.UI = {
 
       switch (btn.dataset.action) {
         case 'board-finish':
-          App.Courts.finishGame(courtId);
-          App.UI.renderAll();
+          self._showFinishConfirm(courtId);
           break;
         case 'board-suggest':
           self._suggestForCourt(courtId);
@@ -2234,7 +1867,90 @@ App.UI = {
   },
 
   // --- Sync ---
+  // --- Results / Leaderboard ---
+  renderResults: function() {
+    var players = Object.values(App.state.players).filter(function(p) {
+      return p.gamesPlayed > 0;
+    });
+
+    if (players.length === 0) {
+      document.getElementById('resultsContent').innerHTML =
+        '<div style="text-align:center; color:var(--text-secondary); padding:24px;">' + App.t('noResultsYet') + '</div>';
+      return;
+    }
+
+    // Sort by wins desc, then win rate, then points diff
+    players.sort(function(a, b) {
+      var aWins = a.wins || 0, bWins = b.wins || 0;
+      if (bWins !== aWins) return bWins - aWins;
+      var aRate = a.gamesPlayed ? aWins / a.gamesPlayed : 0;
+      var bRate = b.gamesPlayed ? bWins / b.gamesPlayed : 0;
+      if (bRate !== aRate) return bRate - aRate;
+      var aDiff = (a.pointsScored || 0) - (a.pointsConceded || 0);
+      var bDiff = (b.pointsScored || 0) - (b.pointsConceded || 0);
+      return bDiff - aDiff;
+    });
+
+    var html = '<table class="results-table">';
+    html += '<thead><tr>';
+    html += '<th>#</th>';
+    html += '<th>' + App.t('resultsPlayer') + '</th>';
+    html += '<th>' + App.t('resultsGames') + '</th>';
+    html += '<th>W</th>';
+    html += '<th>L</th>';
+    html += '<th>' + App.t('resultsWinRate') + '</th>';
+    html += '<th>' + App.t('resultsPoints') + '</th>';
+    html += '<th>+/-</th>';
+    html += '</tr></thead><tbody>';
+
+    players.forEach(function(p, idx) {
+      var wins = p.wins || 0;
+      var losses = p.losses || 0;
+      var rate = p.gamesPlayed ? Math.round(100 * wins / p.gamesPlayed) : 0;
+      var diff = (p.pointsScored || 0) - (p.pointsConceded || 0);
+      var diffStr = diff > 0 ? '+' + diff : '' + diff;
+      var diffClass = diff > 0 ? 'positive' : (diff < 0 ? 'negative' : '');
+      var medal = idx === 0 ? ' results-gold' : (idx === 1 ? ' results-silver' : (idx === 2 ? ' results-bronze' : ''));
+
+      html += '<tr class="' + medal + '">';
+      html += '<td class="results-rank">' + (idx + 1) + '</td>';
+      html += '<td class="results-name">' + App.UI._esc(p.name) + '</td>';
+      html += '<td>' + p.gamesPlayed + '</td>';
+      html += '<td class="results-wins">' + wins + '</td>';
+      html += '<td class="results-losses">' + losses + '</td>';
+      html += '<td>' + rate + '%</td>';
+      html += '<td>' + (p.pointsScored || 0) + ':' + (p.pointsConceded || 0) + '</td>';
+      html += '<td class="results-diff ' + diffClass + '">' + diffStr + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('resultsContent').innerHTML = html;
+  },
+
+  renderSync: function() {
+    // Update share link visibility based on connection state
+    var shareLinkEl = document.getElementById('syncShareLink');
+    var disconnectBtn = document.getElementById('btnDisconnect');
+    if (App.Sync.connected) {
+      disconnectBtn.hidden = false;
+      shareLinkEl.hidden = false;
+      var url = this._buildShareUrl(App.state.settings.syncRoomId);
+      document.getElementById('syncShareUrl').value = url;
+    } else {
+      disconnectBtn.hidden = true;
+      shareLinkEl.hidden = true;
+    }
+  },
+
+  _buildShareUrl: function(roomId) {
+    var base = window.location.href.split('?')[0].split('#')[0];
+    return base + '?room=' + encodeURIComponent(roomId);
+  },
+
   _bindSync: function() {
+    var self = this;
+
     document.getElementById('btnCreateRoom').addEventListener('click', function() {
       var roomId = document.getElementById('roomIdInput').value.trim();
       if (!roomId) {
@@ -2244,6 +1960,7 @@ App.UI = {
       var ok = App.Sync.init(roomId, true);
       if (ok) {
         App.UI.showToast(App.t('roomCreated') + roomId);
+        self.renderSync();
       }
     });
 
@@ -2256,16 +1973,163 @@ App.UI = {
       var ok = App.Sync.init(roomId, false);
       if (ok) {
         App.UI.showToast(App.t('connectedToRoom') + roomId);
+        self.renderSync();
       }
     });
 
     document.getElementById('btnDisconnect').addEventListener('click', function() {
       App.Sync.disconnect();
       App.UI.showToast(App.t('syncDisconnected'));
+      self.renderSync();
+    });
+
+    document.getElementById('btnCopyLink').addEventListener('click', function() {
+      var urlInput = document.getElementById('syncShareUrl');
+      navigator.clipboard.writeText(urlInput.value).then(function() {
+        App.UI.showToast(App.t('linkCopied'));
+      });
     });
   },
 
   // --- Mode toggle ---
+  // --- Finish game confirm ---
+  _showFinishConfirm: function(courtId) {
+    var court = App.state.courts[courtId];
+    if (!court || !court.currentMatch) return;
+    var match = App.state.matches[court.currentMatch];
+    if (!match) return;
+
+    var teamANames = match.teamA.map(function(pid) {
+      var p = App.state.players[pid];
+      return p ? App.UI._esc(p.name) : '?';
+    }).join(' & ');
+    var teamBNames = match.teamB.map(function(pid) {
+      var p = App.state.players[pid];
+      return p ? App.UI._esc(p.name) : '?';
+    }).join(' & ');
+
+    var html = '<h3>' + App.t('finishGameTitle') + ' ' + court.displayNumber + '</h3>';
+    html += '<div class="finish-teams">';
+    html += '<span class="finish-team-name">' + teamANames + '</span>';
+    html += '<span class="finish-vs">vs</span>';
+    html += '<span class="finish-team-name">' + teamBNames + '</span>';
+    html += '</div>';
+    html += '<div class="finish-score-row">';
+    html += '<input type="number" id="finishScoreA" class="score-input" min="0" max="99" placeholder="0">';
+    html += '<span class="finish-score-sep">:</span>';
+    html += '<input type="number" id="finishScoreB" class="score-input" min="0" max="99" placeholder="0">';
+    html += '</div>';
+    html += '<p class="finish-hint">' + App.t('scoreOptional') + '</p>';
+    html += '<div class="btn-row">';
+    html += '<button class="btn btn-success" id="btnFinishConfirm">' + App.t('finishConfirm') + '</button>';
+    html += '<button class="btn btn-secondary" id="btnFinishCancel">' + App.t('cancelAction') + '</button>';
+    html += '</div>';
+
+    this.showModal(html);
+
+    document.getElementById('finishScoreA').focus();
+
+    document.getElementById('btnFinishConfirm').addEventListener('click', function() {
+      var scoreA = document.getElementById('finishScoreA').value.trim();
+      var scoreB = document.getElementById('finishScoreB').value.trim();
+      var score = null;
+      if (scoreA && scoreB) {
+        score = scoreA + '-' + scoreB;
+      }
+      App.UI.hideModal();
+      App.Courts.finishGame(courtId, score);
+      App.UI.renderAll();
+    });
+
+    document.getElementById('btnFinishCancel').addEventListener('click', function() {
+      App.UI.hideModal();
+    });
+  },
+
+  // --- Debug ---
+  renderDebug: function() {
+    var s = App.state;
+
+    // Session stats
+    var playerCount = Object.keys(s.players).length;
+    var presentCount = Object.values(s.players).filter(function(p) { return p.present; }).length;
+    var queueCount = s.waitingQueue.length;
+    var courtCount = Object.keys(s.courts).length;
+    var occupiedCount = Object.values(s.courts).filter(function(c) { return c.occupied; }).length;
+    var matchCount = Object.keys(s.matches).length;
+
+    var statsHtml = '<table class="debug-table">' +
+      '<tr><td>' + App.t('debugPlayers') + '</td><td><strong>' + playerCount + '</strong></td></tr>' +
+      '<tr><td>' + App.t('debugPresent') + '</td><td><strong>' + presentCount + '</strong></td></tr>' +
+      '<tr><td>' + App.t('debugInQueue') + '</td><td><strong>' + queueCount + '</strong></td></tr>' +
+      '<tr><td>' + App.t('debugCourts') + '</td><td><strong>' + courtCount + '</strong></td></tr>' +
+      '<tr><td>' + App.t('debugOccupied') + '</td><td><strong>' + occupiedCount + '</strong></td></tr>' +
+      '<tr><td>' + App.t('debugMatches') + '</td><td><strong>' + matchCount + '</strong></td></tr>' +
+      '<tr><td>Version</td><td><strong>' + (s.version || '?') + '</strong></td></tr>' +
+      '<tr><td>Date</td><td><strong>' + (s.date || '?') + '</strong></td></tr>' +
+      '<tr><td>isAdmin</td><td><strong>' + s.isAdmin + '</strong></td></tr>' +
+      '</table>';
+    document.getElementById('debugStats').innerHTML = statsHtml;
+
+    // Sync state
+    var syncHtml;
+    if (App.Sync.connected) {
+      syncHtml = '<table class="debug-table">' +
+        '<tr><td>Status</td><td><strong style="color:var(--success)">' + App.t('debugSyncOn') + '</strong></td></tr>' +
+        '<tr><td>' + App.t('debugSyncRoom') + '</td><td><strong>' + (s.settings.syncRoomId || '—') + '</strong></td></tr>' +
+        '<tr><td>Firebase ref</td><td><code>' + (App.Sync.ref ? App.Sync.ref.toString() : '—') + '</code></td></tr>' +
+        '</table>';
+    } else {
+      syncHtml = '<p style="color:var(--text-secondary)">' + App.t('debugSyncOff') + '</p>';
+    }
+    document.getElementById('debugSyncInfo').innerHTML = syncHtml;
+
+    // LocalStorage info
+    var keys = [];
+    var totalSize = 0;
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      var val = localStorage.getItem(key);
+      var size = val ? val.length : 0;
+      totalSize += size;
+      keys.push({ key: key, size: size });
+    }
+    keys.sort(function(a, b) { return b.size - a.size; });
+
+    var storageHtml = '<table class="debug-table">' +
+      '<tr><td>' + App.t('debugStorageKeys') + '</td><td><strong>' + keys.length + '</strong></td></tr>' +
+      '<tr><td>' + App.t('debugStorageSize') + '</td><td><strong>' + this._formatBytes(totalSize) + '</strong></td></tr>' +
+      '</table>';
+    storageHtml += '<table class="debug-table debug-table-keys">';
+    storageHtml += '<tr><th>Key</th><th>Size</th></tr>';
+    keys.forEach(function(k) {
+      storageHtml += '<tr><td><code>' + App.UI._esc(k.key) + '</code></td><td>' + App.UI._formatBytes(k.size) + '</td></tr>';
+    });
+    storageHtml += '</table>';
+    document.getElementById('debugStorageInfo').innerHTML = storageHtml;
+
+    // Current state JSON
+    var stateJson = JSON.stringify(s, null, 2);
+    document.getElementById('debugStateJson').textContent = stateJson;
+  },
+
+  _formatBytes: function(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  },
+
+  _bindDebug: function() {
+    var self = this;
+    document.getElementById('btnClearStorage').addEventListener('click', function() {
+      App.UI.showConfirm(App.t('debugConfirmClear'), function() {
+        localStorage.clear();
+        App.UI.showToast(App.t('debugCleared'));
+        setTimeout(function() { window.location.reload(); }, 500);
+      });
+    });
+  },
+
   _bindModeToggle: function() {
     var self = this;
     document.getElementById('btnToggleMode').addEventListener('click', function() {
@@ -2512,8 +2376,15 @@ App.init = function() {
   App.UI.init();
   App.UI.renderAll();
 
-  // If sync was active — show room ID (user clicks to reconnect)
-  if (App.state.settings.syncEnabled && App.state.settings.syncRoomId) {
+  // Check for ?room= URL parameter — auto-join
+  var urlParams = new URLSearchParams(window.location.search);
+  var roomParam = urlParams.get('room');
+  if (roomParam) {
+    document.getElementById('roomIdInput').value = roomParam;
+    App.Sync.init(roomParam, false);
+    App.UI.showTab('sync');
+  } else if (App.state.settings.syncEnabled && App.state.settings.syncRoomId) {
+    // If sync was active — show room ID (user clicks to reconnect)
     document.getElementById('roomIdInput').value = App.state.settings.syncRoomId;
   }
 

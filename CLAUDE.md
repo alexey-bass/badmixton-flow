@@ -10,16 +10,22 @@ Local web app for managing player queue and court assignments during amateur bad
 
 - Pure HTML / CSS / JavaScript — no frameworks, no build tools, no npm
 - `localStorage` for data persistence (survives refresh)
-- Firebase Realtime Database for optional multi-device sync (CDN script tags)
+- Firebase Realtime Database v10.12.0 (compat SDK) for optional multi-device sync (CDN script tags)
+- Google Analytics (gtag.js)
 - Mobile-first responsive CSS with breakpoints at 768px and 1024px
 
 ## Files
 
 ```
-index.html   — App shell, 6 tab panels, modal, toast container
-styles.css   — All styles, CSS variables, responsive breakpoints
-app.js       — Full application logic (~2100 lines)
+index.html          — App shell, 10 tab panels, modal, toast container
+styles.css          — All styles, CSS variables, responsive breakpoints
+app.js              — Application logic (App.Utils through App.DnD)
+i18n.js             — App object init, translations (Polish + English), i18n engine
+firebase-config.js  — Firebase config + Google Analytics measurement ID
+package.json        — npm start script (python3 http.server)
 ```
+
+**Load order:** `firebase-config.js` (head) → Firebase SDK (CDN) → `i18n.js` → `app.js`
 
 ## How to Run
 
@@ -27,27 +33,41 @@ Open `index.html` in a browser. That's it. No server required.
 
 Or use a local server:
 ```bash
-python3 -m http.server 8080
+npm start
 ```
 
 ## Architecture
 
-Single global `App` object with modules:
+Single global `App` object (created in `i18n.js`) with modules:
 
 | Module         | Purpose                                          |
 |----------------|--------------------------------------------------|
 | `App.i18n`     | Internationalization (Polish + English)           |
 | `App.Utils`    | ID generation, date/time formatting               |
-| `App.Storage`  | localStorage read/write, JSON export/import       |
+| `App.Storage`  | localStorage read/write, JSON export/import, state migration |
 | `App.Session`  | Session create/reset, court initialization         |
 | `App.Players`  | Add/remove players, mark present/absent, wishes    |
 | `App.Queue`    | Waiting queue CRUD, reorder, move to end           |
-| `App.Courts`   | Start/finish/cancel games, pair stats tracking     |
+| `App.Courts`   | Start/finish/cancel games, pair stats, score tracking |
 | `App.Matches`  | Match history, filtering, undo last match          |
 | `App.Suggest`  | Auto-suggestion algorithm for next 4 players       |
 | `App.Sync`     | Firebase Realtime Database sync                    |
 | `App.UI`       | All rendering, event binding, modals, toasts       |
 | `App.DnD`      | Drag-and-drop (mouse + touch) for queue reorder    |
+
+## Tabs (10 total)
+
+| Tab       | Panel ID        | Mode        | Purpose                        |
+|-----------|-----------------|-------------|--------------------------------|
+| Board     | panel-board     | Both        | Player-facing court view       |
+| Today     | panel-dashboard | Admin only  | Stats, settings, actions       |
+| Players   | panel-players   | Both        | Add/remove, mark present       |
+| Queue     | panel-queue     | Admin only  | Queue management, reorder      |
+| Courts    | panel-courts    | Admin only  | Court management, start games  |
+| History   | panel-history   | Admin only  | Match history, filters, undo   |
+| Results   | panel-results   | Both        | Leaderboard (wins, points)     |
+| Sync      | panel-sync      | Admin only  | Firebase room create/join      |
+| Debug     | panel-debug     | Admin only  | State inspector, clear storage |
 
 ## Key Concepts
 
@@ -66,10 +86,15 @@ Team split scoring:
 - Wish fulfillment bonus (-100)
 
 ### Two UI Modes
-- **Board** (player-facing): Simple view — courts with teams + timer, queue list. One-tap "Finish" button.
-- **Management** (admin): Full control — all 6 tabs, add/remove players, manual player selection, settings.
+- **Board** (player-facing): Courts with teams + timer, queue list, results. One-tap "Finish" with score input.
+- **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
 
 Toggle between modes with the gear icon in the header.
+
+### Score Tracking
+- Finish confirmation modal with optional score input (e.g. 21:15)
+- If score provided: wins/losses and points scored/conceded tracked per player
+- Results tab shows leaderboard sorted by wins → win rate → point differential
 
 ### i18n (Internationalization)
 - Two languages: Polish (default) and English
@@ -79,10 +104,15 @@ Toggle between modes with the gear icon in the header.
 - Switcher in header with flag buttons
 
 ### Firebase Sync
-- Admin creates a room, shares the room ID (e.g., via WhatsApp)
-- Players join with the room ID to see live updates
-- Config placeholder in `App.Sync.init()` — replace `YOUR_API_KEY`, `YOUR_DATABASE_URL`, `YOUR_PROJECT_ID`
+- Admin creates a room on Sync tab, shares the link
+- Shareable URL with `?room=` parameter for auto-join
+- Config in `firebase-config.js` (public by design for web apps)
 - Not required for local single-device use
+
+### Data Migration
+- `App.Storage._ensureState()` validates and fills missing fields on load
+- Handles corrupted localStorage, old versions, and Firebase sync data
+- Player fields auto-migrated (partnerHistory, wins, losses, points, etc.)
 
 ## Data Model
 
@@ -103,17 +133,8 @@ Session state stored in `localStorage` as `badminton_session_YYYY-MM-DD`:
 }
 ```
 
-**Player:** `{ id, number, name, present, gamesPlayed, lastGameEndTime, queueEntryTime, partnerHistory, opponentHistory, wishedPartner, wishFulfilled }`
+**Player:** `{ id, number, name, present, gamesPlayed, lastGameEndTime, queueEntryTime, partnerHistory, opponentHistory, wishedPartner, wishFulfilled, wins, losses, pointsScored, pointsConceded }`
 
 **Court:** `{ id, displayNumber, active, occupied, currentMatch, gameStartTime }`
 
 **Match:** `{ id, startTime, endTime, courtId, teamA: [id,id], teamB: [id,id], score, status }`
-
-## Future Ideas
-
-- Score tracking per game
-- Player statistics dashboard (win rate, avg game time)
-- Session history across days
-- PWA support (offline, installable)
-- QR code for room join link
-- Player self-check-in via phone

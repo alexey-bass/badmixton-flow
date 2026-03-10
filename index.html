@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Badminton — Queue</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="firebase-config.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GB138KHZ0D"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GB138KHZ0D');
+  </script>
 </head>
 <body>
 
@@ -34,6 +42,9 @@
     <button class="tab" data-tab="queue" data-i18n="tabQueue"></button>
     <button class="tab" data-tab="courts" data-i18n="tabCourts"></button>
     <button class="tab" data-tab="history" data-i18n="tabHistory"></button>
+    <button class="tab" data-tab="results" data-i18n="tabResults"></button>
+    <button class="tab" data-tab="sync" data-i18n="tabSync"></button>
+    <button class="tab" data-tab="debug" data-i18n="tabDebug"></button>
   </nav>
 
   <!-- ===== CONTENT ===== -->
@@ -72,21 +83,6 @@
         <button class="btn btn-primary" id="btnApplyCourts" data-i18n="applyCourts"></button>
       </div>
 
-      <div class="section-block">
-        <h3 data-i18n="syncFirebase"></h3>
-        <div id="syncSection">
-          <div class="form-row">
-            <label data-i18n="roomIdLabel"></label>
-            <input type="text" id="roomIdInput" placeholder="bad-2026-03-09">
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" id="btnCreateRoom" data-i18n="createRoom"></button>
-            <button class="btn btn-secondary" id="btnJoinRoom" data-i18n="joinRoom"></button>
-            <button class="btn btn-danger" id="btnDisconnect" hidden data-i18n="disconnect"></button>
-          </div>
-          <div id="syncStatus" class="sync-status"></div>
-        </div>
-      </div>
 
       <div class="section-block">
         <h3 data-i18n="actions"></h3>
@@ -138,6 +134,60 @@
       <div class="history-list" id="historyList"></div>
     </section>
 
+    <!-- RESULTS -->
+    <section class="panel" id="panel-results">
+      <div id="resultsContent"></div>
+    </section>
+
+    <!-- SYNC -->
+    <section class="panel" id="panel-sync">
+      <div class="section-block">
+        <h3 data-i18n="syncFirebase"></h3>
+        <div id="syncSection">
+          <div class="form-row">
+            <label data-i18n="roomIdLabel"></label>
+            <input type="text" id="roomIdInput" placeholder="bad-2026-03-09">
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnCreateRoom" data-i18n="createRoom"></button>
+            <button class="btn btn-secondary" id="btnJoinRoom" data-i18n="joinRoom"></button>
+            <button class="btn btn-danger" id="btnDisconnect" hidden data-i18n="disconnect"></button>
+          </div>
+          <div id="syncStatus" class="sync-status"></div>
+          <div id="syncShareLink" class="sync-share-link" hidden>
+            <label data-i18n="shareLink"></label>
+            <div class="share-link-row">
+              <input type="text" id="syncShareUrl" readonly>
+              <button class="btn btn-secondary btn-sm" id="btnCopyLink" data-i18n="copyLink"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEBUG -->
+    <section class="panel" id="panel-debug">
+      <div class="section-block">
+        <h3 data-i18n="debugState"></h3>
+        <div id="debugStats" class="debug-stats"></div>
+      </div>
+      <div class="section-block">
+        <h3 data-i18n="debugSync"></h3>
+        <div id="debugSyncInfo" class="debug-info"></div>
+      </div>
+      <div class="section-block">
+        <h3 data-i18n="debugLocalStorage"></h3>
+        <div id="debugStorageInfo" class="debug-info"></div>
+        <pre id="debugStateJson" class="debug-json"></pre>
+      </div>
+      <div class="section-block">
+        <h3 data-i18n="debugActions"></h3>
+        <div class="btn-row">
+          <button class="btn btn-danger" id="btnClearStorage" data-i18n="debugClearStorage"></button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ===== MODAL ===== -->
@@ -151,7 +201,7 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

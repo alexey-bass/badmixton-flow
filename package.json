@@ -1,0 +1,7 @@
+{
+  "name": "kort-flow",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8080"
+  }
+}

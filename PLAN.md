@@ -17,7 +17,6 @@
 - [x] Two UI modes: Board (player-facing) and Management (admin)
 - [x] Mobile-first responsive design (phone, 12" tablet, desktop)
 - [x] Drag-and-drop queue reorder (mouse + touch)
-- [x] Firebase Realtime Database sync (room create/join)
 - [x] JSON export/import
 - [x] Session create/reset
 
@@ -31,26 +30,46 @@
 - [x] Language preference saved in localStorage
 - [x] All Russian comments in code replaced with English
 
-## Phase 3: Polish & UX Improvements
+## Phase 3: Multi-Device Sync (DONE)
 
-- [ ] Fix session date display to use localized day names (currently shows old saved Russian day name for existing sessions)
+- [x] Firebase Realtime Database sync (room create/join)
+- [x] Separate Sync tab with room management
+- [x] Shareable join URL with `?room=` parameter (auto-join on open)
+- [x] Copy link button for easy sharing
+- [x] Firebase config in separate `firebase-config.js`
+- [x] i18n extracted to separate `i18n.js`
+- [x] Google Analytics (gtag.js)
+
+## Phase 4: Score Tracking & Results (DONE)
+
+- [x] Finish game confirmation modal with optional score input
+- [x] Score stored on match record (e.g., "21-15")
+- [x] Win/loss tracking per player
+- [x] Points scored/conceded tracking per player
+- [x] Results/Leaderboard tab (sorted by wins, win rate, point diff)
+- [x] Results tab visible in both admin and player modes
+- [x] Data migration for existing players (auto-adds new fields)
+
+## Phase 5: Debug & Stability (DONE)
+
+- [x] Debug tab: session state, sync state, localStorage inspector
+- [x] Clear localStorage with confirmation
+- [x] `_ensureState` migration for corrupted/incomplete data
+- [x] Robust player field initialization
+
+## Phase 6: Polish & UX Improvements
+
+- [ ] Fix session date display to use localized day names
 - [ ] Add "mark all present" bulk action button
 - [ ] Add player search/filter on Players tab
 - [ ] Show game count next to player name on Board queue
+- [ ] Score display in match history
 - [ ] Add confirmation toast with undo option (instead of modal confirm)
 - [ ] Improve touch drag-and-drop smoothness
 - [ ] Add haptic feedback on mobile (vibrate API)
 - [ ] Add session name display on Board tab
 
-## Phase 4: Score Tracking
-
-- [ ] Optional score input on game finish (e.g., 21-15)
-- [ ] Score display in match history
-- [ ] Win/loss tracking per player
-- [ ] Player stats: win rate, total points scored/conceded
-- [ ] Leaderboard view
-
-## Phase 5: Advanced Statistics
+## Phase 7: Advanced Statistics
 
 - [ ] Player statistics dashboard (games played, avg game time, favorite partners)
 - [ ] Head-to-head stats between players
@@ -58,14 +77,14 @@
 - [ ] Charts/graphs for trends
 - [ ] "Best pair" and "most common opponents" insights
 
-## Phase 6: PWA & Offline
+## Phase 8: PWA & Offline
 
 - [ ] Service Worker for offline support
 - [ ] Web App Manifest (installable on home screen)
 - [ ] Offline-first with sync on reconnect
 - [ ] App icon and splash screen
 
-## Phase 7: Multi-Device Experience
+## Phase 9: Multi-Device Experience
 
 - [ ] QR code generation for room join link
 - [ ] Player self-check-in via phone (scan QR, tap "I'm here")
@@ -73,7 +92,7 @@
 - [ ] Push notifications (game starting, your turn coming up)
 - [ ] WhatsApp share button for room link
 
-## Phase 8: Advanced Features
+## Phase 10: Advanced Features
 
 - [ ] Tournament mode (round-robin, knockout brackets)
 - [ ] Skill rating system (ELO-like)
