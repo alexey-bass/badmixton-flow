@@ -478,6 +478,7 @@ App.i18n = {
   setLang: function(lang) {
     if (!this.translations[lang]) return;
     this.currentLang = lang;
+    if (typeof App.Analytics !== 'undefined') App.Analytics.track('lang_switch', { lang: lang });
     localStorage.setItem(this.STORAGE_KEY, lang);
 
     // Update active state on buttons

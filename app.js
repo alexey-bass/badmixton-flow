@@ -5,6 +5,17 @@
 
 
 // ============================================================
+// ANALYTICS — Google Analytics event tracking
+// ============================================================
+App.Analytics = {
+  track: function(event, params) {
+    if (typeof gtag === 'function') {
+      gtag('event', event, params || {});
+    }
+  }
+};
+
+// ============================================================
 // UTILS — Helper functions
 // ============================================================
 App.Utils = {
@@ -1099,6 +1110,7 @@ App.UI = {
 
   showTab: function(tabName) {
     this.currentTab = tabName;
+    App.Analytics.track('tab_switch', { tab_name: tabName });
 
     // Active tab
     document.querySelectorAll('.tab').forEach(function(t) {
@@ -1147,6 +1159,7 @@ App.UI = {
       self.showConfirm(App.t('confirmNewSession'), function() {
         App.Session.create();
         App.Session.initCourts([1, 2, 3, 4]);
+        App.Analytics.track('session_create', { court_count: 4 });
         App.UI.renderAll();
         App.UI.showToast(App.t('newSessionCreated'));
       });
@@ -1237,6 +1250,7 @@ App.UI = {
       switch (action) {
         case 'mark-present':
           App.Players.markPresent(playerId);
+          App.Analytics.track('player_mark_present', { present_count: App.Players.getPresent().length });
           App.save();
           self.renderPlayers();
           self.renderQueue();
@@ -1280,6 +1294,7 @@ App.UI = {
     if (!name) return;
     var id = App.Players.add(name);
     if (id) {
+      App.Analytics.track('player_add', { player_count: Object.keys(App.state.players).length });
       input.value = '';
       input.focus();
       this.renderPlayers();
@@ -1405,11 +1420,13 @@ App.UI = {
       if (!wishId) {
         // "No preference" — clear all
         App.Players.setWish(playerId, null);
+        App.Analytics.track('wish_set', { wish_count: 0 });
         App.UI.showToast(App.t('wishRemoved'));
       } else {
         // Toggle this partner
         App.Players.setWish(playerId, wishId);
         var isNowWished = player.wishedPartners.indexOf(wishId) !== -1;
+        App.Analytics.track('wish_set', { wish_count: player.wishedPartners.length });
         App.UI.showToast(isNowWished ? App.t('wishSet') : App.t('wishRemoved'));
       }
 
@@ -1512,6 +1529,7 @@ App.UI = {
           break;
         case 'cancel':
           self.showConfirm(App.t('confirmCancelGame'), function() {
+            App.Analytics.track('game_cancel');
             App.Courts.cancelGame(courtId);
             App.UI.renderAll();
           });
@@ -1617,6 +1635,7 @@ App.UI = {
   },
 
   _suggestForCourt: function(courtId) {
+    App.Analytics.track('game_suggest', { court_id: courtId });
     var result = App.Suggest.forCourt(courtId);
 
     if (!result.players) {
@@ -1693,6 +1712,7 @@ App.UI = {
 
     // Confirm
     document.getElementById('btnConfirmSuggest').addEventListener('click', function() {
+      App.Analytics.track('game_start', { split_type: isCustom ? 'custom' : 'suggested', source: 'suggest' });
       App.Courts.startGame(courtId, selectedSplit.teamA, selectedSplit.teamB);
       App.UI.hideModal();
       App.UI.renderAll();
@@ -1816,6 +1836,8 @@ App.UI = {
       this._customSwapTarget = null;
       area.querySelectorAll('.custom-split-chip').forEach(function(c) { c.classList.remove('swap-selected'); });
       if (swapped) {
+        var swapType = (firstOnBench || onBench) ? 'bench' : 'team';
+        App.Analytics.track('custom_split_swap', { swap_type: swapType });
         this._syncCustomSplit(area, splitObj);
       }
     } else {
@@ -1939,6 +1961,7 @@ App.UI = {
 
     btnStart.addEventListener('click', function() {
       if (!chosenSplit) return;
+      App.Analytics.track('game_start', { split_type: isCustom2 ? 'custom' : 'suggested', source: 'manual' });
       App.Courts.startGame(courtId, chosenSplit.teamA, chosenSplit.teamB);
       App.UI.hideModal();
       App.UI.renderAll();
@@ -2209,6 +2232,7 @@ App.UI = {
       }
       var ok = App.Sync.init(sessionId, true);
       if (ok) {
+        App.Analytics.track('sync_create');
         App.UI.showToast(App.t('sessionCreated') + sessionId);
         self.renderSync();
       }
@@ -2222,6 +2246,7 @@ App.UI = {
       }
       var ok = App.Sync.init(sessionId, false);
       if (ok) {
+        App.Analytics.track('sync_join', { source: 'manual' });
         App.UI.showToast(App.t('connectedToSession') + sessionId);
         self.renderSync();
       }
@@ -2286,6 +2311,8 @@ App.UI = {
       if (scoreA && scoreB) {
         score = scoreA + '-' + scoreB;
       }
+      var durationSec = Math.round((Date.now() - (App.state.courts[courtId].gameStartTime || Date.now())) / 1000);
+      App.Analytics.track('game_finish', { has_score: !!score, duration_sec: durationSec });
       App.UI.hideModal();
       App.Courts.finishGame(courtId, score);
       App.UI.renderAll();
@@ -2396,11 +2423,13 @@ App.UI = {
         self._showPasswordPrompt(function() {
           nav.classList.remove('player-mode');
           document.getElementById('modeIcon').innerHTML = '&#9881;';
+          App.Analytics.track('mode_switch', { mode: 'admin' });
         });
       } else {
         // Switching back to player mode — no password needed
         nav.classList.add('player-mode');
         document.getElementById('modeIcon').innerHTML = '&#9776;';
+        App.Analytics.track('mode_switch', { mode: 'player' });
         self.showTab('board');
       }
     });
@@ -2689,6 +2718,7 @@ App.init = function() {
   if (sessionParam) {
     document.getElementById('sessionIdInput').value = sessionParam;
     App.Sync.init(sessionParam, false);
+    App.Analytics.track('sync_join', { source: 'url' });
     App.UI.showTab('sync');
   } else if (App.state.settings.syncEnabled && App.state.settings.syncSessionId) {
     // If sync was active — show session ID (user clicks to reconnect)

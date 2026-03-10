@@ -64,6 +64,7 @@ Single global `App` object (created in `i18n.js`) with modules:
 | Module         | Purpose                                          |
 |----------------|--------------------------------------------------|
 | `App.i18n`     | Internationalization (Polish + English)           |
+| `App.Analytics`| Google Analytics event tracking wrapper             |
 | `App.Utils`    | ID generation, date/time formatting               |
 | `App.Storage`  | localStorage read/write, JSON export/import, state migration |
 | `App.Session`  | Session create/reset, court initialization         |
