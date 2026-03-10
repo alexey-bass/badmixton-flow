@@ -418,9 +418,26 @@ App.Queue = {
   add: function(playerId) {
     if (App.state.waitingQueue.indexOf(playerId) !== -1) return; // already in queue
     if (App.Players.isOnCourt(playerId)) return; // on court
-    App.state.waitingQueue.push(playerId);
     var p = App.state.players[playerId];
     if (p) p.queueEntryTime = Date.now();
+
+    // New players (0 games) are inserted after other zero-games players
+    // but before anyone who has already played
+    if (p && p.gamesPlayed === 0) {
+      var insertAt = this._findNewPlayerInsertIndex();
+      App.state.waitingQueue.splice(insertAt, 0, playerId);
+    } else {
+      App.state.waitingQueue.push(playerId);
+    }
+  },
+
+  _findNewPlayerInsertIndex: function() {
+    var queue = App.state.waitingQueue;
+    for (var i = 0; i < queue.length; i++) {
+      var p = App.state.players[queue[i]];
+      if (p && p.gamesPlayed > 0) return i;
+    }
+    return queue.length;
   },
 
   remove: function(playerId) {

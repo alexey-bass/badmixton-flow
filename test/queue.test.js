@@ -13,15 +13,63 @@ describe('App.Queue', function() {
 
   describe('add', function() {
     it('should add player to end of queue', function() {
+      App.state.players = {
+        p1: { gamesPlayed: 0 },
+        p2: { gamesPlayed: 0 }
+      };
       App.Queue.add('p1');
       App.Queue.add('p2');
       assert.deepStrictEqual(App.state.waitingQueue, ['p1', 'p2']);
     });
 
     it('should not add duplicate', function() {
+      App.state.players = { p1: { gamesPlayed: 0 } };
       App.Queue.add('p1');
       App.Queue.add('p1');
       assert.deepStrictEqual(App.state.waitingQueue, ['p1']);
+    });
+
+    it('should insert new player before players who have played', function() {
+      App.state.players = {
+        p1: { gamesPlayed: 1 },
+        p2: { gamesPlayed: 2 },
+        p3: { gamesPlayed: 0 }
+      };
+      App.state.waitingQueue = ['p1', 'p2'];
+      App.Queue.add('p3');
+      assert.deepStrictEqual(App.state.waitingQueue, ['p3', 'p1', 'p2']);
+    });
+
+    it('should insert new player after other zero-games players', function() {
+      App.state.players = {
+        p1: { gamesPlayed: 0 },
+        p2: { gamesPlayed: 1 },
+        p3: { gamesPlayed: 0 }
+      };
+      App.state.waitingQueue = ['p1', 'p2'];
+      App.Queue.add('p3');
+      assert.deepStrictEqual(App.state.waitingQueue, ['p1', 'p3', 'p2']);
+    });
+
+    it('should add to end when all players have zero games', function() {
+      App.state.players = {
+        p1: { gamesPlayed: 0 },
+        p2: { gamesPlayed: 0 },
+        p3: { gamesPlayed: 0 }
+      };
+      App.state.waitingQueue = ['p1', 'p2'];
+      App.Queue.add('p3');
+      assert.deepStrictEqual(App.state.waitingQueue, ['p1', 'p2', 'p3']);
+    });
+
+    it('should add experienced player to end of queue', function() {
+      App.state.players = {
+        p1: { gamesPlayed: 0 },
+        p2: { gamesPlayed: 1 }
+      };
+      App.state.waitingQueue = ['p1'];
+      App.Queue.add('p2');
+      assert.deepStrictEqual(App.state.waitingQueue, ['p1', 'p2']);
     });
   });
 

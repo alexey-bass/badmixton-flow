@@ -56,7 +56,7 @@ PLAN.md                         — Development roadmap
 
 ### Living Queue
 
-Players arrive and get a sequential number (#1, #2, ...). After a game finishes, all 4 players go to the end of the queue. Queue position is the primary factor for who plays next.
+Players arrive and get a sequential number (#1, #2, ...). New players who haven't played yet are promoted ahead of those who have, so latecomers get to play sooner. After a game finishes, all 4 players go to the end of the queue. Queue position is the primary factor for who plays next.
 
 ### Suggestion Algorithm
 

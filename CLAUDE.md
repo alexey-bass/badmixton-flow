@@ -96,7 +96,7 @@ Single global `App` object (created in `assets/js/i18n.js`) with modules:
 ## Key Concepts
 
 ### Living Queue
-Players arrive and get a sequential number (#1, #2, ...). After a game finishes, all 4 players go to the **end** of the queue. Queue position is the primary factor for next game selection.
+Players arrive and get a sequential number (#1, #2, ...). New players (0 games played) are inserted ahead of players who have already played, so latecomers get to play sooner. After a game finishes, all 4 players go to the **end** of the queue. Queue position is the primary factor for next game selection.
 
 ### Suggestion Algorithm
 Scores each candidate by:
