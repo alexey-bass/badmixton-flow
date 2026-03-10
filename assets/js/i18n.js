@@ -16,7 +16,7 @@ App.i18n = {
     pl: {
       // Tabs
       tabBoard: 'Tablica',
-      tabToday: 'Dzisiaj',
+      tabSession: 'Sesja',
       tabPlayers: 'Gracze',
       tabQueue: 'Kolejka',
       tabCourts: 'Korty',
@@ -35,12 +35,8 @@ App.i18n = {
 
       // Session settings
       sessionSettings: 'Ustawienia sesji',
-      sessionNameLabel: 'Nazwa sesji',
-      dayFriday: 'Piątek',
-      daySunday: 'Niedziela',
-      sessionTraining: 'Trening',
-      sessionOther: 'Inne',
       courtNumbersLabel: 'Numery kortów',
+      courtNumbersHint: 'oddzielone przecinkami, np. 1,2,3',
       applyCourts: 'Zastosuj korty',
 
       // Sync
@@ -249,7 +245,7 @@ App.i18n = {
     en: {
       // Tabs
       tabBoard: 'Board',
-      tabToday: 'Today',
+      tabSession: 'Session',
       tabPlayers: 'Players',
       tabQueue: 'Queue',
       tabCourts: 'Courts',
@@ -268,12 +264,8 @@ App.i18n = {
 
       // Session settings
       sessionSettings: 'Session settings',
-      sessionNameLabel: 'Session name',
-      dayFriday: 'Friday',
-      daySunday: 'Sunday',
-      sessionTraining: 'Training',
-      sessionOther: 'Other',
       courtNumbersLabel: 'Court numbers',
+      courtNumbersHint: 'comma-separated, e.g. 1,2,3',
       applyCourts: 'Apply courts',
 
       // Sync

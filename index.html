@@ -40,9 +40,9 @@
   <!-- ===== NAVIGATION (tabs) ===== -->
   <nav class="tabs" id="tabNav">
     <button class="tab active" data-tab="board" data-i18n="tabBoard"></button>
-    <button class="tab" data-tab="dashboard" data-i18n="tabToday"></button>
     <button class="tab" data-tab="players" data-i18n="tabPlayers"></button>
     <button class="tab" data-tab="queue" data-i18n="tabQueue"></button>
+    <button class="tab" data-tab="dashboard" data-i18n="tabSession"></button>
     <button class="tab" data-tab="courts" data-i18n="tabCourts"></button>
     <button class="tab" data-tab="history" data-i18n="tabHistory"></button>
     <button class="tab" data-tab="results" data-i18n="tabResults"></button>
@@ -71,17 +71,9 @@
       <div class="section-block">
         <h3 data-i18n="sessionSettings"></h3>
         <div class="form-row">
-          <label data-i18n="sessionNameLabel"></label>
-          <select id="sessionName">
-            <option value="Friday" data-i18n-opt="dayFriday"></option>
-            <option value="Sunday" data-i18n-opt="daySunday"></option>
-            <option value="Training" data-i18n-opt="sessionTraining"></option>
-            <option value="Other" data-i18n-opt="sessionOther"></option>
-          </select>
-        </div>
-        <div class="form-row">
           <label data-i18n="courtNumbersLabel"></label>
-          <input type="text" id="courtNumbers" placeholder="2,3,4,6" value="1,2,3,4">
+          <input type="text" id="courtNumbers" placeholder="1,2,3,4" value="1,2,3,4">
+          <small data-i18n="courtNumbersHint"></small>
         </div>
         <button class="btn btn-primary" id="btnApplyCourts" data-i18n="applyCourts"></button>
       </div>
@@ -204,7 +196,7 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script src="assets/js/i18n.js?v=1.1"></script>
+  <script src="assets/js/i18n.js?v=1.2"></script>
   <script src="assets/js/app.js?v=1.1"></script>
 </body>
 </html>
