@@ -993,12 +993,23 @@ App.Sync = {
     App.state.isAdmin = !!asAdmin;
 
     var self = this;
+    this._initialLoad = true;
 
     // Listen for changes
     this._listener = this.ref.on('value', function(snapshot) {
       if (self._pushing) return; // ignore own changes
 
       var remote = snapshot.val();
+      if (self._initialLoad) {
+        // First load: non-admin always takes remote state
+        self._initialLoad = false;
+        if (remote && !asAdmin) {
+          self._merge(remote);
+          App.UI.renderAll();
+          return;
+        }
+      }
+
       if (remote && remote.lastModified > App.state.lastModified) {
         self._merge(remote);
         App.UI.renderAll();
@@ -1013,7 +1024,7 @@ App.Sync = {
       this.push();
     }
 
-    App.save();
+    App.Storage.save(); // save locally only, don't push to Firebase
     return true;
   },
 
