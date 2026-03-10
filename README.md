@@ -16,7 +16,7 @@ Web app for managing player queues and court assignments during amateur badminto
 - **Match history** — filterable by court and player, with undo
 - **Drag-and-drop** — reorder queue manually (mouse + touch)
 - **Two UI modes** — Board (player-facing: courts, queue, results) and Management (admin: full control)
-- **Multi-device sync** — Firebase Realtime Database, shareable room links with auto-join
+- **Multi-device sync** — Firebase Realtime Database, shareable session links with auto-join
 - **i18n** — Polish (default) and English
 - **JSON export/import** — backup and restore session data
 - **Debug tools** — session inspector, localStorage viewer, clear data
@@ -78,9 +78,9 @@ When finishing a game, a confirmation modal lets you optionally enter the score 
 ### Multi-Device Sync
 
 1. Go to the **Sync** tab
-2. Click **Create room** (generates a room ID like `bad-2026-03-10`)
+2. Click **Create session** (generates a session ID like `badminton-2026-03-10`)
 3. Copy the share link and send it to players
-4. Anyone opening the link auto-joins the room and sees live updates
+4. Anyone opening the link auto-joins the session and sees live updates
 
 Sync uses Firebase Realtime Database. Configuration is in `firebase-config.js`.
 

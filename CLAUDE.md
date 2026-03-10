@@ -36,6 +36,27 @@ Or use a local server:
 npm start
 ```
 
+## Development Workflow
+
+### Before every commit:
+```bash
+npm run validate   # runs syntax check + tests
+```
+
+### Rules:
+- Every new feature must be covered with tests
+- README must be updated when adding features
+- All tests must pass before committing
+
+### Testing:
+```bash
+npm test           # run all tests
+npm run check      # syntax check only
+npm run validate   # both check + test
+```
+
+Tests use Node.js built-in `node:test` runner (no npm dependencies). Test files are in `test/` directory. Browser APIs are mocked in `test/helpers.js`.
+
 ## Architecture
 
 Single global `App` object (created in `i18n.js`) with modules:
@@ -104,8 +125,8 @@ Toggle between modes with the gear icon in the header.
 - Switcher in header with flag buttons
 
 ### Firebase Sync
-- Admin creates a room on Sync tab, shares the link
-- Shareable URL with `?room=` parameter for auto-join
+- Admin creates a session on Sync tab, shares the link
+- Shareable URL with `?session=` parameter for auto-join
 - Config in `firebase-config.js` (public by design for web apps)
 - Not required for local single-device use
 
@@ -127,7 +148,7 @@ Session state stored in `localStorage` as `badminton_session_YYYY-MM-DD`:
   waitingQueue: [playerId, ...],
   courts: { [id]: Court },
   matches: { [id]: Match },
-  settings: { courtNumbers, syncEnabled, syncRoomId },
+  settings: { courtNumbers, syncEnabled, syncSessionId },
   nextPlayerNumber: 1,
   isAdmin: true
 }
