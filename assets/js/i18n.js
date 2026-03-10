@@ -69,6 +69,9 @@ App.i18n = {
       scoreOptional: 'Wynik opcjonalny',
       finishConfirm: 'Zakończ',
 
+      // Fullscreen
+      fullscreenTooltip: 'Pełny ekran',
+
       // Help
       helpTitle: 'Jak to działa?',
       helpSteps: [
@@ -298,6 +301,9 @@ App.i18n = {
       finishGameTitle: 'Finish game — court',
       scoreOptional: 'Score is optional',
       finishConfirm: 'Finish',
+
+      // Fullscreen
+      fullscreenTooltip: 'Fullscreen',
 
       // Help
       helpTitle: 'How does it work?',

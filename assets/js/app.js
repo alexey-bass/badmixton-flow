@@ -1106,6 +1106,7 @@ App.UI = {
     this._bindSync();
     this._bindDebug();
     this._bindModeToggle();
+    this._bindFullscreen();
     this._bindHelp();
     this.startTimers();
   },
@@ -2542,6 +2543,20 @@ App.UI = {
         App.UI.showToast(App.t('debugCleared'));
         setTimeout(function() { window.location.reload(); }, 500);
       });
+    });
+  },
+
+  _bindFullscreen: function() {
+    var btn = document.getElementById('btnFullscreen');
+    btn.addEventListener('click', function() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(function() {});
+      } else {
+        document.exitFullscreen();
+      }
+    });
+    document.addEventListener('fullscreenchange', function() {
+      btn.textContent = document.fullscreenElement ? '\u2716' : '\u26F6';
     });
   },
 
