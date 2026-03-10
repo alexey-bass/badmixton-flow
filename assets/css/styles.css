@@ -978,14 +978,27 @@ body {
   padding-left: 20px;
   margin: 12px 0;
   line-height: 1.7;
+  font-size: 13px;
 }
 .help-steps li {
   margin-bottom: 4px;
 }
 .help-wish {
   margin: 12px 0;
-  font-size: 0.95em;
+  font-size: 13px;
   color: var(--text-secondary);
+}
+.help-copyright {
+  margin: 16px 0 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.help-copyright a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.help-copyright a:hover {
+  text-decoration: underline;
 }
 
 /* --- Player selection in modal --- */

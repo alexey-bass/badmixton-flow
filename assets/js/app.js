@@ -2587,6 +2587,7 @@ App.UI = {
       }
       html += '</ol>';
       html += '<p class="help-wish">' + App.t('helpWish') + '</p>';
+      html += '<p class="help-copyright">&copy; <a href="https://github.com/alexey-bass/badmixton-flow" target="_blank" rel="noopener">Alexey Bass</a></p>';
       html += '<div class="btn-row"><button class="btn btn-secondary" id="btnCloseHelp">' + App.t('close') + '</button></div>';
       App.UI.showModal(html);
       document.getElementById('btnCloseHelp').addEventListener('click', function() {
