@@ -93,7 +93,7 @@ App.Storage = {
     if (!state.courts || typeof state.courts !== 'object') state.courts = {};
     if (!state.matches || typeof state.matches !== 'object') state.matches = {};
     if (!state.settings || typeof state.settings !== 'object') {
-      state.settings = { courtNumbers: [1,2,3,4], syncEnabled: false, syncRoomId: null };
+      state.settings = { courtNumbers: [1,2,3,4], syncEnabled: false, syncSessionId: null };
     }
     if (!state.nextPlayerNumber) state.nextPlayerNumber = 1;
     if (!state.date) state.date = App.Utils.getISODate(new Date());
@@ -181,7 +181,7 @@ App.Session = {
       settings: {
         courtNumbers: [1, 2, 3, 4],
         syncEnabled: false,
-        syncRoomId: null
+        syncSessionId: null
       },
       nextPlayerNumber: 1,
       lastModified: Date.now(),
@@ -915,7 +915,7 @@ App.Sync = {
   _listener: null,
   _pushing: false,
 
-  init: function(roomId, asAdmin) {
+  init: function(sessionId, asAdmin) {
     // Check if Firebase SDK is loaded
     if (typeof firebase === 'undefined' || !firebase.database) {
       App.UI.showToast(App.t('firebaseNotLoaded'));
@@ -933,10 +933,10 @@ App.Sync = {
     }
 
     this.db = firebase.database();
-    this.ref = this.db.ref('sessions/' + roomId);
+    this.ref = this.db.ref('sessions/' + sessionId);
 
     App.state.settings.syncEnabled = true;
-    App.state.settings.syncRoomId = roomId;
+    App.state.settings.syncSessionId = sessionId;
     App.state.isAdmin = !!asAdmin;
 
     var self = this;
@@ -991,7 +991,7 @@ App.Sync = {
     this.connected = false;
     this._listener = null;
     App.state.settings.syncEnabled = false;
-    App.state.settings.syncRoomId = null;
+    App.state.settings.syncSessionId = null;
     App.save();
     this._updateStatus('disconnected');
   },
@@ -1002,7 +1002,7 @@ App.Sync = {
     var btnDisconnect = document.getElementById('btnDisconnect');
 
     if (status === 'connected') {
-      el.textContent = App.t('connectedToRoom') + App.state.settings.syncRoomId;
+      el.textContent = App.t('connectedToSession') + App.state.settings.syncSessionId;
       el.className = 'sync-status connected';
       indicator.hidden = false;
       indicator.className = 'sync-indicator';
@@ -1935,7 +1935,7 @@ App.UI = {
     if (App.Sync.connected) {
       disconnectBtn.hidden = false;
       shareLinkEl.hidden = false;
-      var url = this._buildShareUrl(App.state.settings.syncRoomId);
+      var url = this._buildShareUrl(App.state.settings.syncSessionId);
       document.getElementById('syncShareUrl').value = url;
     } else {
       disconnectBtn.hidden = true;
@@ -1943,36 +1943,36 @@ App.UI = {
     }
   },
 
-  _buildShareUrl: function(roomId) {
+  _buildShareUrl: function(sessionId) {
     var base = window.location.href.split('?')[0].split('#')[0];
-    return base + '?room=' + encodeURIComponent(roomId);
+    return base + '?session=' + encodeURIComponent(sessionId);
   },
 
   _bindSync: function() {
     var self = this;
 
-    document.getElementById('btnCreateRoom').addEventListener('click', function() {
-      var roomId = document.getElementById('roomIdInput').value.trim();
-      if (!roomId) {
-        roomId = 'bad-' + App.state.date;
-        document.getElementById('roomIdInput').value = roomId;
+    document.getElementById('btnCreateSession').addEventListener('click', function() {
+      var sessionId = document.getElementById('sessionIdInput').value.trim();
+      if (!sessionId) {
+        sessionId = 'badminton-' + App.state.date;
+        document.getElementById('sessionIdInput').value = sessionId;
       }
-      var ok = App.Sync.init(roomId, true);
+      var ok = App.Sync.init(sessionId, true);
       if (ok) {
-        App.UI.showToast(App.t('roomCreated') + roomId);
+        App.UI.showToast(App.t('sessionCreated') + sessionId);
         self.renderSync();
       }
     });
 
-    document.getElementById('btnJoinRoom').addEventListener('click', function() {
-      var roomId = document.getElementById('roomIdInput').value.trim();
-      if (!roomId) {
-        App.UI.showToast(App.t('enterRoomId'));
+    document.getElementById('btnJoinSession').addEventListener('click', function() {
+      var sessionId = document.getElementById('sessionIdInput').value.trim();
+      if (!sessionId) {
+        App.UI.showToast(App.t('enterSessionId'));
         return;
       }
-      var ok = App.Sync.init(roomId, false);
+      var ok = App.Sync.init(sessionId, false);
       if (ok) {
-        App.UI.showToast(App.t('connectedToRoom') + roomId);
+        App.UI.showToast(App.t('connectedToSession') + sessionId);
         self.renderSync();
       }
     });
@@ -2076,7 +2076,7 @@ App.UI = {
     if (App.Sync.connected) {
       syncHtml = '<table class="debug-table">' +
         '<tr><td>Status</td><td><strong style="color:var(--success)">' + App.t('debugSyncOn') + '</strong></td></tr>' +
-        '<tr><td>' + App.t('debugSyncRoom') + '</td><td><strong>' + (s.settings.syncRoomId || '—') + '</strong></td></tr>' +
+        '<tr><td>' + App.t('debugSyncSession') + '</td><td><strong>' + (s.settings.syncSessionId || '—') + '</strong></td></tr>' +
         '<tr><td>Firebase ref</td><td><code>' + (App.Sync.ref ? App.Sync.ref.toString() : '—') + '</code></td></tr>' +
         '</table>';
     } else {
@@ -2132,16 +2132,68 @@ App.UI = {
 
   _bindModeToggle: function() {
     var self = this;
-    document.getElementById('btnToggleMode').addEventListener('click', function() {
-      var nav = document.getElementById('tabNav');
-      nav.classList.toggle('player-mode');
-      var isPlayerMode = nav.classList.contains('player-mode');
-      document.getElementById('modeIcon').innerHTML = isPlayerMode ? '&#9776;' : '&#9881;';
 
-      // In player mode show only Board and Players
+    // Start in player mode by default
+    var nav = document.getElementById('tabNav');
+    nav.classList.add('player-mode');
+    document.getElementById('modeIcon').innerHTML = '&#9776;';
+
+    document.getElementById('btnToggleMode').addEventListener('click', function() {
+      var isPlayerMode = nav.classList.contains('player-mode');
+
       if (isPlayerMode) {
+        // Switching to admin — require password
+        self._showPasswordPrompt(function() {
+          nav.classList.remove('player-mode');
+          document.getElementById('modeIcon').innerHTML = '&#9881;';
+        });
+      } else {
+        // Switching back to player mode — no password needed
+        nav.classList.add('player-mode');
+        document.getElementById('modeIcon').innerHTML = '&#9776;';
         self.showTab('board');
       }
+    });
+  },
+
+  _showPasswordPrompt: function(onSuccess) {
+    var html = '<h3>' + App.t('adminLogin') + '</h3>';
+    html += '<div class="form-row" style="margin:12px 0">';
+    html += '<input type="password" id="adminPasswordInput" placeholder="' + App.t('passwordPlaceholder') + '" autocomplete="off">';
+    html += '</div>';
+    html += '<div class="btn-row">';
+    html += '<button class="btn btn-primary" id="btnPasswordOk">' + App.t('ok') + '</button>';
+    html += '<button class="btn btn-secondary" id="btnPasswordCancel">' + App.t('cancelAction') + '</button>';
+    html += '</div>';
+    html += '<div id="passwordError" style="color:var(--danger);font-size:13px;margin-top:8px;" hidden></div>';
+
+    this.showModal(html);
+    document.getElementById('adminPasswordInput').focus();
+
+    var self = this;
+
+    document.getElementById('btnPasswordOk').addEventListener('click', function() {
+      var pwd = document.getElementById('adminPasswordInput').value;
+      if (pwd === 'aleks') {
+        self.hideModal();
+        onSuccess();
+      } else {
+        var err = document.getElementById('passwordError');
+        err.textContent = App.t('wrongPassword');
+        err.hidden = false;
+        document.getElementById('adminPasswordInput').value = '';
+        document.getElementById('adminPasswordInput').focus();
+      }
+    });
+
+    document.getElementById('adminPasswordInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('btnPasswordOk').click();
+      }
+    });
+
+    document.getElementById('btnPasswordCancel').addEventListener('click', function() {
+      self.hideModal();
     });
   },
 
@@ -2376,16 +2428,16 @@ App.init = function() {
   App.UI.init();
   App.UI.renderAll();
 
-  // Check for ?room= URL parameter — auto-join
+  // Check for ?session= URL parameter — auto-join
   var urlParams = new URLSearchParams(window.location.search);
-  var roomParam = urlParams.get('room');
-  if (roomParam) {
-    document.getElementById('roomIdInput').value = roomParam;
-    App.Sync.init(roomParam, false);
+  var sessionParam = urlParams.get('session');
+  if (sessionParam) {
+    document.getElementById('sessionIdInput').value = sessionParam;
+    App.Sync.init(sessionParam, false);
     App.UI.showTab('sync');
-  } else if (App.state.settings.syncEnabled && App.state.settings.syncRoomId) {
-    // If sync was active — show room ID (user clicks to reconnect)
-    document.getElementById('roomIdInput').value = App.state.settings.syncRoomId;
+  } else if (App.state.settings.syncEnabled && App.state.settings.syncSessionId) {
+    // If sync was active — show session ID (user clicks to reconnect)
+    document.getElementById('sessionIdInput').value = App.state.settings.syncSessionId;
   }
 
   // Close modal on overlay click

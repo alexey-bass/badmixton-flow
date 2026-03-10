@@ -45,9 +45,9 @@ App.i18n = {
 
       // Sync
       syncFirebase: 'Synchronizacja Firebase',
-      roomIdLabel: 'ID pokoju',
-      createRoom: 'Utwórz pokój',
-      joinRoom: 'Dołącz',
+      sessionIdLabel: 'ID sesji',
+      createSession: 'Utwórz sesję',
+      joinSession: 'Dołącz',
       disconnect: 'Rozłącz',
       shareLink: 'Link do udostępnienia:',
       copyLink: 'Kopiuj',
@@ -66,6 +66,12 @@ App.i18n = {
       scoreOptional: 'Wynik opcjonalny',
       finishConfirm: 'Zakończ',
 
+      // Admin login
+      adminLogin: 'Tryb administratora',
+      passwordPlaceholder: 'Hasło',
+      ok: 'OK',
+      wrongPassword: 'Nieprawidłowe hasło',
+
       // Debug
       tabDebug: 'Debug',
       debugState: 'Stan sesji',
@@ -82,8 +88,8 @@ App.i18n = {
       debugOccupied: 'Zajętych',
       debugMatches: 'Meczów',
       debugSyncOff: 'Synchronizacja wyłączona',
-      debugSyncOn: 'Połączono z pokojem',
-      debugSyncRoom: 'Pokój',
+      debugSyncOn: 'Połączono z sesją',
+      debugSyncSession: 'Sesja',
       debugStorageKeys: 'Klucze',
       debugStorageSize: 'Rozmiar',
       debugCurrentState: 'Aktualny stan (JSON)',
@@ -202,9 +208,9 @@ App.i18n = {
       // Sync messages
       firebaseNotLoaded: 'Firebase SDK nie załadowane. Sprawdź połączenie.',
       configureFirebase: 'Skonfiguruj Firebase w app.js (sekcja App.Sync.init)',
-      roomCreated: 'Pokój utworzony: ',
-      enterRoomId: 'Wprowadź ID pokoju',
-      connectedToRoom: 'Połączono z pokojem: ',
+      sessionCreated: 'Sesja utworzona: ',
+      enterSessionId: 'Wprowadź ID sesji',
+      connectedToSession: 'Połączono z sesją: ',
       disconnectedMsg: 'Rozłączono',
       syncDisconnected: 'Rozłączono z synchronizacją',
 
@@ -250,9 +256,9 @@ App.i18n = {
 
       // Sync
       syncFirebase: 'Firebase Sync',
-      roomIdLabel: 'Room ID',
-      createRoom: 'Create room',
-      joinRoom: 'Join',
+      sessionIdLabel: 'Session ID',
+      createSession: 'Create session',
+      joinSession: 'Join',
       disconnect: 'Disconnect',
       shareLink: 'Share link:',
       copyLink: 'Copy',
@@ -271,6 +277,12 @@ App.i18n = {
       scoreOptional: 'Score is optional',
       finishConfirm: 'Finish',
 
+      // Admin login
+      adminLogin: 'Admin mode',
+      passwordPlaceholder: 'Password',
+      ok: 'OK',
+      wrongPassword: 'Wrong password',
+
       // Debug
       tabDebug: 'Debug',
       debugState: 'Session state',
@@ -287,8 +299,8 @@ App.i18n = {
       debugOccupied: 'Occupied',
       debugMatches: 'Matches',
       debugSyncOff: 'Sync disabled',
-      debugSyncOn: 'Connected to room',
-      debugSyncRoom: 'Room',
+      debugSyncOn: 'Connected to session',
+      debugSyncSession: 'Session',
       debugStorageKeys: 'Keys',
       debugStorageSize: 'Size',
       debugCurrentState: 'Current state (JSON)',
@@ -407,9 +419,9 @@ App.i18n = {
       // Sync messages
       firebaseNotLoaded: 'Firebase SDK not loaded. Check your connection.',
       configureFirebase: 'Configure Firebase in app.js (App.Sync.init section)',
-      roomCreated: 'Room created: ',
-      enterRoomId: 'Enter room ID',
-      connectedToRoom: 'Connected to room: ',
+      sessionCreated: 'Session created: ',
+      enterSessionId: 'Enter session ID',
+      connectedToSession: 'Connected to session: ',
       disconnectedMsg: 'Disconnected',
       syncDisconnected: 'Disconnected from sync',
 
