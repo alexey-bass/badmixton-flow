@@ -106,6 +106,19 @@ App.Storage = {
       if (p.losses === undefined) p.losses = 0;
       if (p.pointsScored === undefined) p.pointsScored = 0;
       if (p.pointsConceded === undefined) p.pointsConceded = 0;
+      // Migrate wishedPartner (single) → wishedPartners (array)
+      if (!Array.isArray(p.wishedPartners)) {
+        if (p.wishedPartner) {
+          p.wishedPartners = [p.wishedPartner];
+        } else {
+          p.wishedPartners = [];
+        }
+      }
+      if (!Array.isArray(p.wishesFulfilled)) {
+        p.wishesFulfilled = p.wishFulfilled && p.wishedPartner ? [p.wishedPartner] : [];
+      }
+      delete p.wishedPartner;
+      delete p.wishFulfilled;
     });
     return state;
   },
@@ -202,7 +215,7 @@ App.Session = {
       players[id].queueEntryTime = 0;
       players[id].partnerHistory = {};
       players[id].opponentHistory = {};
-      players[id].wishFulfilled = false;
+      players[id].wishesFulfilled = [];
       players[id].number = 0;
     });
     App.state.waitingQueue = [];
@@ -264,8 +277,8 @@ App.Players = {
       queueEntryTime: 0,
       partnerHistory: {},
       opponentHistory: {},
-      wishedPartner: null,
-      wishFulfilled: false,
+      wishedPartners: [],
+      wishesFulfilled: [],
       wins: 0,
       losses: 0,
       pointsScored: 0,
@@ -287,9 +300,11 @@ App.Players = {
     delete App.state.players[playerId];
     // Remove wishes targeting this player
     Object.values(App.state.players).forEach(function(p) {
-      if (p.wishedPartner === playerId) {
-        p.wishedPartner = null;
-        p.wishFulfilled = false;
+      var idx = p.wishedPartners.indexOf(playerId);
+      if (idx !== -1) {
+        p.wishedPartners.splice(idx, 1);
+        var fi = p.wishesFulfilled.indexOf(playerId);
+        if (fi !== -1) p.wishesFulfilled.splice(fi, 1);
       }
     });
     App.save();
@@ -325,8 +340,24 @@ App.Players = {
   setWish: function(playerId, partnerId) {
     var p = App.state.players[playerId];
     if (!p) return;
-    p.wishedPartner = partnerId;
-    p.wishFulfilled = false;
+    if (!Array.isArray(p.wishedPartners)) p.wishedPartners = [];
+    if (!Array.isArray(p.wishesFulfilled)) p.wishesFulfilled = [];
+    if (!partnerId) {
+      // Clear all wishes
+      p.wishedPartners = [];
+      p.wishesFulfilled = [];
+    } else {
+      var idx = p.wishedPartners.indexOf(partnerId);
+      if (idx !== -1) {
+        // Remove wish (toggle off)
+        p.wishedPartners.splice(idx, 1);
+        var fi = p.wishesFulfilled.indexOf(partnerId);
+        if (fi !== -1) p.wishesFulfilled.splice(fi, 1);
+      } else {
+        // Add wish
+        p.wishedPartners.push(partnerId);
+      }
+    }
     App.save();
   },
 
@@ -597,11 +628,12 @@ App.Courts = {
   _checkWishes: function(teamIds) {
     teamIds.forEach(function(pid) {
       var p = App.state.players[pid];
-      if (!p) return;
-      // If wished partner is on the same team
-      if (p.wishedPartner && teamIds.indexOf(p.wishedPartner) !== -1) {
-        p.wishFulfilled = true;
-      }
+      if (!p || !Array.isArray(p.wishedPartners)) return;
+      p.wishedPartners.forEach(function(wishId) {
+        if (teamIds.indexOf(wishId) !== -1 && p.wishesFulfilled.indexOf(wishId) === -1) {
+          p.wishesFulfilled.push(wishId);
+        }
+      });
     });
   },
 
@@ -733,13 +765,17 @@ App.Suggest = {
         score += gamesDiff * 50;
       }
 
-      // Bonus for unfulfilled wish
-      if (player.wishedPartner && !player.wishFulfilled) {
-        var partner = players[player.wishedPartner];
-        if (partner && partner.present) {
-          score -= 80;
-          reasons.push(App.t('wantsPlayWith') + partner.name);
-        }
+      // Bonus for unfulfilled wishes
+      if (Array.isArray(player.wishedPartners)) {
+        player.wishedPartners.forEach(function(wishId) {
+          if (player.wishesFulfilled.indexOf(wishId) === -1) {
+            var partner = players[wishId];
+            if (partner && partner.present) {
+              score -= 80;
+              reasons.push(App.t('wantsPlayWith') + partner.name);
+            }
+          }
+        });
       }
 
       return { player: player, score: score, reasons: reasons, queueIndex: queueIndex };
@@ -753,8 +789,12 @@ App.Suggest = {
 
     for (var i = 0; i < Math.min(4, selected.length); i++) {
       var sel = selected[i];
-      var wishId = sel.player.wishedPartner;
-      if (wishId && !sel.player.wishFulfilled) {
+      if (!Array.isArray(sel.player.wishedPartners)) continue;
+      var unfulfilled = sel.player.wishedPartners.filter(function(wid) {
+        return sel.player.wishesFulfilled.indexOf(wid) === -1;
+      });
+      for (var w = 0; w < unfulfilled.length; w++) {
+        var wishId = unfulfilled[w];
         var alreadyIn = selected.some(function(s) { return s.player.id === wishId; });
         if (!alreadyIn) {
           var wishCandidate = scored.find(function(s) {
@@ -763,6 +803,7 @@ App.Suggest = {
           if (wishCandidate && wishCandidate.queueIndex < candidates.length * 0.75) {
             selected[3] = wishCandidate;
             selected.sort(function(a, b) { return a.score - b.score; });
+            break;
           }
         }
       }
@@ -827,8 +868,9 @@ App.Suggest = {
       [split.teamA, split.teamB].forEach(function(team) {
         var p0 = App.state.players[team[0]];
         var p1 = App.state.players[team[1]];
-        if ((p0.wishedPartner === p1.id && !p0.wishFulfilled) ||
-            (p1.wishedPartner === p0.id && !p1.wishFulfilled)) {
+        var p0Wants = Array.isArray(p0.wishedPartners) && p0.wishedPartners.indexOf(p1.id) !== -1 && p0.wishesFulfilled.indexOf(p1.id) === -1;
+        var p1Wants = Array.isArray(p1.wishedPartners) && p1.wishedPartners.indexOf(p0.id) !== -1 && p1.wishesFulfilled.indexOf(p0.id) === -1;
+        if (p0Wants || p1Wants) {
           penalty -= 100;
           reasons.push(App.t('wishLabel') + p0.name + ' + ' + p1.name);
         }
@@ -1272,14 +1314,20 @@ App.UI = {
       }
 
       var wishText = '';
-      if (p.wishedPartner) {
-        var wp = App.state.players[p.wishedPartner];
-        if (wp) {
-          wishText = '<div class="player-wish">' +
-            (p.wishFulfilled ? '&#10003; ' : '&#9829; ') +
-            App.t('pairWith') + wp.name +
-            (p.wishFulfilled ? App.t('wishFulfilled') : '') +
-            '</div>';
+      if (Array.isArray(p.wishedPartners) && p.wishedPartners.length > 0) {
+        var wishParts = [];
+        p.wishedPartners.forEach(function(wid) {
+          var wp = App.state.players[wid];
+          if (!wp) return;
+          var fulfilled = Array.isArray(p.wishesFulfilled) && p.wishesFulfilled.indexOf(wid) !== -1;
+          wishParts.push(
+            (fulfilled ? '&#10003; ' : '&#9829; ') +
+            wp.name +
+            (fulfilled ? App.t('wishFulfilled') : '')
+          );
+        });
+        if (wishParts.length > 0) {
+          wishText = '<div class="player-wish">' + wishParts.join(', ') + '</div>';
         }
       }
 
@@ -1325,18 +1373,19 @@ App.UI = {
   _showWishDialog: function(playerId) {
     var player = App.state.players[playerId];
     if (!player) return;
+    if (!Array.isArray(player.wishedPartners)) player.wishedPartners = [];
 
     var present = App.Players.getPresent().filter(function(p) { return p.id !== playerId; });
     var html = '<h3>' + App.t('wishFor') + App.UI._esc(player.name) + '</h3>';
     html += '<p style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;">' + App.t('selectPartner') + '</p>';
-    html += '<div class="modal-player-list">';
+    html += '<div class="modal-player-list" id="wishPlayerList">';
 
-    // "No preference" option
-    html += '<div class="modal-player-item' + (!player.wishedPartner ? ' selected' : '') + '" data-wish-id="">' +
+    // "Clear all" option
+    html += '<div class="modal-player-item' + (player.wishedPartners.length === 0 ? ' selected' : '') + '" data-wish-id="">' +
       '<span>' + App.t('noWish') + '</span></div>';
 
     present.forEach(function(p) {
-      var selected = player.wishedPartner === p.id ? ' selected' : '';
+      var selected = player.wishedPartners.indexOf(p.id) !== -1 ? ' selected' : '';
       html += '<div class="modal-player-item' + selected + '" data-wish-id="' + p.id + '">' +
         '<span style="font-weight:700; color:var(--primary); margin-right:6px;">' + (p.number || '-') + '</span>' +
         '<span>' + App.UI._esc(p.name) + '</span></div>';
@@ -1347,16 +1396,39 @@ App.UI = {
 
     this.showModal(html);
 
-    // Selection handler
+    // Selection handler — multi-select toggle
     document.getElementById('modalContent').addEventListener('click', function(e) {
       var item = e.target.closest('.modal-player-item');
       if (!item) return;
       var wishId = item.dataset.wishId;
-      App.Players.setWish(playerId, wishId || null);
-      App.save();
-      App.UI.hideModal();
+
+      if (!wishId) {
+        // "No preference" — clear all
+        App.Players.setWish(playerId, null);
+        App.UI.showToast(App.t('wishRemoved'));
+      } else {
+        // Toggle this partner
+        App.Players.setWish(playerId, wishId);
+        var isNowWished = player.wishedPartners.indexOf(wishId) !== -1;
+        App.UI.showToast(isNowWished ? App.t('wishSet') : App.t('wishRemoved'));
+      }
+
+      // Update visual state without closing
+      var list = document.getElementById('wishPlayerList');
+      if (list) {
+        var noWishItem = list.querySelector('[data-wish-id=""]');
+        if (noWishItem) {
+          noWishItem.classList.toggle('selected', player.wishedPartners.length === 0);
+        }
+        list.querySelectorAll('[data-wish-id]').forEach(function(el) {
+          var wid = el.dataset.wishId;
+          if (wid) {
+            el.classList.toggle('selected', player.wishedPartners.indexOf(wid) !== -1);
+          }
+        });
+      }
+
       App.UI.renderPlayers();
-      App.UI.showToast(wishId ? App.t('wishSet') : App.t('wishRemoved'));
     });
   },
 
@@ -1527,7 +1599,9 @@ App.UI = {
       var p0 = App.state.players[team[0]];
       var p1 = App.state.players[team[1]];
       if (p0 && p1) {
-        if ((p0.wishedPartner === p1.id) || (p1.wishedPartner === p0.id)) {
+        var p0w = Array.isArray(p0.wishedPartners) && p0.wishedPartners.indexOf(p1.id) !== -1;
+        var p1w = Array.isArray(p1.wishedPartners) && p1.wishedPartners.indexOf(p0.id) !== -1;
+        if (p0w || p1w) {
           hints.push({ type: 'good', text: App.t('wishLabel') + p0.name + ' + ' + p1.name });
         }
       }

@@ -30,8 +30,8 @@ describe('App.Players', function() {
       assert.strictEqual(p.pointsConceded, 0);
       assert.deepStrictEqual(p.partnerHistory, {});
       assert.deepStrictEqual(p.opponentHistory, {});
-      assert.strictEqual(p.wishedPartner, null);
-      assert.strictEqual(p.wishFulfilled, false);
+      assert.deepStrictEqual(p.wishedPartners, []);
+      assert.deepStrictEqual(p.wishesFulfilled, []);
     });
 
     it('should return null for empty name', function() {
@@ -96,22 +96,42 @@ describe('App.Players', function() {
   });
 
   describe('setWish', function() {
-    it('should set a wished partner', function() {
+    it('should add a wished partner', function() {
       var id1 = App.Players.add('Alice');
       var id2 = App.Players.add('Bob');
       App.Players.setWish(id1, id2);
 
-      assert.strictEqual(App.state.players[id1].wishedPartner, id2);
-      assert.strictEqual(App.state.players[id1].wishFulfilled, false);
+      assert.deepStrictEqual(App.state.players[id1].wishedPartners, [id2]);
     });
 
-    it('should clear wish with null', function() {
+    it('should support multiple wished partners', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      var id3 = App.Players.add('Carol');
+      App.Players.setWish(id1, id2);
+      App.Players.setWish(id1, id3);
+
+      assert.deepStrictEqual(App.state.players[id1].wishedPartners, [id2, id3]);
+    });
+
+    it('should toggle wish off when called again with same partner', function() {
       var id1 = App.Players.add('Alice');
       var id2 = App.Players.add('Bob');
       App.Players.setWish(id1, id2);
+      App.Players.setWish(id1, id2);
+
+      assert.deepStrictEqual(App.state.players[id1].wishedPartners, []);
+    });
+
+    it('should clear all wishes with null', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      var id3 = App.Players.add('Carol');
+      App.Players.setWish(id1, id2);
+      App.Players.setWish(id1, id3);
       App.Players.setWish(id1, null);
 
-      assert.strictEqual(App.state.players[id1].wishedPartner, null);
+      assert.deepStrictEqual(App.state.players[id1].wishedPartners, []);
     });
   });
 
