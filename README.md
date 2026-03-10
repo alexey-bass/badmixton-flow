@@ -96,6 +96,7 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 - `localStorage` for persistence
 - Google Analytics (gtag.js)
 - Mobile-first responsive CSS
+- Preconnect hints for faster CDN loading
 
 ## License
 

@@ -13,6 +13,7 @@ Local web app for managing player queue and court assignments during amateur bad
 - Firebase Realtime Database v10.12.0 (compat SDK) for optional multi-device sync (CDN script tags)
 - Google Analytics (gtag.js)
 - Mobile-first responsive CSS with breakpoints at 768px and 1024px
+- Preconnect hints for `gstatic.com` and `googletagmanager.com`
 
 ## Files
 
