@@ -1370,7 +1370,7 @@ App.UI = {
         }
       }
 
-      html += '<button class="btn btn-secondary btn-xs" data-action="set-wish" title="' + App.t('wishPlayWith') + '">&#9829;</button>';
+      html += '<button class="btn btn-secondary btn-xs" data-action="set-wish" title="' + App.t('wishPlayWith') + '" style="color:#e11d48">&#9829;</button>';
       if (status !== 'playing') {
         html += '<button class="btn btn-danger btn-xs" data-action="delete" title="' + App.t('deletePlayer') + '">&#10005;</button>';
       }
