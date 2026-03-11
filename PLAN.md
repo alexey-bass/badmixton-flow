@@ -72,11 +72,11 @@
 ## Phase 7: Advanced Statistics
 
 - [x] Session highlights (most active, win streak, top scorer, social butterfly, rivals, most patient)
-- [ ] Player statistics dashboard (games played, avg game time, favorite partners)
-- [ ] Head-to-head stats between players
+- [x] Player statistics modal (games, W/L, win rate, points, avg wait)
+- [x] Head-to-head stats between players (W/L record per opponent)
+- [x] "Best pair" and "most common opponents" insights (favorite partner, best pair by win rate)
 - [ ] Session comparison across days
 - [ ] Charts/graphs for trends
-- [ ] "Best pair" and "most common opponents" insights
 
 ## Phase 8: PWA & Offline (DONE)
 
