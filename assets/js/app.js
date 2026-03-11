@@ -3089,6 +3089,11 @@ App.UI = {
           }
         });
       }
+      // Check auto-lock once per minute
+      var nowSec = Math.floor(now / 1000);
+      if (nowSec % 60 === 0) {
+        App.Lock.checkAutoLock();
+      }
     }, 1000);
   },
 
