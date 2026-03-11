@@ -3,7 +3,7 @@
    Main application logic (App object defined in i18n.js)
    ============================================================ */
 
-App.VERSION = 'v260311-1800';
+App.VERSION = 'v260311-1830';
 
 
 // ============================================================
@@ -2710,6 +2710,7 @@ App.UI = {
     // Start in player mode by default
     var nav = document.getElementById('tabNav');
     nav.classList.add('player-mode');
+    document.body.classList.add('player-mode');
     document.getElementById('modeIcon').innerHTML = '&#9776;';
 
     document.getElementById('btnToggleMode').addEventListener('click', function() {
@@ -2719,12 +2720,14 @@ App.UI = {
         // Switching to admin — require password
         self._showPasswordPrompt(function() {
           nav.classList.remove('player-mode');
+          document.body.classList.remove('player-mode');
           document.getElementById('modeIcon').innerHTML = '&#9881;';
           App.Analytics.track('mode_switch', { mode: 'admin' });
         });
       } else {
         // Switching back to player mode — no password needed
         nav.classList.add('player-mode');
+        document.body.classList.add('player-mode');
         document.getElementById('modeIcon').innerHTML = '&#9776;';
         App.Analytics.track('mode_switch', { mode: 'player' });
         self.showTab('board');

@@ -180,7 +180,11 @@ body {
   font-weight: 700;
 }
 
-/* Hidden tabs for player (non-admin) mode */
+/* Hidden elements for player (non-admin) mode */
+body.player-mode .admin-only {
+  display: none;
+}
+
 .tabs.player-mode .tab[data-tab="dashboard"],
 .tabs.player-mode .tab[data-tab="queue"],
 .tabs.player-mode .tab[data-tab="courts"],
