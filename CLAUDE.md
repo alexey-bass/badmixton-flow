@@ -175,6 +175,7 @@ Header layout (left to right): title, lock indicator (🔒) | language switcher,
 
 ### Firebase Sync
 - Admin creates a session on Session tab, shares the link
+- Creating a session with existing data shows a modal: "Start fresh" or "Keep player list" (resets stats, preserves players)
 - Shareable URL with `?session=` parameter for auto-join
 - Join (URL or button) checks session existence first via `ref.once('value')` — rejects if not found
 - `init()` accepts optional callback for async join result

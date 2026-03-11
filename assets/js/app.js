@@ -2806,6 +2806,44 @@ App.UI = {
     return base + '?session=' + encodeURIComponent(sessionId);
   },
 
+  _createSyncSession: function(sessionId, mode) {
+    if (mode === 'fresh') {
+      App.Session.create();
+      App.Session.initCourts([1, 2, 3, 4]);
+    } else if (mode === 'keepPlayers') {
+      // Keep players but reset stats, queue, matches
+      var players = App.state.players;
+      var courtNumbers = App.state.settings.courtNumbers || [1, 2, 3, 4];
+      App.Session.create();
+      App.state.players = players;
+      Object.keys(players).forEach(function(id) {
+        players[id].present = false;
+        players[id].gamesPlayed = 0;
+        players[id].lastGameEndTime = 0;
+        players[id].queueEntryTime = 0;
+        players[id].partnerHistory = {};
+        players[id].opponentHistory = {};
+        players[id].wishesFulfilled = [];
+        players[id].wishedPartners = [];
+        players[id].number = 0;
+        players[id].wins = 0;
+        players[id].losses = 0;
+        players[id].pointsScored = 0;
+        players[id].pointsConceded = 0;
+        players[id].totalWaitTime = 0;
+        players[id].waitCount = 0;
+      });
+      App.Session.initCourts(courtNumbers);
+    }
+
+    var ok = App.Sync.init(sessionId, true);
+    if (ok) {
+      App.Analytics.track('sync_create');
+      App.UI.showToast(App.t('sessionCreated') + sessionId);
+      App.UI.renderAll();
+    }
+  },
+
   _bindSync: function() {
     var self = this;
 
@@ -2827,12 +2865,33 @@ App.UI = {
         sessionId = 'badminton-' + App.state.date;
         document.getElementById('sessionIdInput').value = sessionId;
       }
-      var ok = App.Sync.init(sessionId, true);
-      if (ok) {
-        App.Analytics.track('sync_create');
-        App.UI.showToast(App.t('sessionCreated') + sessionId);
-        self.renderSync();
+
+      var hasData = Object.keys(App.state.players).length > 0 ||
+                    Object.keys(App.state.matches).length > 0;
+
+      if (!hasData) {
+        self._createSyncSession(sessionId, 'fresh');
+        return;
       }
+
+      // Show modal with options
+      var html = '<h2>' + App.t('createSessionTitle') + '</h2>' +
+        '<p>' + App.t('createSessionDesc') + '</p>' +
+        '<div class="btn-row" style="flex-direction:column;gap:8px">' +
+        '<button class="btn btn-primary" id="btnCreateFresh">' + App.t('createSessionFresh') + '</button>' +
+        '<button class="btn btn-secondary" id="btnCreateKeepPlayers">' + App.t('createSessionKeepPlayers') + '</button>' +
+        '<button class="btn btn-secondary" onclick="App.UI.hideModal()">' + App.t('cancelAction') + '</button>' +
+        '</div>';
+      App.UI.showModal(html);
+
+      document.getElementById('btnCreateFresh').addEventListener('click', function() {
+        App.UI.hideModal();
+        self._createSyncSession(sessionId, 'fresh');
+      });
+      document.getElementById('btnCreateKeepPlayers').addEventListener('click', function() {
+        App.UI.hideModal();
+        self._createSyncSession(sessionId, 'keepPlayers');
+      });
     });
 
     document.getElementById('btnJoinSession').addEventListener('click', function() {
