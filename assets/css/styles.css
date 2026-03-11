@@ -113,6 +113,15 @@ body {
   color: #f87171;
 }
 
+.sync-indicator.blink {
+  animation: sync-blink 0.3s ease-in-out 2;
+}
+
+@keyframes sync-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
 /* --- Language switcher --- */
 .lang-switcher {
   display: flex;

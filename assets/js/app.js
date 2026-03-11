@@ -1062,6 +1062,7 @@ App.Sync = {
         self._initialLoad = false;
         if (remote && !asAdmin) {
           self._merge(remote);
+          self._blink();
           App.UI.renderAll();
           return;
         }
@@ -1069,6 +1070,7 @@ App.Sync = {
 
       if (remote && remote.lastModified > App.state.lastModified) {
         self._merge(remote);
+        self._blink();
         App.UI.renderAll();
       }
     });
@@ -1088,6 +1090,7 @@ App.Sync = {
   push: function() {
     if (!this.ref || !this.connected) return;
     this._pushing = true;
+    this._blink();
     var self = this;
     this.ref.set(App.state).then(function() {
       self._pushing = false;
@@ -1115,6 +1118,15 @@ App.Sync = {
     App.state.settings.syncSessionId = null;
     App.save();
     this._updateStatus('disconnected');
+  },
+
+  _blink: function() {
+    var indicator = document.getElementById('syncIndicator');
+    if (indicator.hidden) return;
+    indicator.classList.remove('blink');
+    // Force reflow to restart animation
+    void indicator.offsetWidth;
+    indicator.classList.add('blink');
   },
 
   _updateStatus: function(status) {
