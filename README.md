@@ -17,6 +17,7 @@ Web app for managing player queues and court assignments during amateur badminto
 - **Match history** — filterable by court and player, with undo
 - **Drag-and-drop** — reorder queue manually (mouse + touch)
 - **Two UI modes** — Board (player-facing: courts, queue, results) and Management (admin: full control)
+- **Screen wake lock** — keeps the tablet display on during sessions (Screen Wake Lock API)
 - **Offline-first PWA** — service worker caches the app for instant loads and offline use, installable on mobile
 - **Multi-device sync** — Firebase Realtime Database, shareable session links with auto-join
 - **Quick help** — in-app instructions modal, translated

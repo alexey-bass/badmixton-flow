@@ -1163,6 +1163,7 @@ App.UI = {
     this._bindSync();
     this._bindDebug();
     this._bindModeToggle();
+    this._bindWakeLock();
     this._bindFullscreen();
     this._bindHelp();
     this.startTimers();
@@ -2671,6 +2672,51 @@ App.UI = {
         App.UI.showToast(App.t('debugCleared'));
         setTimeout(function() { window.location.reload(); }, 500);
       });
+    });
+  },
+
+  _wakeLock: null,
+
+  _bindWakeLock: function() {
+    if (!('wakeLock' in navigator)) return;
+    var btn = document.getElementById('btnWakeLock');
+    btn.hidden = false;
+    var self = this;
+
+    btn.addEventListener('click', function() {
+      if (self._wakeLock) {
+        self._wakeLock.release();
+        self._wakeLock = null;
+        btn.textContent = '\u2600';
+        btn.classList.remove('active');
+        App.Analytics.track('wake_lock_off');
+      } else {
+        navigator.wakeLock.request('screen').then(function(lock) {
+          self._wakeLock = lock;
+          btn.textContent = '\uD83D\uDD06';
+          btn.classList.add('active');
+          lock.addEventListener('release', function() {
+            self._wakeLock = null;
+            btn.textContent = '\u2600';
+            btn.classList.remove('active');
+          });
+          App.Analytics.track('wake_lock_on');
+        }).catch(function() {});
+      }
+    });
+
+    // Re-acquire wake lock when page becomes visible again
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible' && self._wakeLock === null && btn.classList.contains('active')) {
+        navigator.wakeLock.request('screen').then(function(lock) {
+          self._wakeLock = lock;
+          lock.addEventListener('release', function() {
+            self._wakeLock = null;
+            btn.textContent = '\u2600';
+            btn.classList.remove('active');
+          });
+        }).catch(function() {});
+      }
     });
   },
 

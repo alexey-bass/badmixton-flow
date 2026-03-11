@@ -56,7 +56,7 @@ npm run validate   # runs syntax check + tests
 
 ### Rules:
 - Every new feature must be covered with tests
-- README must be updated when adding features
+- README and CLAUDE.md must be updated when adding features
 - All tests must pass before committing
 - `App.VERSION` and `?v=` cache-busting params are auto-stamped by the pre-commit hook — no manual update needed
 - Git hooks live in `hooks/` (tracked). After cloning, run: `git config core.hooksPath hooks`
@@ -126,6 +126,13 @@ Team split scoring (3 algorithmic options + custom):
 - **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
 
 Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated).
+
+Header buttons (left to right): language switcher, wake lock (☀), fullscreen (⛶), help (?), mode toggle (⚙), sync indicator (●).
+
+### Screen Wake Lock
+- Toggle button (☀) in header keeps the tablet screen on during sessions
+- Uses the Screen Wake Lock API — hidden on browsers that don't support it
+- Auto-reacquires the lock when the tab becomes visible again
 
 ### Score Tracking
 - Finish confirmation modal with optional score input (e.g. 21:15)

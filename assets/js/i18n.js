@@ -72,8 +72,9 @@ App.i18n = {
       scoreOptional: 'Wynik opcjonalny',
       finishConfirm: 'Zakończ',
 
-      // Fullscreen
+      // Fullscreen & Wake Lock
       fullscreenTooltip: 'Pełny ekran',
+      wakeLockTooltip: 'Nie wyłączaj ekranu',
 
       // Help
       helpTitle: 'Jak to działa?',
@@ -316,8 +317,9 @@ App.i18n = {
       scoreOptional: 'Score is optional',
       finishConfirm: 'Finish',
 
-      // Fullscreen
+      // Fullscreen & Wake Lock
       fullscreenTooltip: 'Fullscreen',
+      wakeLockTooltip: 'Keep screen on',
 
       // Help
       helpTitle: 'How does it work?',
