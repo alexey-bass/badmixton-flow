@@ -113,6 +113,62 @@ describe('i18n data-i18n-title support', function() {
   });
 });
 
+describe('Debug tab version info', function() {
+  var appInfoHtml;
+  var origGetById;
+  var origBody;
+
+  function setupDebugMocks(isPlayerMode) {
+    appInfoHtml = '';
+    origGetById = global.document.getElementById;
+    origBody = global.document.body;
+
+    var appInfoEl = createMockElement();
+    Object.defineProperty(appInfoEl, 'innerHTML', {
+      set: function(v) { appInfoHtml = v; },
+      get: function() { return appInfoHtml; },
+      configurable: true
+    });
+
+    global.document.getElementById = function(id) {
+      if (id === 'debugAppInfo') return appInfoEl;
+      return origGetById(id);
+    };
+    global.document.body = { classList: { contains: function(cls) { return isPlayerMode && cls === 'player-mode'; } } };
+  }
+
+  function restoreDebugMocks() {
+    global.document.getElementById = origGetById;
+    global.document.body = origBody;
+  }
+
+  beforeEach(function() {
+    localStorage.clear();
+    App.Session.create();
+  });
+
+  it('should show App.VERSION in debug app info', function() {
+    setupDebugMocks(false);
+    App.UI.renderDebug();
+    restoreDebugMocks();
+    assert.ok(appInfoHtml.indexOf(App.VERSION) !== -1, 'should contain App.VERSION');
+  });
+
+  it('should show Admin mode when not in player-mode', function() {
+    setupDebugMocks(false);
+    App.UI.renderDebug();
+    restoreDebugMocks();
+    assert.ok(appInfoHtml.indexOf('Admin') !== -1, 'should show Admin mode');
+  });
+
+  it('should show Player mode when in player-mode', function() {
+    setupDebugMocks(true);
+    App.UI.renderDebug();
+    restoreDebugMocks();
+    assert.ok(appInfoHtml.indexOf('Player') !== -1, 'should show Player mode');
+  });
+});
+
 describe('Queue games counter', function() {
   beforeEach(function() {
     localStorage.clear();
