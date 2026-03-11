@@ -22,7 +22,7 @@ Web app for managing player queues and court assignments during amateur badminto
 - **Offline-first PWA** — service worker caches the app for instant loads and offline use, installable on mobile
 - **Session lock** — manual or timed lock disables all actions, red header indicator, synced across devices
 - **Multi-device sync** — Firebase Realtime Database, shareable session links with auto-join
-- **Quick help** — in-app instructions modal, translated
+- **Quick help** — in-app instructions modal with app version, translated
 - **i18n** — Polish (default) and English, with proper plural forms
 - **JSON export/import** — backup and restore session data
 - **Analytics** — Google Analytics event tracking for user flow analysis

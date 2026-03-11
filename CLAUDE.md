@@ -136,7 +136,7 @@ Team split scoring (3 algorithmic options + custom):
 - **Board** (player-facing): Courts with teams + timer, queue list with games played counter and live wait timer, results. One-tap "Finish" with score input.
 - **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
 
-Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated).
+Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated) with app version in the footer.
 
 Header buttons (left to right): language switcher, wake lock (☀), fullscreen (⛶), help (?), mode toggle (⚙), lock indicator (🔒), sync indicator (●).
 
