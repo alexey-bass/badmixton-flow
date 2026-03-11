@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260311-1522">
+  <meta name="version" content="v260311-1536">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -15,7 +15,7 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="assets/css/styles.css?v=18">
+  <link rel="stylesheet" href="assets/css/styles.css?v=19">
   <script>
     var FIREBASE_CONFIG = {
       apiKey: "AIzaSyDQV3njrl8xcpaC9X9weZknzlx2zzxoD9k",
@@ -87,58 +87,59 @@
 
     <!-- TODAY (dashboard) -->
     <section class="panel" id="panel-dashboard">
-      <div class="stats-grid" id="statsGrid"></div>
+      <div class="stats-strip" id="statsGrid"></div>
 
       <div class="section-block">
-        <h2 data-i18n="sessionLock">Blokada sesji</h2>
-        <div class="form-row">
-          <label class="checkbox-row">
-            <input type="checkbox" id="autoLockEnabled">
-            <span data-i18n="autoLockLabel">Auto-blokada o</span>
-          </label>
-          <input type="time" id="autoLockTime" hidden>
-          <small id="autoLockStatus" class="auto-lock-status" hidden></small>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-danger" id="btnLockSession" data-i18n="lockSession">Zablokuj sesję</button>
-          <button class="btn btn-success" id="btnUnlockSession" data-i18n="unlockSession" hidden>Odblokuj sesję</button>
-        </div>
-      </div>
-
-      <div class="section-block">
-        <h2 data-i18n="sessionSettings"></h2>
-        <div class="form-row">
-          <label for="courtNumbers" data-i18n="courtNumbersLabel"></label>
-          <input type="text" id="courtNumbers" placeholder="1,2,3,4" value="1,2,3,4">
-          <small data-i18n="courtNumbersHint"></small>
-        </div>
-        <button class="btn btn-primary" id="btnApplyCourts" data-i18n="applyCourts"></button>
-      </div>
-
-
-      <div class="section-block">
-        <h2 data-i18n="syncFirebase"></h2>
-        <p class="section-desc" data-i18n="syncDesc"></p>
-        <div id="syncSection">
+        <div class="subsection">
+          <h2 data-i18n="sessionSettings"></h2>
           <div class="form-row">
-            <label for="sessionIdInput" data-i18n="sessionIdLabel"></label>
-            <div class="session-id-row">
-              <input type="text" id="sessionIdInput" placeholder="badminton-2026-03-09">
-              <button class="btn btn-secondary btn-sm" id="btnAddSalt" data-i18n-title="addSaltTooltip">&#x1f3b2;</button>
+            <label for="courtNumbers" data-i18n="courtNumbersLabel"></label>
+            <input type="text" id="courtNumbers" placeholder="1,2,3,4" value="1,2,3,4">
+            <small data-i18n="courtNumbersHint"></small>
+          </div>
+          <button class="btn btn-primary" id="btnApplyCourts" data-i18n="applyCourts"></button>
+        </div>
+
+        <div class="subsection">
+          <h2 data-i18n="syncFirebase"></h2>
+          <p class="section-desc" data-i18n="syncDesc"></p>
+          <div id="syncSection">
+            <div class="form-row">
+              <label for="sessionIdInput" data-i18n="sessionIdLabel"></label>
+              <div class="session-id-row">
+                <input type="text" id="sessionIdInput" placeholder="badminton-2026-03-09">
+                <button class="btn btn-secondary btn-sm" id="btnAddSalt" data-i18n-title="addSaltTooltip">&#x1f3b2;</button>
+              </div>
             </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btnCreateSession" data-i18n="createSession"></button>
+              <button class="btn btn-secondary" id="btnJoinSession" data-i18n="joinSession"></button>
+              <button class="btn btn-danger" id="btnDisconnect" hidden data-i18n="disconnect"></button>
+            </div>
+            <div id="syncStatus" class="sync-status"></div>
+            <div id="syncShareLink" class="sync-share-link" hidden>
+              <label for="syncShareUrl" data-i18n="shareLink"></label>
+              <div class="share-link-row">
+                <input type="text" id="syncShareUrl" readonly>
+                <button class="btn btn-secondary btn-sm" id="btnCopyLink" data-i18n="copyLink"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <h2 data-i18n="sessionLock">Blokada sesji</h2>
+          <div class="form-row">
+            <label class="checkbox-row">
+              <input type="checkbox" id="autoLockEnabled">
+              <span data-i18n="autoLockLabel">Auto-blokada o</span>
+            </label>
+            <input type="time" id="autoLockTime" hidden>
+            <small id="autoLockStatus" class="auto-lock-status" hidden></small>
           </div>
           <div class="btn-row">
-            <button class="btn btn-primary" id="btnCreateSession" data-i18n="createSession"></button>
-            <button class="btn btn-secondary" id="btnJoinSession" data-i18n="joinSession"></button>
-            <button class="btn btn-danger" id="btnDisconnect" hidden data-i18n="disconnect"></button>
-          </div>
-          <div id="syncStatus" class="sync-status"></div>
-          <div id="syncShareLink" class="sync-share-link" hidden>
-            <label for="syncShareUrl" data-i18n="shareLink"></label>
-            <div class="share-link-row">
-              <input type="text" id="syncShareUrl" readonly>
-              <button class="btn btn-secondary btn-sm" id="btnCopyLink" data-i18n="copyLink"></button>
-            </div>
+            <button class="btn btn-danger" id="btnLockSession" data-i18n="lockSession">Zablokuj sesję</button>
+            <button class="btn btn-success" id="btnUnlockSession" data-i18n="unlockSession" hidden>Odblokuj sesję</button>
           </div>
         </div>
       </div>

@@ -426,32 +426,50 @@ body.player-mode .admin-only {
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-/* --- Statistics (dashboard) --- */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+/* --- Statistics strip (dashboard) --- */
+.stats-strip {
+  display: flex;
+  gap: 0;
   margin-bottom: 12px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .stat-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 14px;
-  box-shadow: var(--shadow);
+  flex: 1;
+  padding: 10px 4px;
   text-align: center;
 }
 
+.stat-card + .stat-card {
+  border-left: 1px solid var(--border);
+}
+
 .stat-value {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--primary);
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   margin-top: 2px;
+}
+
+/* --- Subsections inside a card --- */
+.subsection {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.subsection:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 /* --- Players --- */
@@ -1661,10 +1679,6 @@ tr.results-gold .results-name { color: #b8860b; }
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Stats: 4 in a row */
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
 
   .player-select-grid {
     grid-template-columns: repeat(3, 1fr);
