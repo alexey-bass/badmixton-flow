@@ -2771,14 +2771,6 @@ App.UI = {
   renderDebug: function() {
     var s = App.state;
 
-    // App info
-    var isAdmin = !document.body.classList.contains('player-mode');
-    var appHtml = '<table class="debug-table">' +
-      '<tr><td>Version</td><td><strong>' + App.VERSION + '</strong></td></tr>' +
-      '<tr><td>Mode</td><td><strong>' + (isAdmin ? 'Admin' : 'Player') + '</strong></td></tr>' +
-      '</table>';
-    document.getElementById('debugAppInfo').innerHTML = appHtml;
-
     // Session stats
     var playerCount = Object.keys(s.players).length;
     var presentCount = Object.values(s.players).filter(function(p) { return p.present; }).length;
@@ -2936,7 +2928,7 @@ App.UI = {
       }
       html += '</div>';
       html += '<p class="help-wish">' + App.t('helpWish') + '</p>';
-      html += '<p class="help-copyright">&copy; <a href="https://github.com/alexey-bass/badmixton-flow" target="_blank" rel="noopener">Alexey Bass</a></p>';
+      html += '<p class="help-copyright">' + App.VERSION + ' &middot; &copy; <a href="https://github.com/alexey-bass/badmixton-flow" target="_blank" rel="noopener">Alexey Bass</a></p>';
       html += '<div class="btn-row"><button class="btn btn-secondary" id="btnCloseHelp">' + App.t('close') + '</button></div>';
       App.UI.showModal(html);
       document.getElementById('btnCloseHelp').addEventListener('click', function() {
