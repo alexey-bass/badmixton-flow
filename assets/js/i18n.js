@@ -41,6 +41,7 @@ App.i18n = {
 
       // Sync
       syncFirebase: 'Synchronizacja Firebase',
+      syncDesc: 'Synchronizuj dane między urządzeniami w czasie rzeczywistym. ID sesji to nazwa wspólnego pokoju — każdy kto je zna, może dołączyć i zobaczyć dane. Użyj 🎲 aby dodać losowy kod i utrudnić zgadnięcie ID.',
       sessionIdLabel: 'ID sesji',
       createSession: 'Utwórz sesję',
       joinSession: 'Dołącz',
@@ -284,6 +285,7 @@ App.i18n = {
 
       // Sync
       syncFirebase: 'Firebase Sync',
+      syncDesc: 'Sync data between devices in real time. The session ID is the name of a shared room — anyone who knows it can join and see the data. Use 🎲 to add a random code and make the ID harder to guess.',
       sessionIdLabel: 'Session ID',
       createSession: 'Create session',
       joinSession: 'Join',
