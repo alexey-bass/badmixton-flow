@@ -125,6 +125,8 @@ Scores each candidate by:
 - Games above average penalty (weight: 50 per game)
 - Unfulfilled wish bonus (-80)
 
+Post-selection diversity (`_diversifySelection`): if 3+ of the selected 4 were in the same recent match, swaps the lowest-priority overlapping player with the best available candidate not from that match. Checks last 10 finished matches, repeats until no match has 3+ overlap.
+
 Team split scoring (3 algorithmic options + custom):
 - Pair repeat penalty (30 per repeat)
 - Opponent repeat penalty (15 per repeat beyond 1st)

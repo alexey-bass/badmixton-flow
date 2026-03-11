@@ -936,6 +936,9 @@ App.Suggest = {
       }
     }
 
+    // Step 2b: diversify — avoid re-grouping players from the same recent match
+    selected = this._diversifySelection(selected, scored);
+
     var fourPlayers = selected.map(function(s) { return s.player; });
 
     // Step 3: best team split
@@ -1043,6 +1046,53 @@ App.Suggest = {
     if (present.length === 0) return 0;
     var total = present.reduce(function(s, p) { return s + p.gamesPlayed; }, 0);
     return total / present.length;
+  },
+
+  // If 3+ of the selected 4 were in the same recent match, swap the
+  // lowest-priority overlapping player with the best available candidate
+  // who wasn't in that match. Repeat until no match has 3+ overlap.
+  _diversifySelection: function(selected, scored) {
+    var recentMatches = App.Matches.getFinished().slice(0, 10);
+    if (recentMatches.length === 0) return selected;
+
+    var maxPasses = 4; // safety limit
+    for (var pass = 0; pass < maxPasses; pass++) {
+      var swapped = false;
+      for (var m = 0; m < recentMatches.length; m++) {
+        var matchPlayerIds = recentMatches[m].teamA.concat(recentMatches[m].teamB);
+        var overlap = selected.filter(function(s) {
+          return matchPlayerIds.indexOf(s.player.id) !== -1;
+        });
+
+        if (overlap.length < 3) continue;
+
+        // Pick the overlapping player with the worst score (highest = worst)
+        overlap.sort(function(a, b) { return b.score - a.score; });
+        var toReplace = overlap[0];
+
+        // Find best replacement: not already selected, not in this match
+        var selectedIds = selected.map(function(s) { return s.player.id; });
+        var replacement = null;
+        for (var r = 0; r < scored.length; r++) {
+          var cand = scored[r];
+          if (selectedIds.indexOf(cand.player.id) !== -1) continue;
+          if (matchPlayerIds.indexOf(cand.player.id) !== -1) continue;
+          replacement = cand;
+          break;
+        }
+
+        if (replacement) {
+          var idx = selected.indexOf(toReplace);
+          selected[idx] = replacement;
+          selected.sort(function(a, b) { return a.score - b.score; });
+          swapped = true;
+          break; // restart match checks with new selection
+        }
+      }
+      if (!swapped) break;
+    }
+
+    return selected;
   },
 
   _buildExplanation: function(selected, split, fourPlayers) {

@@ -81,6 +81,7 @@ Picks the best 4 players by scoring each candidate:
 - Queue position (highest priority)
 - Games above average penalty (fairness)
 - Unfulfilled wish bonus
+- Diversity check: if 3+ of the top 4 were in the same recent match, swaps one out for a fresh player
 
 Then splits them into two teams minimizing:
 - Pair repeat penalty
