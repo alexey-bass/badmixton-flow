@@ -51,7 +51,7 @@ npm start
 
 ### Before every commit:
 ```bash
-npm run validate   # runs syntax check + tests
+npm run validate   # runs syntax check + tests + lighthouse
 ```
 
 ### Rules:
@@ -60,12 +60,19 @@ npm run validate   # runs syntax check + tests
 - All tests must pass before committing
 - `App.VERSION` and `?v=` cache-busting params are auto-stamped by the pre-commit hook — no manual update needed
 - Git hooks live in `hooks/` (tracked). After cloning, run: `git config core.hooksPath hooks`
+- Lighthouse scores must stay at 100 across all categories. `npm run validate` runs Lighthouse after tests.
+
+### Performance (CLS prevention):
+- All visible-on-load HTML elements must have default content in the HTML to avoid layout shift when JS populates them via `i18n.apply()` or `renderBoard()`
+- Tab buttons in `<nav>` must have default Polish text (e.g. `<button data-i18n="tabBoard">Tablica</button>`)
+- `#boardCourts` must have placeholder court cards matching the default 4-court layout — JS replaces them via `innerHTML`
+- Any new above-the-fold `data-i18n` elements should include default Polish text inline
 
 ### Testing:
 ```bash
 npm test           # run all tests
 npm run check      # syntax check only
-npm run validate   # both check + test
+npm run validate   # check + test + lighthouse
 ```
 
 Tests use Node.js built-in `node:test` runner (no npm dependencies). Test files are in `test/` directory. Browser APIs are mocked in `test/helpers.js`.

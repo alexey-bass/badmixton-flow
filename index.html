@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Badmixton Flow</title>
-  <meta name="version" content="v260311-1241">
+  <meta name="version" content="v260311-1257">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -54,14 +54,14 @@
 
   <!-- ===== NAVIGATION (tabs) ===== -->
   <nav class="tabs" id="tabNav">
-    <button class="tab active" data-tab="board" data-i18n="tabBoard"></button>
-    <button class="tab" data-tab="players" data-i18n="tabPlayers"></button>
-    <button class="tab" data-tab="queue" data-i18n="tabQueue"></button>
-    <button class="tab" data-tab="dashboard" data-i18n="tabSession"></button>
-    <button class="tab" data-tab="courts" data-i18n="tabCourts"></button>
-    <button class="tab" data-tab="history" data-i18n="tabHistory"></button>
-    <button class="tab" data-tab="results" data-i18n="tabResults"></button>
-<button class="tab" data-tab="debug" data-i18n="tabDebug"></button>
+    <button class="tab active" data-tab="board" data-i18n="tabBoard">Tablica</button>
+    <button class="tab" data-tab="players" data-i18n="tabPlayers">Gracze</button>
+    <button class="tab" data-tab="queue" data-i18n="tabQueue">Kolejka</button>
+    <button class="tab" data-tab="dashboard" data-i18n="tabSession">Sesja</button>
+    <button class="tab" data-tab="courts" data-i18n="tabCourts">Korty</button>
+    <button class="tab" data-tab="history" data-i18n="tabHistory">Historia</button>
+    <button class="tab" data-tab="results" data-i18n="tabResults">Wyniki</button>
+    <button class="tab" data-tab="debug" data-i18n="tabDebug">Debug</button>
   </nav>
 
   <!-- ===== CONTENT ===== -->
@@ -70,9 +70,14 @@
     <!-- BOARD (main screen during play) -->
     <section class="panel active" id="panel-board">
       <div class="board-layout">
-        <div class="board-courts" id="boardCourts"></div>
+        <div class="board-courts" id="boardCourts">
+          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 1</h3></div><div class="court-empty">&nbsp;</div></div>
+          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 2</h3></div><div class="court-empty">&nbsp;</div></div>
+          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 3</h3></div><div class="court-empty">&nbsp;</div></div>
+          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 4</h3></div><div class="court-empty">&nbsp;</div></div>
+        </div>
         <div class="board-queue">
-          <h3><span data-i18n="queue"></span> <span class="badge" id="boardQueueCount">0</span></h3>
+          <h3><span data-i18n="queue">Kolejka</span> <span class="badge" id="boardQueueCount">0</span></h3>
           <div class="board-queue-list" id="boardQueueList"></div>
         </div>
       </div>
