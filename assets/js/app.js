@@ -1210,6 +1210,7 @@ App.UI = {
 
   renderAll: function() {
     this.renderCurrentTab();
+    this.cacheTimerElements();
   },
 
   // --- Dashboard ---
@@ -1553,6 +1554,7 @@ App.UI = {
     // Bind drag-and-drop and buttons
     App.DnD.init(queueList);
     this._bindQueueActions(queueList);
+    this.cacheTimerElements();
   },
 
   _bindQueueActions: function(container) {
@@ -1651,6 +1653,7 @@ App.UI = {
     });
 
     document.getElementById('courtsGrid').innerHTML = html;
+    this.cacheTimerElements();
   },
 
   _renderTeams: function(match) {
@@ -2118,6 +2121,7 @@ App.UI = {
 
     // Bind board action buttons
     this._bindBoardActions();
+    this.cacheTimerElements();
   },
 
   _bindBoardActions: function() {
@@ -2754,14 +2758,23 @@ App.UI = {
   },
 
   // --- Timers ---
+  _cachedCourtTimers: [],
+  _cachedQueueTimers: [],
+
+  cacheTimerElements: function() {
+    this._cachedCourtTimers = Array.from(document.querySelectorAll('.court-timer, .board-court-timer'));
+    this._cachedQueueTimers = Array.from(document.querySelectorAll('.queue-timer, .bq-timer'));
+  },
+
   startTimers: function() {
     if (this.timerInterval) clearInterval(this.timerInterval);
+    var self = this;
     this.timerInterval = setInterval(function() {
       var now = Date.now();
       // Update court timers (skip if no active games)
       var hasOccupied = Object.values(App.state.courts).some(function(c) { return c.occupied; });
       if (hasOccupied) {
-        document.querySelectorAll('.court-timer, .board-court-timer').forEach(function(el) {
+        self._cachedCourtTimers.forEach(function(el) {
           var start = parseInt(el.dataset.start);
           if (start) {
             el.textContent = App.Utils.formatTime(now - start);
@@ -2770,7 +2783,7 @@ App.UI = {
       }
       // Update queue wait timers (skip if queue empty)
       if (App.state.waitingQueue.length > 0) {
-        document.querySelectorAll('.queue-timer, .bq-timer').forEach(function(el) {
+        self._cachedQueueTimers.forEach(function(el) {
           var start = parseInt(el.dataset.queueStart);
           if (start) {
             el.textContent = App.Utils.formatWaitMinutes(now - start);
