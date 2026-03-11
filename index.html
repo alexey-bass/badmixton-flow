@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Badmixton Flow</title>
-  <meta name="version" content="v260311-1108">
+  <meta name="version" content="v260311-1150">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="assets/css/styles.css?v=12">
+  <link rel="stylesheet" href="assets/css/styles.css?v=13">
   <script>
     var FIREBASE_CONFIG = {
       apiKey: "AIzaSyDQV3njrl8xcpaC9X9weZknzlx2zzxoD9k",
@@ -44,8 +44,8 @@
       </div>
       <button class="btn-icon" id="btnWakeLock" data-i18n-title="wakeLockTooltip" hidden>&#x2600;</button>
       <button class="btn-icon" id="btnFullscreen" data-i18n-title="fullscreenTooltip">&#x26F6;</button>
-      <button class="btn-icon" id="btnHelp" title="Help">?</button>
-      <button class="btn-icon" id="btnToggleMode" title="Toggle mode">
+      <button class="btn-icon" id="btnHelp" data-i18n-title="helpTooltip">?</button>
+      <button class="btn-icon" id="btnToggleMode" data-i18n-title="modeToggleTooltip">
         <span id="modeIcon">&#9881;</span>
       </button>
       <span class="sync-indicator" id="syncIndicator" title="Sync" hidden>&#9679;</span>
@@ -85,7 +85,7 @@
       <div class="section-block">
         <h3 data-i18n="sessionSettings"></h3>
         <div class="form-row">
-          <label data-i18n="courtNumbersLabel"></label>
+          <label for="courtNumbers" data-i18n="courtNumbersLabel"></label>
           <input type="text" id="courtNumbers" placeholder="1,2,3,4" value="1,2,3,4">
           <small data-i18n="courtNumbersHint"></small>
         </div>
@@ -98,7 +98,7 @@
         <p class="section-desc" data-i18n="syncDesc"></p>
         <div id="syncSection">
           <div class="form-row">
-            <label data-i18n="sessionIdLabel"></label>
+            <label for="sessionIdInput" data-i18n="sessionIdLabel"></label>
             <div class="session-id-row">
               <input type="text" id="sessionIdInput" placeholder="badminton-2026-03-09">
               <button class="btn btn-secondary btn-sm" id="btnAddSalt" data-i18n-title="addSaltTooltip">&#x1f3b2;</button>
@@ -111,7 +111,7 @@
           </div>
           <div id="syncStatus" class="sync-status"></div>
           <div id="syncShareLink" class="sync-share-link" hidden>
-            <label data-i18n="shareLink"></label>
+            <label for="syncShareUrl" data-i18n="shareLink"></label>
             <div class="share-link-row">
               <input type="text" id="syncShareUrl" readonly>
               <button class="btn btn-secondary btn-sm" id="btnCopyLink" data-i18n="copyLink"></button>
@@ -235,7 +235,7 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script defer src="assets/js/i18n.js?v=8"></script>
+  <script defer src="assets/js/i18n.js?v=9"></script>
   <script defer src="assets/js/app.js?v=13"></script>
   <script>
     if ('serviceWorker' in navigator) {

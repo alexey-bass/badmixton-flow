@@ -469,6 +469,7 @@ body.player-mode .admin-only {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
   border-left: 4px solid var(--border);
+  transition: border-color 0.2s;
 }
 
 .player-row.status-waiting {
@@ -631,6 +632,7 @@ body.player-mode .admin-only {
   padding: 16px;
   box-shadow: var(--shadow);
   border-left: 5px solid var(--border);
+  transition: border-color 0.2s;
 }
 
 .court-card.occupied {
@@ -866,6 +868,7 @@ body.player-mode .admin-only {
   padding: 16px;
   box-shadow: var(--shadow-md);
   border-left: 5px solid var(--border);
+  transition: border-color 0.2s;
 }
 
 .board-court-card.occupied {

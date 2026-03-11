@@ -74,6 +74,8 @@ App.i18n = {
 
       // Fullscreen & Wake Lock
       fullscreenTooltip: 'Pełny ekran',
+      helpTooltip: 'Pomoc',
+      modeToggleTooltip: 'Przełącz tryb',
       wakeLockTooltip: 'Nie wyłączaj ekranu',
 
       // Help
@@ -324,6 +326,8 @@ App.i18n = {
 
       // Fullscreen & Wake Lock
       fullscreenTooltip: 'Fullscreen',
+      helpTooltip: 'Help',
+      modeToggleTooltip: 'Toggle mode',
       wakeLockTooltip: 'Keep screen on',
 
       // Help
@@ -576,6 +580,7 @@ App.i18n = {
       btn.classList.toggle('active', btn.dataset.lang === lang);
     });
 
+    document.documentElement.lang = lang;
     this.apply();
 
     // Re-render dynamic content
@@ -590,6 +595,8 @@ App.i18n = {
     if (saved && this.translations[saved]) {
       this.currentLang = saved;
     }
+
+    document.documentElement.lang = this.currentLang;
 
     // Set active button
     document.querySelectorAll('.lang-btn').forEach(function(btn) {
