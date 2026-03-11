@@ -57,34 +57,46 @@
 - [x] `_ensureState` migration for corrupted/incomplete data
 - [x] Robust player field initialization
 
-## Phase 6: Polish & UX Improvements
+## Phase 6: Polish & UX Improvements (DONE)
 
-- [ ] Fix session date display to use localized day names
-- [ ] Add "mark all present" bulk action button
-- [ ] Add player search/filter on Players tab
-- [ ] Show game count next to player name on Board queue
-- [ ] Score display in match history
-- [ ] Add confirmation toast with undo option (instead of modal confirm)
-- [ ] Improve touch drag-and-drop smoothness
-- [ ] Add haptic feedback on mobile (vibrate API)
-- [ ] Add session name display on Board tab
+- [x] Show game count next to player name on Board queue
+- [x] Improve touch drag-and-drop smoothness (rAF throttling)
+- [x] Emoji animal picker for duplicate player name disambiguation
+- [x] Screen wake lock (keep tablet display on)
+- [x] Sync indicator blink on data send/receive
+- [x] Google Analytics event tracking (emoji, player, fullscreen, sync, DnD, etc.)
+- [x] Session highlights (most active, win streak, top scorer, rivals, etc.)
+- [x] Custom team swap with bench players
+- [x] Accessibility: i18n tooltips, label-input linking, html lang, border transitions
 
 ## Phase 7: Advanced Statistics
 
+- [x] Session highlights (most active, win streak, top scorer, social butterfly, rivals, most patient)
 - [ ] Player statistics dashboard (games played, avg game time, favorite partners)
 - [ ] Head-to-head stats between players
 - [ ] Session comparison across days
 - [ ] Charts/graphs for trends
 - [ ] "Best pair" and "most common opponents" insights
 
-## Phase 8: PWA & Offline
+## Phase 8: PWA & Offline (DONE)
 
-- [ ] Service Worker for offline support
-- [ ] Web App Manifest (installable on home screen)
-- [ ] Offline-first with sync on reconnect
-- [ ] App icon and splash screen
+- [x] Service Worker for offline support (stale-while-revalidate)
+- [x] Web App Manifest (installable on home screen)
+- [x] Offline-first with sync on reconnect
+- [x] App icons (96px, 192px, 512px)
+- [x] Pre-commit hook auto-stamps version, bumps cache-bust params, SW version
 
-## Phase 9: Multi-Device Experience
+## Phase 9: UX Improvements
+
+- [ ] Fix session date display to use localized day names
+- [ ] Add "mark all present" bulk action button
+- [ ] Add player search/filter on Players tab
+- [ ] Score display in match history
+- [ ] Add confirmation toast with undo option (instead of modal confirm)
+- [ ] Add haptic feedback on mobile (vibrate API)
+- [ ] Add session name display on Board tab
+
+## Phase 10: Multi-Device Experience
 
 - [ ] QR code generation for room join link
 - [ ] Player self-check-in via phone (scan QR, tap "I'm here")
@@ -92,7 +104,7 @@
 - [ ] Push notifications (game starting, your turn coming up)
 - [ ] WhatsApp share button for room link
 
-## Phase 10: Advanced Features
+## Phase 11: Advanced Features
 
 - [ ] Tournament mode (round-robin, knockout brackets)
 - [ ] Skill rating system (ELO-like)
