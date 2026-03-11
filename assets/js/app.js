@@ -2841,6 +2841,7 @@ App.UI = {
       App.Analytics.track('sync_create');
       App.UI.showToast(App.t('sessionCreated') + sessionId);
       App.UI.renderAll();
+      App.UI.renderSync();
     }
   },
 
