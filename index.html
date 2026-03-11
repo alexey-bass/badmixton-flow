@@ -2,10 +2,10 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260311-1300">
+  <meta name="version" content="v260311-1308">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -15,7 +15,7 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="assets/css/styles.css?v=15">
+  <link rel="stylesheet" href="assets/css/styles.css?v=16">
   <script>
     var FIREBASE_CONFIG = {
       apiKey: "AIzaSyDQV3njrl8xcpaC9X9weZknzlx2zzxoD9k",
@@ -72,13 +72,13 @@
     <section class="panel active" id="panel-board">
       <div class="board-layout">
         <div class="board-courts" id="boardCourts">
-          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 1</h3></div><div class="court-empty">&nbsp;</div></div>
-          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 2</h3></div><div class="court-empty">&nbsp;</div></div>
-          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 3</h3></div><div class="court-empty">&nbsp;</div></div>
-          <div class="board-court-card free"><div class="board-court-header"><h3>Kort 4</h3></div><div class="court-empty">&nbsp;</div></div>
+          <div class="board-court-card free"><div class="board-court-header"><h2>Kort 1</h2></div><div class="court-empty">&nbsp;</div></div>
+          <div class="board-court-card free"><div class="board-court-header"><h2>Kort 2</h2></div><div class="court-empty">&nbsp;</div></div>
+          <div class="board-court-card free"><div class="board-court-header"><h2>Kort 3</h2></div><div class="court-empty">&nbsp;</div></div>
+          <div class="board-court-card free"><div class="board-court-header"><h2>Kort 4</h2></div><div class="court-empty">&nbsp;</div></div>
         </div>
         <div class="board-queue">
-          <h3><span data-i18n="queue">Kolejka</span> <span class="badge" id="boardQueueCount">0</span></h3>
+          <h2><span data-i18n="queue">Kolejka</span> <span class="badge" id="boardQueueCount">0</span></h2>
           <div class="board-queue-list" id="boardQueueList"></div>
         </div>
       </div>
@@ -89,7 +89,7 @@
       <div class="stats-grid" id="statsGrid"></div>
 
       <div class="section-block">
-        <h3 data-i18n="sessionSettings"></h3>
+        <h2 data-i18n="sessionSettings"></h2>
         <div class="form-row">
           <label for="courtNumbers" data-i18n="courtNumbersLabel"></label>
           <input type="text" id="courtNumbers" placeholder="1,2,3,4" value="1,2,3,4">
@@ -100,7 +100,7 @@
 
 
       <div class="section-block">
-        <h3 data-i18n="syncFirebase"></h3>
+        <h2 data-i18n="syncFirebase"></h2>
         <p class="section-desc" data-i18n="syncDesc"></p>
         <div id="syncSection">
           <div class="form-row">
@@ -127,7 +127,7 @@
       </div>
 
       <div class="section-block">
-        <h3 data-i18n="actions"></h3>
+        <h2 data-i18n="actions"></h2>
         <div class="action-list">
           <div class="action-item">
             <button class="btn btn-secondary" id="btnResetToday" data-i18n="resetDay"></button>
@@ -204,24 +204,24 @@
     <!-- DEBUG -->
     <section class="panel" id="panel-debug">
       <div class="section-block">
-        <h3>App</h3>
+        <h2>App</h2>
         <div id="debugAppInfo" class="debug-info"></div>
       </div>
       <div class="section-block">
-        <h3 data-i18n="debugState"></h3>
+        <h2 data-i18n="debugState"></h2>
         <div id="debugStats" class="debug-stats"></div>
       </div>
       <div class="section-block">
-        <h3 data-i18n="debugSync"></h3>
+        <h2 data-i18n="debugSync"></h2>
         <div id="debugSyncInfo" class="debug-info"></div>
       </div>
       <div class="section-block">
-        <h3 data-i18n="debugLocalStorage"></h3>
+        <h2 data-i18n="debugLocalStorage"></h2>
         <div id="debugStorageInfo" class="debug-info"></div>
         <pre id="debugStateJson" class="debug-json"></pre>
       </div>
       <div class="section-block">
-        <h3 data-i18n="debugActions"></h3>
+        <h2 data-i18n="debugActions"></h2>
         <div class="btn-row">
           <button class="btn btn-danger" id="btnClearStorage" data-i18n="debugClearStorage"></button>
         </div>
@@ -242,7 +242,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script defer src="assets/js/i18n.js?v=11"></script>
-  <script defer src="assets/js/app.js?v=15"></script>
+  <script defer src="assets/js/app.js?v=16"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');

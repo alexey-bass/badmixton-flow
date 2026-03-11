@@ -19,7 +19,7 @@
   --bg-secondary: #e8eaed;
   --card: #ffffff;
   --text: #1e293b;
-  --text-secondary: #64748b;
+  --text-secondary: #4b5563;
   --border: #e2e8f0;
   --radius: 10px;
   --radius-sm: 6px;
@@ -126,7 +126,7 @@ body {
 .lang-switcher {
   display: flex;
   gap: 2px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.15);
   border-radius: 6px;
   padding: 2px;
 }
@@ -138,7 +138,7 @@ body {
   padding: 4px 8px;
   border: none;
   background: none;
-  color: rgba(255,255,255,0.7);
+  color: white;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -147,7 +147,7 @@ body {
 }
 
 .lang-btn.active {
-  background: rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.2);
   color: white;
 }
 
@@ -330,7 +330,7 @@ body.player-mode .admin-only {
   box-shadow: var(--shadow);
 }
 
-.section-block h3 {
+.section-block h2 {
   font-size: 15px;
   margin-bottom: 12px;
   color: var(--text);
@@ -650,7 +650,7 @@ body.player-mode .admin-only {
   margin-bottom: 12px;
 }
 
-.court-header h3 {
+.court-header h2 {
   font-size: 18px;
 }
 
@@ -886,7 +886,7 @@ body.player-mode .admin-only {
   margin-bottom: 10px;
 }
 
-.board-court-header h3 {
+.board-court-header h2 {
   font-size: 20px;
   font-weight: 700;
 }
@@ -948,7 +948,7 @@ body.player-mode .admin-only {
   font-size: 16px;
 }
 
-.board-queue h3 {
+.board-queue h2 {
   font-size: 16px;
   margin-bottom: 8px;
 }

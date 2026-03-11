@@ -1554,7 +1554,7 @@ App.UI = {
     if (!Array.isArray(player.wishedPartners)) player.wishedPartners = [];
 
     var present = App.Players.getPresent().filter(function(p) { return p.id !== playerId; });
-    var html = '<h3>' + App.t('wishFor') + App.UI._esc(player.name) + '</h3>';
+    var html = '<h2>' + App.t('wishFor') + App.UI._esc(player.name) + '</h2>';
     html += '<p style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;">' + App.t('selectPartner') + '</p>';
     html += '<div class="modal-player-list" id="wishPlayerList">';
 
@@ -1719,7 +1719,7 @@ App.UI = {
 
       html += '<div class="court-card ' + (isOccupied ? 'occupied' : 'free') + '" data-court-id="' + court.id + '">';
       html += '<div class="court-header">';
-      html += '<h3>' + App.t('court') + court.displayNumber + '</h3>';
+      html += '<h2>' + App.t('court') + court.displayNumber + '</h2>';
 
       if (isOccupied) {
         html += '<span class="court-timer" data-start="' + court.gameStartTime + '">' +
@@ -1814,7 +1814,7 @@ App.UI = {
     }
 
     // Show suggestion modal
-    var html = '<h3>' + App.t('suggestionFor') + App.state.courts[courtId].displayNumber + '</h3>';
+    var html = '<h2>' + App.t('suggestionFor') + App.state.courts[courtId].displayNumber + '</h2>';
     html += '<div class="suggestion-block">';
     html += '<div class="suggestion-explanation">' + App.UI._esc(result.explanation) + '</div>';
     html += '</div>';
@@ -2031,7 +2031,7 @@ App.UI = {
 
     var selectedIds = [];
 
-    var html = '<h3>' + App.t('selectPlayersFor') + App.state.courts[courtId].displayNumber + '</h3>';
+    var html = '<h2>' + App.t('selectPlayersFor') + App.state.courts[courtId].displayNumber + '</h2>';
     html += '<p style="color:var(--text-secondary); font-size:13px; margin-bottom:10px;">' + App.t('select4Players') + '</p>';
     html += '<div class="player-select-grid" id="playerSelectGrid">';
 
@@ -2157,7 +2157,7 @@ App.UI = {
 
       html += '<div class="board-court-card ' + (isOccupied ? 'occupied' : 'free') + '" data-court-id="' + court.id + '">';
       html += '<div class="board-court-header">';
-      html += '<h3>' + App.t('court') + court.displayNumber + '</h3>';
+      html += '<h2>' + App.t('court') + court.displayNumber + '</h2>';
       if (isOccupied) {
         html += '<span class="board-court-timer" data-start="' + court.gameStartTime + '">' +
           App.Utils.formatTime(Date.now() - court.gameStartTime) + '</span>';
@@ -2388,7 +2388,7 @@ App.UI = {
     var highlights = this._buildHighlights(players);
     if (highlights.length > 0) {
       html += '<div class="highlights-section">';
-      html += '<h3>' + App.t('sessionHighlights') + '</h3>';
+      html += '<h2>' + App.t('sessionHighlights') + '</h2>';
       html += '<div class="highlights-grid">';
       highlights.forEach(function(h) {
         html += '<div class="highlight-card">';
@@ -2646,7 +2646,7 @@ App.UI = {
       return p ? App.UI._esc(p.name) : '?';
     }).join(' & ');
 
-    var html = '<h3>' + App.t('finishGameTitle') + ' ' + court.displayNumber + '</h3>';
+    var html = '<h2>' + App.t('finishGameTitle') + ' ' + court.displayNumber + '</h2>';
     html += '<div class="finish-teams">';
     html += '<span class="finish-team-name">' + teamANames + '</span>';
     html += '<span class="finish-vs">vs</span>';
@@ -2842,7 +2842,7 @@ App.UI = {
   _bindHelp: function() {
     document.getElementById('btnHelp').addEventListener('click', function() {
       var steps = App.t('helpSteps');
-      var html = '<h3>' + App.t('helpTitle') + '</h3>';
+      var html = '<h2>' + App.t('helpTitle') + '</h2>';
       html += '<ol class="help-steps">';
       for (var i = 0; i < steps.length; i++) {
         html += '<li>' + steps[i] + '</li>';
@@ -2905,7 +2905,7 @@ App.UI = {
   },
 
   _showPasswordPrompt: function(onSuccess) {
-    var html = '<h3>' + App.t('adminLogin') + '</h3>';
+    var html = '<h2>' + App.t('adminLogin') + '</h2>';
     html += '<div class="form-row" style="margin:12px 0">';
     html += '<input type="password" id="adminPasswordInput" placeholder="' + App.t('passwordPlaceholder') + '" autocomplete="off">';
     html += '</div>';
@@ -3127,7 +3127,7 @@ App.UI = {
     var diff = (p.pointsScored || 0) - (p.pointsConceded || 0);
     var diffStr = diff > 0 ? '+' + diff : '' + diff;
 
-    var html = '<h3>' + esc(p.name) + '</h3>';
+    var html = '<h2>' + esc(p.name) + '</h2>';
 
     // Overview grid
     html += '<div class="ps-section"><div class="ps-stat-grid">';
