@@ -20,7 +20,7 @@ Web app for managing player queues and court assignments during amateur badminto
 - **Two UI modes** — Board (player-facing: courts, queue, results) and Management (admin: full control)
 - **Screen wake lock** — keeps the tablet display on during sessions (Screen Wake Lock API)
 - **Offline-first PWA** — service worker caches the app for instant loads and offline use, installable on mobile
-- **Session lock** — manual or timed lock disables all actions, red header indicator, synced across devices
+- **Session lock** — manual or timed lock disables all actions, optional queue clear on lock, red header indicator, synced across devices
 - **Multi-device sync** — Firebase Realtime Database, shareable session links with auto-join
 - **Quick help** — in-app instructions modal with app version, translated
 - **i18n** — Polish (default) and English, with proper plural forms

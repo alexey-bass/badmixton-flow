@@ -49,6 +49,7 @@ App.i18n = {
       sessionLocked: 'Sesja zablokowana',
       sessionUnlocked: 'Sesja odblokowana',
       sessionAutoLocked: 'Sesja zablokowana automatycznie',
+      clearQueueOnLockLabel: 'Wyczyść kolejkę przy blokadzie',
 
       // Sync
       syncFirebase: 'Synchronizacja Firebase',
@@ -336,6 +337,7 @@ App.i18n = {
       sessionLocked: 'Session locked',
       sessionUnlocked: 'Session unlocked',
       sessionAutoLocked: 'Session auto-locked',
+      clearQueueOnLockLabel: 'Clear queue on lock',
 
       // Sync
       syncFirebase: 'Firebase Sync',

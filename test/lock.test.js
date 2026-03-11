@@ -33,6 +33,32 @@ describe('App.Lock', function() {
       var saved = App.Storage.load(App.state.date);
       assert.strictEqual(saved.settings.locked, true);
     });
+
+    it('should clear queue when clearQueueOnLock is enabled', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+      App.Players.markPresent(id2);
+      assert.strictEqual(App.state.waitingQueue.length, 2);
+
+      App.state.settings.clearQueueOnLock = true;
+      App.Lock.lock();
+
+      assert.strictEqual(App.state.waitingQueue.length, 0);
+      // Players should still exist
+      assert.ok(App.state.players[id1]);
+      assert.ok(App.state.players[id2]);
+    });
+
+    it('should not clear queue when clearQueueOnLock is disabled', function() {
+      var id1 = App.Players.add('Alice');
+      App.Players.markPresent(id1);
+
+      App.state.settings.clearQueueOnLock = false;
+      App.Lock.lock();
+
+      assert.strictEqual(App.state.waitingQueue.length, 1);
+    });
   });
 
   describe('unlock', function() {
@@ -71,6 +97,19 @@ describe('App.Lock', function() {
       assert.strictEqual(App.state.settings.locked, true);
     });
 
+    it('should clear queue on auto-lock when clearQueueOnLock is enabled', function() {
+      var id1 = App.Players.add('Alice');
+      App.Players.markPresent(id1);
+      App.state.settings.clearQueueOnLock = true;
+      App.state.settings.autoLockTime = '00:00';
+
+      App.Lock.checkAutoLock();
+
+      assert.strictEqual(App.state.settings.locked, true);
+      assert.strictEqual(App.state.waitingQueue.length, 0);
+      assert.ok(App.state.players[id1]);
+    });
+
     it('should not lock when current time < autoLockTime (time in future)', function() {
       App.state.settings.autoLockTime = '23:59';
       var now = new Date();
@@ -95,6 +134,12 @@ describe('App.Lock', function() {
       assert.strictEqual(result.settings.autoLockTime, null);
     });
 
+    it('should add clearQueueOnLock: false when missing', function() {
+      var state = { players: {}, settings: {} };
+      var result = App.Storage._ensureState(state);
+      assert.strictEqual(result.settings.clearQueueOnLock, false);
+    });
+
     it('should preserve existing locked: true', function() {
       var state = { players: {}, settings: { locked: true, autoLockTime: '20:00' } };
       var result = App.Storage._ensureState(state);
@@ -111,12 +156,17 @@ describe('App.Lock', function() {
     it('should have autoLockTime: null in new session', function() {
       assert.strictEqual(App.state.settings.autoLockTime, null);
     });
+
+    it('should have clearQueueOnLock: false in new session', function() {
+      assert.strictEqual(App.state.settings.clearQueueOnLock, false);
+    });
   });
 
   describe('i18n keys', function() {
     it('should have lock translations in both languages', function() {
       var keys = ['sessionLock', 'lockSession', 'unlockSession', 'autoLockLabel',
-                  'autoLockAt', 'autoLockDisabled', 'sessionLocked', 'sessionUnlocked', 'sessionAutoLocked'];
+                  'autoLockAt', 'autoLockDisabled', 'sessionLocked', 'sessionUnlocked', 'sessionAutoLocked',
+                  'clearQueueOnLockLabel'];
       keys.forEach(function(key) {
         assert.notStrictEqual(App.i18n.translations.pl[key], undefined, 'Missing PL: ' + key);
         assert.notStrictEqual(App.i18n.translations.en[key], undefined, 'Missing EN: ' + key);

@@ -117,6 +117,7 @@ App.Storage = {
     }
     if (state.settings.locked === undefined) state.settings.locked = false;
     if (state.settings.autoLockTime === undefined) state.settings.autoLockTime = null;
+    if (state.settings.clearQueueOnLock === undefined) state.settings.clearQueueOnLock = false;
     if (!state.nextPlayerNumber) state.nextPlayerNumber = 1;
     if (!state.date) state.date = App.Utils.getISODate(new Date());
     if (state.isAdmin === undefined) state.isAdmin = true;
@@ -222,7 +223,8 @@ App.Session = {
         syncEnabled: false,
         syncSessionId: null,
         locked: false,
-        autoLockTime: null
+        autoLockTime: null,
+        clearQueueOnLock: false
       },
       nextPlayerNumber: 1,
       lastModified: Date.now(),
@@ -296,8 +298,12 @@ App.Lock = {
 
   lock: function() {
     App.state.settings.locked = true;
+    if (App.state.settings.clearQueueOnLock) {
+      App.state.waitingQueue = [];
+    }
     App.save();
     App.UI.applyLockState();
+    if (App.state.settings.clearQueueOnLock) App.UI.renderAll();
     App.UI.showToast(App.t('sessionLocked'));
     App.Analytics.track('session_lock');
   },
@@ -320,8 +326,12 @@ App.Lock = {
     var nowMinutes = now.getHours() * 60 + now.getMinutes();
     if (nowMinutes >= lockMinutes) {
       App.state.settings.locked = true;
+      if (App.state.settings.clearQueueOnLock) {
+        App.state.waitingQueue = [];
+      }
       App.save();
       App.UI.applyLockState();
+      if (App.state.settings.clearQueueOnLock) App.UI.renderAll();
       App.UI.showToast(App.t('sessionAutoLocked'));
       App.Analytics.track('session_auto_lock');
     }
@@ -1388,6 +1398,11 @@ App.UI = {
       App.Lock.unlock();
     });
 
+    document.getElementById('clearQueueOnLock').addEventListener('change', function() {
+      App.state.settings.clearQueueOnLock = this.checked;
+      App.save();
+    });
+
     document.getElementById('autoLockEnabled').addEventListener('change', function() {
       var timeInput = document.getElementById('autoLockTime');
       var status = document.getElementById('autoLockStatus');
@@ -1445,6 +1460,7 @@ App.UI = {
     var autoTime = App.state.settings.autoLockTime;
     document.getElementById('btnLockSession').hidden = locked;
     document.getElementById('btnUnlockSession').hidden = !locked;
+    document.getElementById('clearQueueOnLock').checked = !!App.state.settings.clearQueueOnLock;
     document.getElementById('autoLockEnabled').checked = !!autoTime;
     document.getElementById('autoLockTime').value = autoTime || '';
     document.getElementById('autoLockTime').hidden = !autoTime;

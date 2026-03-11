@@ -163,6 +163,7 @@ Header layout (left to right): title, lock indicator (🔒) | language switcher,
 ### Session Lock
 - Manual lock/unlock button on Session tab — disables all mutation actions (add/remove players, start/finish games, queue reorder, drag-and-drop)
 - Optional auto-lock time picker ("Auto-lock at") — session locks automatically when the specified time is reached
+- Optional "Clear queue on lock" checkbox — empties the waiting queue (keeps player list) when session is locked manually or via auto-lock
 - When locked: header turns red (#b91c1c), lock icon (🔒) appears in header
 - Viewing tabs (Board, Results, History) remain fully functional
 - Admin can unlock anytime; non-admin sees red header + lock icon
@@ -195,7 +196,7 @@ Session state stored in `localStorage` as `badminton_session_YYYY-MM-DD`:
   waitingQueue: [playerId, ...],
   courts: { [id]: Court },
   matches: { [id]: Match },
-  settings: { courtNumbers, syncEnabled, syncSessionId, locked, autoLockTime },
+  settings: { courtNumbers, syncEnabled, syncSessionId, locked, autoLockTime, clearQueueOnLock },
   nextPlayerNumber: 1,
   isAdmin: true
 }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260311-1814">
+  <meta name="version" content="v260311-1826">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -137,6 +137,12 @@
             <input type="time" id="autoLockTime" hidden>
             <small id="autoLockStatus" class="auto-lock-status" hidden></small>
           </div>
+          <div class="form-row">
+            <label class="checkbox-row">
+              <input type="checkbox" id="clearQueueOnLock">
+              <span data-i18n="clearQueueOnLockLabel">Wyczyść kolejkę przy blokadzie</span>
+            </label>
+          </div>
           <div class="btn-row">
             <button class="btn btn-danger" id="btnLockSession" data-i18n="lockSession">Zablokuj sesję</button>
             <button class="btn btn-success" id="btnUnlockSession" data-i18n="unlockSession" hidden>Odblokuj sesję</button>
@@ -251,8 +257,8 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script defer src="assets/js/i18n.js?v=14"></script>
-  <script defer src="assets/js/app.js?v=24"></script>
+  <script defer src="assets/js/i18n.js?v=15"></script>
+  <script defer src="assets/js/app.js?v=25"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');
