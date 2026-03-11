@@ -2711,11 +2711,24 @@ App.UI = {
   _bindModeToggle: function() {
     var self = this;
 
-    // Start in player mode by default
     var nav = document.getElementById('tabNav');
-    nav.classList.add('player-mode');
-    document.body.classList.add('player-mode');
-    document.getElementById('modeIcon').innerHTML = '&#9776;';
+    var savedMode = localStorage.getItem('badminton_mode');
+
+    function setMode(isAdmin) {
+      if (isAdmin) {
+        nav.classList.remove('player-mode');
+        document.body.classList.remove('player-mode');
+        document.getElementById('modeIcon').innerHTML = '&#9881;';
+      } else {
+        nav.classList.add('player-mode');
+        document.body.classList.add('player-mode');
+        document.getElementById('modeIcon').innerHTML = '&#9776;';
+      }
+      localStorage.setItem('badminton_mode', isAdmin ? 'admin' : 'player');
+    }
+
+    // Restore saved mode, default to player
+    setMode(savedMode === 'admin');
 
     document.getElementById('btnToggleMode').addEventListener('click', function() {
       var isPlayerMode = nav.classList.contains('player-mode');
@@ -2723,16 +2736,11 @@ App.UI = {
       if (isPlayerMode) {
         // Switching to admin — require password
         self._showPasswordPrompt(function() {
-          nav.classList.remove('player-mode');
-          document.body.classList.remove('player-mode');
-          document.getElementById('modeIcon').innerHTML = '&#9881;';
+          setMode(true);
           App.Analytics.track('mode_switch', { mode: 'admin' });
         });
       } else {
-        // Switching back to player mode — no password needed
-        nav.classList.add('player-mode');
-        document.body.classList.add('player-mode');
-        document.getElementById('modeIcon').innerHTML = '&#9776;';
+        setMode(false);
         App.Analytics.track('mode_switch', { mode: 'player' });
         self.showTab('board');
       }

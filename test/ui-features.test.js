@@ -169,6 +169,81 @@ describe('Debug tab version info', function() {
   });
 });
 
+describe('Mode persistence across refresh', function() {
+  var origGetById;
+  var origBody;
+  var navClasses;
+  var bodyClasses;
+
+  function makeClassList(set) {
+    return {
+      add: function(c) { set.add(c); },
+      remove: function(c) { set.delete(c); },
+      contains: function(c) { return set.has(c); }
+    };
+  }
+
+  function setupModeMocks() {
+    navClasses = new Set();
+    bodyClasses = new Set();
+    origGetById = global.document.getElementById;
+    origBody = global.document.body;
+
+    var navEl = createMockElement();
+    navEl.classList = makeClassList(navClasses);
+    var modeIconEl = createMockElement();
+    var btnEl = createMockElement();
+
+    global.document.getElementById = function(id) {
+      if (id === 'tabNav') return navEl;
+      if (id === 'modeIcon') return modeIconEl;
+      if (id === 'btnToggleMode') return btnEl;
+      return origGetById(id);
+    };
+    global.document.body = { classList: makeClassList(bodyClasses) };
+  }
+
+  function restoreModeMocks() {
+    global.document.getElementById = origGetById;
+    global.document.body = origBody;
+  }
+
+  beforeEach(function() {
+    localStorage.clear();
+  });
+
+  it('should default to player mode when no saved mode', function() {
+    setupModeMocks();
+    App.UI._bindModeToggle();
+    restoreModeMocks();
+
+    assert.ok(navClasses.has('player-mode'), 'nav should have player-mode');
+    assert.ok(bodyClasses.has('player-mode'), 'body should have player-mode');
+    assert.strictEqual(localStorage.getItem('badminton_mode'), 'player');
+  });
+
+  it('should restore admin mode from localStorage', function() {
+    localStorage.setItem('badminton_mode', 'admin');
+    setupModeMocks();
+    App.UI._bindModeToggle();
+    restoreModeMocks();
+
+    assert.ok(!navClasses.has('player-mode'), 'nav should not have player-mode');
+    assert.ok(!bodyClasses.has('player-mode'), 'body should not have player-mode');
+    assert.strictEqual(localStorage.getItem('badminton_mode'), 'admin');
+  });
+
+  it('should restore player mode from localStorage', function() {
+    localStorage.setItem('badminton_mode', 'player');
+    setupModeMocks();
+    App.UI._bindModeToggle();
+    restoreModeMocks();
+
+    assert.ok(navClasses.has('player-mode'), 'nav should have player-mode');
+    assert.ok(bodyClasses.has('player-mode'), 'body should have player-mode');
+  });
+});
+
 describe('Queue games counter', function() {
   beforeEach(function() {
     localStorage.clear();
