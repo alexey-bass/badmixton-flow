@@ -5,6 +5,12 @@
     "start": "python3 -m http.server 8080",
     "test": "node --test test/*.test.js",
     "check": "node --check assets/js/app.js && node --check assets/js/i18n.js",
-    "validate": "npm run check && npm test"
+    "validate": "npm run check && npm test",
+    "screenshots": "node scripts/screenshots.js",
+    "lighthouse": "node scripts/lighthouse.js"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "playwright": "^1.58.2"
   }
 }
