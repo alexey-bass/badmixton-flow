@@ -78,6 +78,14 @@ npm run validate   # check + test + lighthouse
 
 Tests use Node.js built-in `node:test` runner (no npm dependencies). Test files are in `test/` directory. Browser APIs are mocked in `test/helpers.js`.
 
+### Simulation:
+```bash
+npm run simulation                                            # defaults: 4 courts, 17 players, 2 late, 10 rounds
+npm run simulation -- --courts 2 --players 10 --late 1 --rounds 5   # custom params
+```
+
+Runs a full session simulation using the app's suggestion algorithm and generates an HTML report (`simulation-report.html`) with leaderboard, pair stats, match log, and games distribution. Open in browser and print to PDF.
+
 ## Architecture
 
 Single global `App` object (created in `assets/js/i18n.js`) with modules:

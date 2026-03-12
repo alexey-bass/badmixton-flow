@@ -1,8 +1,11 @@
 #!/bin/sh
 # Auto-stamp App version with current local date-time (vYYMMDD-HHMM)
 
-VERSION="v$(date +%y%m%d-%H%M)"
-sed -i '' "s/\(meta name=\"version\" content=\"\)[^\"]*/\1${VERSION}/" index.html
+# Only stamp version if app files changed
+if git diff --cached --name-only | grep -qE "^(index\.html|assets/|manifest\.json)"; then
+  VERSION="v$(date +%y%m%d-%H%M)"
+  sed -i '' "s/\(meta name=\"version\" content=\"\)[^\"]*/\1${VERSION}/" index.html
+fi
 
 # Auto-bump ?v= cache-busting params for changed CSS/JS files
 bump_version() {
@@ -30,4 +33,7 @@ if git diff --cached --name-only | grep -qE "^(index\.html|assets/|manifest\.jso
   fi
 fi
 
-git add index.html
+# Re-stage index.html only if it was modified by this hook
+if ! git diff --quiet index.html 2>/dev/null; then
+  git add index.html
+fi

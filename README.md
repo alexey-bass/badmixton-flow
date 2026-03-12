@@ -121,6 +121,20 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 - Mobile-first responsive CSS
 - Preconnect hints for faster CDN loading
 
+## Simulation
+
+Run a full session simulation to test the suggestion algorithm and generate an HTML report:
+
+```bash
+npm run simulation                                            # defaults: 4 courts, 17 players, 2 late, 10 rounds
+npm run simulation -- --courts 2 --players 10 --late 1 --rounds 5   # custom
+npm run simulation -- --courts 3 --players 20 --late 3 --rounds 15  # large session
+```
+
+Parameters: `--courts N`, `--players N`, `--late N` (late arrivals), `--rounds N`.
+
+Generates `simulation-report.html` with player leaderboard, pair statistics, match log, and games distribution chart. Open in browser and print to PDF.
+
 ## Tested On
 
 - MacBook Air M3 (macOS, Chrome/Safari)
