@@ -24,7 +24,8 @@ var TABS = [
   ['04-queue', 'queue', true],
   ['05-courts', 'courts', true],
   ['06-session', 'dashboard', true],
-  ['07-history', 'history', true]
+  ['07-history', 'history', true],
+  ['08-help', null, false]
 ];
 
 async function seedDemoData(page) {
@@ -172,13 +173,31 @@ async function main() {
         });
       }
 
-      // Switch tab
-      await page.evaluate(function(t) { App.UI.showTab(t); }, tabName);
-      await new Promise(function(resolve) { setTimeout(resolve, 500); });
+      if (tabName === null) {
+        // Special case: help modal
+        await page.evaluate(function() {
+          document.getElementById('btnHelp').click();
+        });
+        await new Promise(function(resolve) { setTimeout(resolve, 500); });
 
-      var filePath = path.join(OUT_DIR, filename + '.png');
-      await page.screenshot({ path: filePath, fullPage: true });
-      console.log('Saved: ' + filePath);
+        var filePath = path.join(OUT_DIR, filename + '.png');
+        await page.screenshot({ path: filePath, fullPage: false });
+        console.log('Saved: ' + filePath);
+
+        // Close modal
+        await page.evaluate(function() {
+          var modal = document.getElementById('helpModal');
+          if (modal) modal.style.display = 'none';
+        });
+      } else {
+        // Switch tab
+        await page.evaluate(function(t) { App.UI.showTab(t); }, tabName);
+        await new Promise(function(resolve) { setTimeout(resolve, 500); });
+
+        var filePath = path.join(OUT_DIR, filename + '.png');
+        await page.screenshot({ path: filePath, fullPage: true });
+        console.log('Saved: ' + filePath);
+      }
     }
 
     console.log('\nAll screenshots captured successfully!');

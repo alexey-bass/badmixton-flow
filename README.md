@@ -39,6 +39,7 @@ Web app for managing player queues and court assignments during amateur badminto
   <a href="screenshots/05-courts.png"><img src="screenshots/05-courts.png" width="240" alt="Courts"></a>
   <a href="screenshots/06-session.png"><img src="screenshots/06-session.png" width="240" alt="Session"></a>
   <a href="screenshots/07-history.png"><img src="screenshots/07-history.png" width="240" alt="History"></a>
+  <a href="screenshots/08-help.png"><img src="screenshots/08-help.png" width="240" alt="Help"></a>
 </p>
 
 ## Quick Start
