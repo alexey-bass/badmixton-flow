@@ -253,20 +253,6 @@ players.forEach(function(p, idx) {
 });
 html += '</table>';
 
-// Pair stats
-html += '<h2>Pair Statistics</h2>';
-html += '<table><tr><th>Pair</th><th>Played</th><th>Wins</th><th>Win%</th></tr>';
-pairs.forEach(function(p) {
-  var rate = p.played ? Math.round(100 * p.wins / p.played) : 0;
-  html += '<tr>';
-  html += '<td>' + p.pair + '</td>';
-  html += '<td>' + p.played + '</td>';
-  html += '<td>' + p.wins + '</td>';
-  html += '<td>' + rate + '%</td>';
-  html += '</tr>';
-});
-html += '</table>';
-
 // Match log
 html += '<h2>Match Log</h2>';
 html += '<table><tr><th>Rnd</th><th>Court</th><th>Team A</th><th>Score</th><th>Team B</th></tr>';
@@ -284,6 +270,20 @@ matchLog.forEach(function(m) {
   html += '<td' + (aWon ? ' class="win"' : '') + '>' + nameA + '</td>';
   html += '<td>' + scoreDisplay + '</td>';
   html += '<td' + (!aWon ? ' class="win"' : '') + '>' + nameB + '</td>';
+  html += '</tr>';
+});
+html += '</table>';
+
+// Pair stats
+html += '<h2>Pair Statistics</h2>';
+html += '<table><tr><th>Pair</th><th>Played</th><th>Wins</th><th>Win%</th></tr>';
+pairs.forEach(function(p) {
+  var rate = p.played ? Math.round(100 * p.wins / p.played) : 0;
+  html += '<tr>';
+  html += '<td>' + p.pair + '</td>';
+  html += '<td>' + p.played + '</td>';
+  html += '<td>' + p.wins + '</td>';
+  html += '<td>' + rate + '%</td>';
   html += '</tr>';
 });
 html += '</table>';
