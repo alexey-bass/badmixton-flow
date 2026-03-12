@@ -6,7 +6,7 @@
     "test": "node --test test/*.test.js",
     "check": "node --check assets/js/app.js && node --check assets/js/i18n.js",
     "validate": "npm run check && npm test && npm run lighthouse",
-    "simulation": "node test/simulation.js",
+    "simulation": "node scripts/simulation.js",
     "screenshots": "node scripts/screenshots.js",
     "lighthouse": "node scripts/lighthouse.js"
   },

@@ -129,7 +129,7 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 Run a full session simulation to test the suggestion algorithm and generate an HTML report:
 
 ```bash
-npm run simulation                                            # defaults: 4 courts, 17 players, 2 late, 10 rounds
+npm run simulation    # defaults: 4 courts, 17 players, 2 late, 10 rounds
 npm run simulation -- --courts 2 --players 10 --late 1 --rounds 5   # custom
 npm run simulation -- --courts 3 --players 20 --late 3 --rounds 15  # large session
 ```
