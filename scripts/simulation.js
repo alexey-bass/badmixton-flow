@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Full session simulation with configurable parameters
-// Usage: node scripts/simulation.js [--courts N] [--players N] [--late N] [--rounds N]
-// Defaults: 4 courts, 17 players, 2 late arrivals, 10 rounds
+// Usage: node scripts/simulation.js [--courts N] [--players N] [--late N] [--rounds N] [--lang pl|en]
+// Defaults: 4 courts, 17 players, 2 late arrivals, 10 rounds, en
 // Generates an HTML report (open in browser, print to PDF)
 
 var path = require('path');
@@ -21,6 +21,66 @@ var NUM_COURTS = getArg('courts', 4);
 var NUM_PLAYERS = getArg('players', 17);
 var NUM_LATE = getArg('late', 2);
 var NUM_ROUNDS = getArg('rounds', 10);
+
+var langIdx = args.indexOf('--lang');
+var LANG = (langIdx !== -1 && args[langIdx + 1]) ? args[langIdx + 1] : 'en';
+
+var T = {
+  en: {
+    title: 'Session Report',
+    simulation: 'Simulation',
+    players: 'Players',
+    matches: 'Matches',
+    courts: 'Courts',
+    rounds: 'Rounds',
+    lateArrival: 'late arrival',
+    lateArrivals: 'late arrivals',
+    afterRound: 'after round',
+    leaderboard: 'Player Leaderboard',
+    player: 'Player',
+    games: 'Games',
+    matchLog: 'Match Log',
+    rnd: 'Rnd',
+    court: 'Court',
+    teamA: 'Team A',
+    score: 'Score',
+    teamB: 'Team B',
+    pairStats: 'Pair Statistics',
+    pair: 'Pair',
+    played: 'Played',
+    wins: 'Wins',
+    distribution: 'Games Distribution',
+    bar: 'Bar'
+  },
+  pl: {
+    title: 'Raport sesji',
+    simulation: 'Symulacja',
+    players: 'Graczy',
+    matches: 'Mecze',
+    courts: 'Korty',
+    rounds: 'Rundy',
+    lateArrival: 'spóźniony',
+    lateArrivals: 'spóźnionych',
+    afterRound: 'po rundzie',
+    leaderboard: 'Ranking graczy',
+    player: 'Gracz',
+    games: 'Gry',
+    matchLog: 'Dziennik meczów',
+    rnd: 'Rnd',
+    court: 'Kort',
+    teamA: 'Drużyna A',
+    score: 'Wynik',
+    teamB: 'Drużyna B',
+    pairStats: 'Statystyki par',
+    pair: 'Para',
+    played: 'Gry',
+    wins: 'Wygr.',
+    distribution: 'Rozkład gier',
+    bar: 'Wykres'
+  }
+};
+
+function t(key) { return (T[LANG] || T.en)[key] || T.en[key]; }
 
 if (NUM_PLAYERS < 4) { console.error('Need at least 4 players'); process.exit(1); }
 if (NUM_LATE >= NUM_PLAYERS) { console.error('Late arrivals must be fewer than total players'); process.exit(1); }
@@ -190,7 +250,7 @@ lateArrivals.forEach(function(la) { lateMap[la.name] = la.afterRound; });
 
 // --- Generate HTML report ---
 var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
-html += '<title>Badmixton Flow — Session Report</title>';
+html += '<title>Badmixton Flow — ' + t('title') + '</title>';
 html += '<style>';
 html += 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; color: #1e293b; }';
 html += 'h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }';
@@ -212,33 +272,33 @@ html += '@media print { body { padding: 0; } h1 { font-size: 20px; } table { fon
 html += '@page { margin: 15mm; }';
 html += '</style></head><body>';
 
-html += '<h1>Badmixton Flow — Session Report</h1>';
+html += '<h1>Badmixton Flow — ' + t('title') + '</h1>';
 
 // Params
-html += '<div class="params">Simulation: ' + NUM_PLAYERS + ' players, ' + NUM_COURTS + ' courts, ' + NUM_ROUNDS + ' rounds, ' + NUM_LATE + ' late arrival' + (NUM_LATE !== 1 ? 's' : '');
+html += '<div class="params">' + t('simulation') + ': ' + NUM_PLAYERS + ' ' + t('players').toLowerCase() + ', ' + NUM_COURTS + ' ' + t('courts').toLowerCase() + ', ' + NUM_ROUNDS + ' ' + t('rounds').toLowerCase() + ', ' + NUM_LATE + ' ' + (NUM_LATE !== 1 ? t('lateArrivals') : t('lateArrival'));
 if (lateArrivals.length > 0) {
   html += ' (';
-  html += lateArrivals.map(function(la) { return la.name + ' after round ' + la.afterRound; }).join(', ');
+  html += lateArrivals.map(function(la) { return la.name + ' ' + t('afterRound') + ' ' + la.afterRound; }).join(', ');
   html += ')';
 }
 html += '</div>';
 
 // Summary cards
 html += '<div class="summary">';
-html += '<div class="stat-card"><div class="val">' + players.length + '</div><div class="label">Players</div></div>';
-html += '<div class="stat-card"><div class="val">' + finishedMatches.length + '</div><div class="label">Matches</div></div>';
-html += '<div class="stat-card"><div class="val">' + NUM_COURTS + '</div><div class="label">Courts</div></div>';
-html += '<div class="stat-card"><div class="val">' + roundNum + '</div><div class="label">Rounds</div></div>';
+html += '<div class="stat-card"><div class="val">' + players.length + '</div><div class="label">' + t('players') + '</div></div>';
+html += '<div class="stat-card"><div class="val">' + finishedMatches.length + '</div><div class="label">' + t('matches') + '</div></div>';
+html += '<div class="stat-card"><div class="val">' + NUM_COURTS + '</div><div class="label">' + t('courts') + '</div></div>';
+html += '<div class="stat-card"><div class="val">' + roundNum + '</div><div class="label">' + t('rounds') + '</div></div>';
 html += '</div>';
 
 // Player leaderboard
-html += '<h2>Player Leaderboard</h2>';
-html += '<table><tr><th>#</th><th>Player</th><th>Games</th><th>W</th><th>L</th><th>Win%</th><th>Pts+</th><th>Pts-</th><th>Diff</th></tr>';
+html += '<h2>' + t('leaderboard') + '</h2>';
+html += '<table><tr><th>#</th><th>' + t('player') + '</th><th>' + t('games') + '</th><th>W</th><th>L</th><th>Win%</th><th>Pts+</th><th>Pts-</th><th>Diff</th></tr>';
 players.forEach(function(p, idx) {
   var rate = p.gamesPlayed ? Math.round(100 * p.wins / p.gamesPlayed) : 0;
   var diff = p.pointsScored - p.pointsConceded;
   var diffStr = diff > 0 ? '+' + diff : '' + diff;
-  var lateNote = lateMap[p.name] !== undefined ? ' <span class="late">(after round ' + lateMap[p.name] + ')</span>' : '';
+  var lateNote = lateMap[p.name] !== undefined ? ' <span class="late">(' + t('afterRound') + ' ' + lateMap[p.name] + ')</span>' : '';
   html += '<tr>';
   html += '<td>' + (idx + 1) + '</td>';
   html += '<td>' + p.name + lateNote + '</td>';
@@ -254,8 +314,8 @@ players.forEach(function(p, idx) {
 html += '</table>';
 
 // Match log
-html += '<h2>Match Log</h2>';
-html += '<table><tr><th>Rnd</th><th>Court</th><th>Team A</th><th>Score</th><th>Team B</th></tr>';
+html += '<h2>' + t('matchLog') + '</h2>';
+html += '<table><tr><th>' + t('rnd') + '</th><th>' + t('court') + '</th><th>' + t('teamA') + '</th><th>' + t('score') + '</th><th>' + t('teamB') + '</th></tr>';
 var prevRound = 0;
 matchLog.forEach(function(m) {
   var nameA = m.teamA.map(playerName).join(', ');
@@ -269,7 +329,7 @@ matchLog.forEach(function(m) {
   prevRound = m.round;
   html += '<tr' + roundBorder + '>';
   html += '<td>' + m.round + '</td>';
-  html += '<td>Court ' + m.courtNum + '</td>';
+  html += '<td>' + t('court') + ' ' + m.courtNum + '</td>';
   html += '<td' + (aWon ? ' class="win"' : '') + '>' + nameA + '</td>';
   html += '<td>' + scoreDisplay + '</td>';
   html += '<td' + (!aWon ? ' class="win"' : '') + '>' + nameB + '</td>';
@@ -278,8 +338,8 @@ matchLog.forEach(function(m) {
 html += '</table>';
 
 // Pair stats
-html += '<h2>Pair Statistics</h2>';
-html += '<table><tr><th>Pair</th><th>Played</th><th>Wins</th><th>Win%</th></tr>';
+html += '<h2>' + t('pairStats') + '</h2>';
+html += '<table><tr><th>' + t('pair') + '</th><th>' + t('played') + '</th><th>' + t('wins') + '</th><th>Win%</th></tr>';
 pairs.forEach(function(p) {
   var rate = p.played ? Math.round(100 * p.wins / p.played) : 0;
   html += '<tr>';
@@ -292,8 +352,8 @@ pairs.forEach(function(p) {
 html += '</table>';
 
 // Games per player distribution
-html += '<h2>Games Distribution</h2>';
-html += '<table><tr><th>Player</th><th>Games</th><th>Bar</th></tr>';
+html += '<h2>' + t('distribution') + '</h2>';
+html += '<table><tr><th>' + t('player') + '</th><th>' + t('games') + '</th><th>' + t('bar') + '</th></tr>';
 var maxGames = Math.max.apply(null, players.map(function(p) { return p.gamesPlayed; }));
 players.sort(function(a, b) { return b.gamesPlayed - a.gamesPlayed; });
 players.forEach(function(p) {

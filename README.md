@@ -131,12 +131,13 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 Run a full session simulation to test the suggestion algorithm and generate an HTML report:
 
 ```bash
-npm run simulation    # defaults: 4 courts, 17 players, 2 late, 10 rounds
+npm run simulation    # defaults: 4 courts, 17 players, 2 late, 10 rounds, en
 npm run simulation -- --courts 2 --players 10 --late 1 --rounds 5   # custom
+npm run simulation -- --lang pl                                      # Polish report
 npm run simulation -- --courts 3 --players 20 --late 3 --rounds 15  # large session
 ```
 
-Parameters: `--courts N`, `--players N`, `--late N` (late arrivals), `--rounds N`.
+Parameters: `--courts N`, `--players N`, `--late N` (late arrivals), `--rounds N`, `--lang pl|en` (default: en).
 
 Generates `simulation-report.html` with player leaderboard, pair statistics, match log, and games distribution chart. Open in browser and print to PDF.
 
