@@ -1343,6 +1343,7 @@ App.UI = {
     this._bindModeToggle();
     this._bindWakeLock();
     this._bindFullscreen();
+    this._bindZoom();
     this._bindHelp();
     this.startTimers();
   },
@@ -1474,12 +1475,6 @@ App.UI = {
       App.UI.showToast(App.t('courtsUpdated') + numbers.join(', '));
     });
 
-    document.getElementById('uiZoom').addEventListener('change', function() {
-      var zoom = parseFloat(this.value) || 1;
-      localStorage.setItem('badminton_zoom', zoom);
-      App.UI._applyZoom();
-    });
-
     document.getElementById('showResultsTab').addEventListener('change', function() {
       App.state.settings.showResults = this.checked;
       App.save();
@@ -1557,7 +1552,6 @@ App.UI = {
     document.getElementById('courtNumbers').value = courtNums.join(',');
 
     // Update display settings
-    document.getElementById('uiZoom').value = localStorage.getItem('badminton_zoom') || 1;
     document.getElementById('showResultsTab').checked = App.state.settings.showResults !== false;
     document.getElementById('resultsLimit').value = App.state.settings.resultsLimit || '';
 
@@ -3159,6 +3153,28 @@ App.UI = {
       App.Analytics.track('fullscreen_toggle', { active: !!document.fullscreenElement });
       btn.textContent = document.fullscreenElement ? '\u2716' : '\u26F6';
     });
+  },
+
+  _zoomLevels: [1, 1.25, 1.5, 2],
+
+  _bindZoom: function() {
+    var self = this;
+    var btn = document.getElementById('btnZoom');
+    self._updateZoomButton(btn);
+    btn.addEventListener('click', function() {
+      if (App.Lock.isLocked()) return;
+      var current = parseFloat(localStorage.getItem('badminton_zoom')) || 1;
+      var idx = self._zoomLevels.indexOf(current);
+      var next = self._zoomLevels[(idx + 1) % self._zoomLevels.length];
+      localStorage.setItem('badminton_zoom', next);
+      self._applyZoom();
+      self._updateZoomButton(btn);
+    });
+  },
+
+  _updateZoomButton: function(btn) {
+    var zoom = parseFloat(localStorage.getItem('badminton_zoom')) || 1;
+    btn.textContent = zoom + 'x';
   },
 
   _bindHelp: function() {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260312-1039">
+  <meta name="version" content="v260312-1044">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -46,6 +46,7 @@
       </div>
       <button class="btn-icon" id="btnWakeLock" data-i18n-title="wakeLockTooltip" hidden>&#x2600;</button>
       <button class="btn-icon" id="btnFullscreen" data-i18n-title="fullscreenTooltip">&#x26F6;</button>
+      <button class="btn-icon" id="btnZoom" data-i18n-title="zoomTooltip">1x</button>
       <button class="btn-icon" id="btnHelp" data-i18n-title="helpTooltip">?</button>
       <button class="btn-icon" id="btnToggleMode" data-i18n-title="modeToggleTooltip">
         <span id="modeIcon">&#9881;</span>
@@ -98,15 +99,6 @@
             <small data-i18n="courtNumbersHint"></small>
           </div>
           <button class="btn btn-primary" id="btnApplyCourts" data-i18n="applyCourts"></button>
-          <div class="form-row" style="margin-top:12px">
-            <label for="uiZoom" data-i18n="uiZoomLabel">Powiększenie UI</label>
-            <select id="uiZoom">
-              <option value="1">1x</option>
-              <option value="1.25">1.25x</option>
-              <option value="1.5">1.5x</option>
-              <option value="2">2x</option>
-            </select>
-          </div>
         </div>
 
         <div class="subsection">
@@ -285,8 +277,8 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script defer src="assets/js/i18n.js?v=19"></script>
-  <script defer src="assets/js/app.js?v=33"></script>
+  <script defer src="assets/js/i18n.js?v=20"></script>
+  <script defer src="assets/js/app.js?v=34"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');

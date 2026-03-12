@@ -36,6 +36,7 @@ describe('Header buttons order', function() {
       'langSwitcher',
       'btnWakeLock',
       'btnFullscreen',
+      'btnZoom',
       'btnHelp',
       'btnToggleMode',
       'modeIcon',

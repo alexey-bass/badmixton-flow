@@ -112,6 +112,7 @@ App.i18n = {
 
       // Fullscreen & Wake Lock
       fullscreenTooltip: 'Pełny ekran',
+      zoomTooltip: 'Powiększenie UI',
       helpTooltip: 'Pomoc',
       modeToggleTooltip: 'Przełącz tryb',
       wakeLockTooltip: 'Nie wyłączaj ekranu',
@@ -130,6 +131,7 @@ App.i18n = {
         ['🇵🇱 🇬🇧', 'Język'],
         ['☀', 'Ekran zawsze włączony'],
         ['⛶', 'Pełny ekran'],
+        ['1x', 'Powiększenie UI'],
         ['?', 'Pomoc'],
         ['⚙ / ☰', 'Admin / gracz'],
         ['<span style="color:#4ade80">●</span>', 'Sync (zielony = OK)'],
@@ -415,6 +417,7 @@ App.i18n = {
 
       // Fullscreen & Wake Lock
       fullscreenTooltip: 'Fullscreen',
+      zoomTooltip: 'UI zoom',
       helpTooltip: 'Help',
       modeToggleTooltip: 'Toggle mode',
       wakeLockTooltip: 'Keep screen on',
@@ -433,6 +436,7 @@ App.i18n = {
         ['🇵🇱 🇬🇧', 'Language'],
         ['☀', 'Keep screen on'],
         ['⛶', 'Fullscreen'],
+        ['1x', 'UI zoom'],
         ['?', 'Help'],
         ['⚙ / ☰', 'Admin / player'],
         ['<span style="color:#4ade80">●</span>', 'Sync (green = OK)'],

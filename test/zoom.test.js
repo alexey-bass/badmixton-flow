@@ -48,10 +48,29 @@ describe('UI zoom setting', function() {
     });
   });
 
+  describe('zoom levels cycling', function() {
+    it('should have 4 zoom levels', function() {
+      assert.deepStrictEqual(App.UI._zoomLevels, [1, 1.25, 1.5, 2]);
+    });
+
+    it('should update button text via _updateZoomButton', function() {
+      var btn = document.getElementById('btnZoom');
+      localStorage.setItem('badminton_zoom', 1.5);
+      App.UI._updateZoomButton(btn);
+      assert.strictEqual(btn.textContent, '1.5x');
+    });
+
+    it('should show 1x when no zoom set', function() {
+      var btn = document.getElementById('btnZoom');
+      App.UI._updateZoomButton(btn);
+      assert.strictEqual(btn.textContent, '1x');
+    });
+  });
+
   describe('i18n keys', function() {
-    it('should have uiZoomLabel in both languages', function() {
-      assert.notStrictEqual(App.i18n.translations.pl.uiZoomLabel, undefined);
-      assert.notStrictEqual(App.i18n.translations.en.uiZoomLabel, undefined);
+    it('should have zoomTooltip in both languages', function() {
+      assert.notStrictEqual(App.i18n.translations.pl.zoomTooltip, undefined);
+      assert.notStrictEqual(App.i18n.translations.en.zoomTooltip, undefined);
     });
   });
 });
