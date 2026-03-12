@@ -1393,7 +1393,14 @@ App.UI = {
     this.renderCurrentTab();
     this.applyLockState();
     this._applyResultsTabVisibility();
+    this._applyZoom();
     this.cacheTimerElements();
+  },
+
+  _applyZoom: function() {
+    if (!document.body || !document.body.style) return;
+    var zoom = parseFloat(localStorage.getItem('badminton_zoom')) || 1;
+    document.body.style.zoom = zoom === 1 ? '' : zoom;
   },
 
   _applyResultsTabVisibility: function() {
@@ -1465,6 +1472,12 @@ App.UI = {
       App.save();
       App.UI.renderAll();
       App.UI.showToast(App.t('courtsUpdated') + numbers.join(', '));
+    });
+
+    document.getElementById('uiZoom').addEventListener('change', function() {
+      var zoom = parseFloat(this.value) || 1;
+      localStorage.setItem('badminton_zoom', zoom);
+      App.UI._applyZoom();
     });
 
     document.getElementById('showResultsTab').addEventListener('change', function() {
@@ -1543,7 +1556,8 @@ App.UI = {
     var courtNums = Object.values(App.state.courts).map(function(c) { return c.displayNumber; });
     document.getElementById('courtNumbers').value = courtNums.join(',');
 
-    // Update results settings
+    // Update display settings
+    document.getElementById('uiZoom').value = localStorage.getItem('badminton_zoom') || 1;
     document.getElementById('showResultsTab').checked = App.state.settings.showResults !== false;
     document.getElementById('resultsLimit').value = App.state.settings.resultsLimit || '';
 

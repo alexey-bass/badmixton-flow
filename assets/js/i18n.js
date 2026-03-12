@@ -39,6 +39,9 @@ App.i18n = {
       courtNumbersHint: 'oddzielone przecinkami, np. 1,2,3',
       applyCourts: 'Zastosuj korty',
 
+      // Display settings
+      uiZoomLabel: 'Powiększenie UI',
+
       // Results settings
       resultsSettings: 'Ustawienia wyników',
       showResultsLabel: 'Pokaż zakładkę Wyniki',
@@ -339,6 +342,9 @@ App.i18n = {
       courtNumbersLabel: 'Court numbers',
       courtNumbersHint: 'comma-separated, e.g. 1,2,3',
       applyCourts: 'Apply courts',
+
+      // Display settings
+      uiZoomLabel: 'UI zoom',
 
       // Results settings
       resultsSettings: 'Results settings',

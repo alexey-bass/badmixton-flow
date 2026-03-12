@@ -147,6 +147,11 @@ Header layout (left to right): title, lock indicator (🔒) | language switcher,
 - Uses the Screen Wake Lock API — hidden on browsers that don't support it
 - Auto-reacquires the lock when the tab becomes visible again
 
+### UI Zoom
+- Zoom selector (1x / 1.25x / 1.5x / 2x) on Session tab for large screens (e.g. Smart TV)
+- Uses CSS `zoom` on `body` — scales everything uniformly without CSS rewrites
+- Stored per device in `localStorage` (`badminton_zoom`), not synced — each device keeps its own zoom level
+
 ### Score Tracking
 - Finish confirmation modal with optional score input (e.g. 21:15)
 - If score provided: wins/losses and points scored/conceded tracked per player
