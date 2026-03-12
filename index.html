@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260311-1947">
+  <meta name="version" content="v260312-1007">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -98,6 +98,25 @@
             <small data-i18n="courtNumbersHint"></small>
           </div>
           <button class="btn btn-primary" id="btnApplyCourts" data-i18n="applyCourts"></button>
+        </div>
+
+        <div class="subsection">
+          <h2 data-i18n="resultsSettings">Ustawienia wyników</h2>
+          <div class="form-row">
+            <label class="checkbox-row">
+              <input type="checkbox" id="showResultsTab" checked>
+              <span data-i18n="showResultsLabel">Pokaż zakładkę Wyniki</span>
+            </label>
+          </div>
+          <div class="form-row">
+            <label for="resultsLimit" data-i18n="resultsLimitLabel">Widok wyników</label>
+            <select id="resultsLimit">
+              <option value="" data-i18n-opt="resultsLimitFull">Pełny ranking</option>
+              <option value="3" data-i18n-opt="resultsLimitTop3">Top 3</option>
+              <option value="5" data-i18n-opt="resultsLimitTop5">Top 5</option>
+              <option value="10" data-i18n-opt="resultsLimitTop10">Top 10</option>
+            </select>
+          </div>
         </div>
 
         <div class="subsection">
@@ -257,8 +276,8 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script defer src="assets/js/i18n.js?v=16"></script>
-  <script defer src="assets/js/app.js?v=30"></script>
+  <script defer src="assets/js/i18n.js?v=17"></script>
+  <script defer src="assets/js/app.js?v=31"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');

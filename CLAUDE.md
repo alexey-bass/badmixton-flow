@@ -151,6 +151,7 @@ Header layout (left to right): title, lock indicator (🔒) | language switcher,
 - Finish confirmation modal with optional score input (e.g. 21:15)
 - If score provided: wins/losses and points scored/conceded tracked per player
 - Results tab shows leaderboard sorted by wins → win rate → point differential
+- Configurable via Session tab: hide Results tab in player mode (`showResults`), limit leaderboard to top 3/5/10 (`resultsLimit`)
 - Click any player row to open detailed stats modal: overview, favorite partner, best pair (min 2 games, win rate), most common opponent, head-to-head W/L table
 
 ### i18n (Internationalization)
@@ -200,7 +201,7 @@ Session state stored in `localStorage` as `bs_YYYY-MM-DD` (local) or `bs_<syncSe
   waitingQueue: [playerId, ...],
   courts: { [id]: Court },
   matches: { [id]: Match },
-  settings: { courtNumbers, syncEnabled, syncSessionId, locked, autoLockTime, clearQueueOnLock },
+  settings: { courtNumbers, syncEnabled, syncSessionId, locked, autoLockTime, clearQueueOnLock, showResults, resultsLimit },
   nextPlayerNumber: 1,
   isAdmin: true
 }

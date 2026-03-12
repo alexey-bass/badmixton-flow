@@ -39,6 +39,15 @@ App.i18n = {
       courtNumbersHint: 'oddzielone przecinkami, np. 1,2,3',
       applyCourts: 'Zastosuj korty',
 
+      // Results settings
+      resultsSettings: 'Ustawienia wyników',
+      showResultsLabel: 'Pokaż zakładkę Wyniki',
+      resultsLimitLabel: 'Widok wyników',
+      resultsLimitFull: 'Pełny ranking',
+      resultsLimitTop3: 'Top 3',
+      resultsLimitTop5: 'Top 5',
+      resultsLimitTop10: 'Top 10',
+
       // Session lock
       sessionLock: 'Blokada sesji',
       lockSession: 'Zablokuj sesję',
@@ -330,6 +339,15 @@ App.i18n = {
       courtNumbersLabel: 'Court numbers',
       courtNumbersHint: 'comma-separated, e.g. 1,2,3',
       applyCourts: 'Apply courts',
+
+      // Results settings
+      resultsSettings: 'Results settings',
+      showResultsLabel: 'Show Results tab',
+      resultsLimitLabel: 'Results view',
+      resultsLimitFull: 'Full leaderboard',
+      resultsLimitTop3: 'Top 3',
+      resultsLimitTop5: 'Top 5',
+      resultsLimitTop10: 'Top 10',
 
       // Session lock
       sessionLock: 'Session lock',

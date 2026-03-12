@@ -43,14 +43,21 @@ function setupBrowserMocks() {
     key: function(i) { return Object.keys(this._data)[i] || null; }
   };
 
+  var elementCache = {};
   global.document = {
     querySelector: function() { return null; },
     querySelectorAll: function() { return []; },
-    getElementById: function() { return createMockElement(); },
+    getElementById: function(id) {
+      if (!elementCache[id]) {
+        elementCache[id] = createMockElement();
+      }
+      return elementCache[id];
+    },
     createElement: function(tag) {
       return createMockElement({ tagName: tag, children: [] });
     },
-    addEventListener: function() {}
+    addEventListener: function() {},
+    _clearElementCache: function() { elementCache = {}; }
   };
 
   global.window = {

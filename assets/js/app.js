@@ -129,6 +129,8 @@ App.Storage = {
     if (state.settings.locked === undefined) state.settings.locked = false;
     if (state.settings.autoLockTime === undefined) state.settings.autoLockTime = null;
     if (state.settings.clearQueueOnLock === undefined) state.settings.clearQueueOnLock = false;
+    if (state.settings.showResults === undefined) state.settings.showResults = true;
+    if (state.settings.resultsLimit === undefined) state.settings.resultsLimit = null;
     if (!state.nextPlayerNumber) state.nextPlayerNumber = 1;
     if (!state.date) state.date = App.Utils.getISODate(new Date());
     if (state.isAdmin === undefined) state.isAdmin = true;
@@ -235,7 +237,9 @@ App.Session = {
         syncSessionId: null,
         locked: false,
         autoLockTime: null,
-        clearQueueOnLock: false
+        clearQueueOnLock: false,
+        showResults: true,
+        resultsLimit: null
       },
       nextPlayerNumber: 1,
       lastModified: Date.now(),
@@ -1388,7 +1392,19 @@ App.UI = {
   renderAll: function() {
     this.renderCurrentTab();
     this.applyLockState();
+    this._applyResultsTabVisibility();
     this.cacheTimerElements();
+  },
+
+  _applyResultsTabVisibility: function() {
+    if (!App.state || !document.body || !document.body.classList) return;
+    var show = App.state.settings.showResults;
+    var isAdmin = !document.body.classList.contains('player-mode');
+    var tab = document.querySelector('.tab[data-tab="results"]');
+    if (tab) {
+      // In player mode, respect the setting; in admin mode, always show
+      tab.style.display = (!show && !isAdmin) ? 'none' : '';
+    }
   },
 
   applyLockState: function() {
@@ -1449,6 +1465,17 @@ App.UI = {
       App.save();
       App.UI.renderAll();
       App.UI.showToast(App.t('courtsUpdated') + numbers.join(', '));
+    });
+
+    document.getElementById('showResultsTab').addEventListener('change', function() {
+      App.state.settings.showResults = this.checked;
+      App.save();
+      App.UI._applyResultsTabVisibility();
+    });
+
+    document.getElementById('resultsLimit').addEventListener('change', function() {
+      App.state.settings.resultsLimit = this.value ? parseInt(this.value) : null;
+      App.save();
     });
 
     document.getElementById('btnLockSession').addEventListener('click', function() {
@@ -1515,6 +1542,10 @@ App.UI = {
     // Update court numbers in input
     var courtNums = Object.values(App.state.courts).map(function(c) { return c.displayNumber; });
     document.getElementById('courtNumbers').value = courtNums.join(',');
+
+    // Update results settings
+    document.getElementById('showResultsTab').checked = App.state.settings.showResults !== false;
+    document.getElementById('resultsLimit').value = App.state.settings.resultsLimit || '';
 
     // Update lock controls
     var locked = App.Lock.isLocked();
@@ -2584,6 +2615,12 @@ App.UI = {
       return bDiff - aDiff;
     });
 
+    // Apply results limit
+    var limit = App.state.settings.resultsLimit;
+    if (limit && limit > 0) {
+      players = players.slice(0, limit);
+    }
+
     var html = '<table class="results-table">';
     html += '<thead><tr>';
     html += '<th>#</th>';
@@ -3153,6 +3190,7 @@ App.UI = {
         document.getElementById('modeIcon').innerHTML = '&#9776;';
       }
       localStorage.setItem('badminton_mode', isAdmin ? 'admin' : 'player');
+      self._applyResultsTabVisibility();
     }
 
     // Restore saved mode, default to player
