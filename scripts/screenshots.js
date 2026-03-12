@@ -32,7 +32,7 @@ async function seedDemoData(page) {
   await page.evaluate(function() {
     // Create session
     App.Session.create();
-    App.Session.initCourts([1, 2, 3]);
+    App.Session.initCourts([1, 2, 3, 4]);
 
     // Add players
     var names = ['Anna', 'Bartek', 'Celina', 'Damian', 'Ewa', 'Filip',
@@ -104,17 +104,39 @@ async function seedDemoData(page) {
       });
     });
 
-    // Put an active game on court 1
-    var court1Key = Object.keys(App.state.courts)[0];
-    var court1 = App.state.courts[court1Key];
-    court1.occupied = true;
-    court1.gameStartTime = now - 420000; // 7 min ago
-    court1.currentMatch = {
-      teamA: [ids[0], ids[2]],
-      teamB: [ids[5], ids[7]]
-    };
-    // Remove those players from queue
-    [ids[0], ids[2], ids[5], ids[7]].forEach(function(pid) {
+    // Court 1: 2v2, started 7 min ago
+    // Court 2: 2v1, started 5 min ago
+    // Court 3: 1v1, started 3 min ago
+    // Court 4: empty
+    var courtKeys = Object.keys(App.state.courts);
+    var activeGames = [
+      { teamA: [ids[0], ids[2]], teamB: [ids[5], ids[7]], ago: 420000, court: 0 },
+      { teamA: [ids[3], ids[6]], teamB: [ids[9]],         ago: 300000, court: 1 },
+      { teamA: [ids[8]],         teamB: [ids[10]],        ago: 180000, court: 2 }
+    ];
+
+    var playingIds = [];
+    activeGames.forEach(function(g) {
+      var mId = App.Utils.generateId('m');
+      App.state.matches[mId] = {
+        id: mId,
+        teamA: g.teamA,
+        teamB: g.teamB,
+        score: null,
+        status: 'playing',
+        startTime: now - g.ago,
+        endTime: null,
+        courtId: courtKeys[g.court]
+      };
+      var court = App.state.courts[courtKeys[g.court]];
+      court.occupied = true;
+      court.gameStartTime = now - g.ago;
+      court.currentMatch = mId;
+      playingIds = playingIds.concat(g.teamA).concat(g.teamB);
+    });
+
+    // Remove playing players from queue
+    playingIds.forEach(function(pid) {
       App.Queue.remove(pid);
     });
 
@@ -200,7 +222,20 @@ async function main() {
       }
     }
 
-    console.log('\nAll screenshots captured successfully!');
+    console.log('\nAll screenshots captured. Optimizing PNGs...');
+
+    // Optimize with pngquant (lossy, significant size reduction)
+    try {
+      execSync('pngquant --version', { stdio: 'ignore' });
+      execSync('pngquant --force --quality=65-90 --skip-if-larger --ext .png ' +
+        TABS.map(function(t) { return '"' + path.join(OUT_DIR, t[0] + '.png') + '"'; }).join(' '),
+        { stdio: 'inherit' });
+      console.log('PNGs optimized with pngquant.');
+    } catch (e) {
+      console.log('pngquant not found — skipping optimization. Install with: brew install pngquant');
+    }
+
+    console.log('Done!');
   } catch (err) {
     console.error('Error:', err.message);
     exitCode = 1;

@@ -87,6 +87,23 @@ npm run simulation -- --lang pl                                       # Polish r
 
 Runs a full session simulation using the app's suggestion algorithm and generates an HTML report (`simulation-report.html`) with leaderboard, pair stats, match log, and games distribution. Supports `--lang pl|en` (default: en). Open in browser and print to PDF.
 
+### Screenshots:
+```bash
+npm run screenshots   # regenerate all screenshots in screenshots/
+```
+
+Uses Playwright (Chromium) to capture each tab at 768×1024 @2x. PNGs are auto-optimized with `pngquant` (lossy, ~70% smaller); skipped gracefully if not installed (`brew install pngquant`). The script (`scripts/screenshots.js`) starts a local server, seeds demo data (12 players, finished matches, active games), and captures:
+- `01-board` — Board tab in player mode: 4 courts (2v2, 2v1, 1v1, empty), queue sidebar
+- `02-players` — Players tab in admin mode
+- `03-results` — Results leaderboard + session highlights in player mode
+- `04-queue` — Queue tab in admin mode
+- `05-courts` — Courts tab in admin mode
+- `06-session` — Session tab in admin mode
+- `07-history` — History tab in admin mode
+- `08-help` — Help modal overlay
+
+When adding new tabs or modals, add an entry to the `TABS` array in the script. Screenshots are committed to `screenshots/` and referenced in README.
+
 ## Architecture
 
 Single global `App` object (created in `assets/js/i18n.js`) with modules:
