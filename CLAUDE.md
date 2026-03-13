@@ -188,7 +188,13 @@ Split scoring (algorithmic options + custom):
 
 Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated) with app version in the footer.
 
-Header layout (left to right): title, lock indicator (🔒) | language switcher, wake lock (☀), fullscreen (⛶), zoom (1x), help (?), mode toggle (⚙), sync indicator (●).
+Header layout (left to right): title + session name, lock indicator (🔒) | language switcher, wake lock (☀), fullscreen (⛶), zoom (1x), help (?), mode toggle (⚙), sync indicator (●).
+
+### Session Name
+- Optional custom name set when creating a new session or edited by clicking the name in the header
+- Displayed in the header bar after "Badmixton Flow" (e.g. "Badmixton Flow — Thursday training")
+- Hidden when empty — header shows just "Badmixton Flow"
+- Stored as `state.name`
 
 ### Screen Wake Lock
 - Toggle button (☀) in header keeps the tablet screen on during sessions
@@ -249,12 +255,12 @@ Session state stored in `localStorage` as `bs_YYYY-MM-DD` (local) or `bs_<syncSe
 {
   version: 1,
   date: "2026-03-10",
-  dayName: "Monday",
+  name: "",
   players: { [id]: Player },
   waitingQueue: [playerId, ...],
   courts: { [id]: Court },
   matches: { [id]: Match },
-  settings: { courtNumbers, syncEnabled, syncSessionId, locked, autoLockTime, clearQueueOnLock, showResults, resultsLimit },
+  settings: { syncEnabled, syncSessionId, locked, autoLockTime, clearQueueOnLock, showResults, resultsLimit },
   nextPlayerNumber: 1,
   isAdmin: true
 }

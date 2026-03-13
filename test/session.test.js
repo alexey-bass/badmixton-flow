@@ -16,7 +16,7 @@ describe('App.Session', function() {
       assert.ok(App.state);
       assert.strictEqual(App.state.version, 1);
       assert.ok(App.state.date);
-      assert.ok(App.state.dayName);
+      assert.strictEqual(App.state.name, '');
       assert.deepStrictEqual(App.state.players, {});
       assert.deepStrictEqual(App.state.waitingQueue, []);
       assert.deepStrictEqual(App.state.courts, {});
@@ -25,6 +25,24 @@ describe('App.Session', function() {
       assert.strictEqual(App.state.isAdmin, true);
       assert.strictEqual(App.state.settings.syncEnabled, false);
       assert.strictEqual(App.state.settings.syncSessionId, null);
+    });
+
+    it('should have exact top-level keys', function() {
+      App.Session.create();
+      var keys = Object.keys(App.state).sort();
+      assert.deepStrictEqual(keys, [
+        'courts', 'date', 'isAdmin', 'lastModified', 'matches',
+        'name', 'nextPlayerNumber', 'players', 'settings', 'version', 'waitingQueue'
+      ]);
+    });
+
+    it('should have exact settings keys', function() {
+      App.Session.create();
+      var keys = Object.keys(App.state.settings).sort();
+      assert.deepStrictEqual(keys, [
+        'autoLockTime', 'clearQueueOnLock', 'locked',
+        'resultsLimit', 'showResults', 'syncEnabled', 'syncSessionId'
+      ]);
     });
 
     it('should set today\'s date', function() {

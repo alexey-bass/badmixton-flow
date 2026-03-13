@@ -279,6 +279,8 @@ App.i18n = {
       no: 'Nie',
 
       // Session actions
+      sessionNameLabel: 'Nazwa sesji',
+      sessionNamePlaceholder: 'np. Czwartkowy trening',
       confirmNewSession: 'Utworzyć nową sesję? Obecne dane zostaną zapisane.',
       newSessionCreated: 'Nowa sesja utworzona',
       confirmResetDay: 'Zresetować dane za dzisiaj?',
@@ -320,8 +322,6 @@ App.i18n = {
       playersRenumbered: 'Gracze przenumerowani',
       confirmUndoMatch: 'Cofnąć ostatni zakończony mecz?',
 
-      // Day names
-      days: ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota']
     },
 
     en: {
@@ -590,6 +590,8 @@ App.i18n = {
       no: 'No',
 
       // Session actions
+      sessionNameLabel: 'Session name',
+      sessionNamePlaceholder: 'e.g. Thursday training',
       confirmNewSession: 'Create new session? Current data will be saved.',
       newSessionCreated: 'New session created',
       confirmResetDay: 'Reset today\'s data?',
@@ -631,8 +633,6 @@ App.i18n = {
       playersRenumbered: 'Players renumbered',
       confirmUndoMatch: 'Undo last finished match?',
 
-      // Day names
-      days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
   },
 

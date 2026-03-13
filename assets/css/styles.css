@@ -61,6 +61,18 @@ body {
 .topbar h1 {
   font-size: 18px;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-name-header {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.session-name-header:before {
+  content: " — ";
 }
 
 .topbar-left {

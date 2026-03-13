@@ -21,6 +21,7 @@ Web app for managing player queues and court assignments during amateur badminto
 - **Two UI modes** — Board (player-facing: courts, queue, results) and Management (admin: full control)
 - **Screen wake lock** — keeps the tablet display on during sessions (Screen Wake Lock API)
 - **Offline-first PWA** — service worker caches the app for instant loads and offline use, installable on mobile
+- **Custom session name** — optional name shown in header bar, set on create or click to edit
 - **Session lock** — manual or timed lock disables all actions, optional queue clear on lock, red header indicator, synced across devices
 - **Multi-device sync** — Firebase Realtime Database, shareable session links with auto-join
 - **Quick help** — in-app instructions modal with app version, translated
@@ -124,7 +125,7 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 - Google Analytics (gtag.js)
 - Mobile-first responsive CSS
 - Preconnect hints for faster CDN loading
-- Node.js built-in test runner (`node:test`) — 290+ tests, zero dependencies
+- Node.js built-in test runner (`node:test`) — 295+ tests, zero dependencies
 - Lighthouse CI — 100/100 across Performance, Accessibility, and SEO
 
 ## Simulation

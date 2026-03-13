@@ -48,12 +48,6 @@ App.Utils = {
     return dd + '.' + mm + '.' + yyyy;
   },
 
-  getDayName: function(date) {
-    var days = App.t('days');
-    var d = date instanceof Date ? date : new Date(date);
-    return days[d.getDay()];
-  },
-
   getISODate: function(date) {
     var d = date instanceof Date ? date : new Date(date);
     return d.toISOString().split('T')[0];
@@ -124,7 +118,7 @@ App.Storage = {
     if (!state.courts || typeof state.courts !== 'object') state.courts = {};
     if (!state.matches || typeof state.matches !== 'object') state.matches = {};
     if (!state.settings || typeof state.settings !== 'object') {
-      state.settings = { courtNumbers: [1,2,3,4], syncEnabled: false, syncSessionId: null };
+      state.settings = { syncEnabled: false, syncSessionId: null };
     }
     if (state.settings.locked === undefined) state.settings.locked = false;
     if (state.settings.autoLockTime === undefined) state.settings.autoLockTime = null;
@@ -133,6 +127,7 @@ App.Storage = {
     if (state.settings.resultsLimit === undefined) state.settings.resultsLimit = null;
     if (!state.nextPlayerNumber) state.nextPlayerNumber = 1;
     if (!state.date) state.date = App.Utils.getISODate(new Date());
+    if (state.name === undefined) state.name = '';
     if (state.isAdmin === undefined) state.isAdmin = true;
     // Ensure player fields (migration)
     Object.values(state.players).forEach(function(p) {
@@ -219,20 +214,19 @@ App.Storage = {
 // SESSION — Session management
 // ============================================================
 App.Session = {
-  create: function(dayName) {
+  create: function(name) {
     var today = new Date();
     var dateStr = App.Utils.getISODate(today);
 
     App.state = {
       version: 1,
       date: dateStr,
-      dayName: dayName || App.Utils.getDayName(today),
+      name: name || '',
       players: {},
       waitingQueue: [],
       courts: {},
       matches: {},
       settings: {
-        courtNumbers: [1, 2, 3, 4],
         syncEnabled: false,
         syncSessionId: null,
         locked: false,
@@ -1441,11 +1435,25 @@ App.UI = {
   },
 
   renderAll: function() {
+    this.renderSessionName();
     this.renderCurrentTab();
     this.applyLockState();
     this._applyResultsTabVisibility();
     this._applyZoom();
     this.cacheTimerElements();
+  },
+
+  renderSessionName: function() {
+    var headerEl = document.getElementById('sessionNameHeader');
+    if (!headerEl) return;
+    var sessionName = App.state.name;
+    if (sessionName) {
+      headerEl.textContent = sessionName;
+      headerEl.hidden = false;
+    } else {
+      headerEl.textContent = '';
+      headerEl.hidden = true;
+    }
   },
 
   _applyZoom: function() {
@@ -1478,13 +1486,55 @@ App.UI = {
   _bindDashboard: function() {
     var self = this;
     document.getElementById('btnNewSession').addEventListener('click', function() {
-      self.showConfirm(App.t('confirmNewSession'), function() {
-        App.Session.create();
+      var html = '<h2>' + App.t('newSession') + '</h2>';
+      html += '<p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">' + App.t('confirmNewSession') + '</p>';
+      html += '<label style="font-size:13px; color:var(--text-secondary);">' + App.t('sessionNameLabel') + '</label>';
+      html += '<input type="text" id="sessionNameInput" placeholder="' + App.t('sessionNamePlaceholder') + '" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; margin:6px 0 16px;">';
+      html += '<div class="btn-row">';
+      html += '<button class="btn btn-success" id="btnNewSessionOk">' + App.t('ok') + '</button>';
+      html += '<button class="btn btn-secondary" id="btnNewSessionCancel">' + App.t('cancelAction') + '</button>';
+      html += '</div>';
+
+      self.showModal(html);
+      document.getElementById('sessionNameInput').focus();
+
+      document.getElementById('btnNewSessionOk').addEventListener('click', function() {
+        var name = document.getElementById('sessionNameInput').value.trim();
+        App.Session.create(name);
         App.Session.initCourts([1, 2, 3, 4]);
         App.Analytics.track('session_create', { court_count: 4 });
+        App.UI.hideModal();
         App.UI.renderAll();
         App.UI.showToast(App.t('newSessionCreated'));
       });
+      document.getElementById('btnNewSessionCancel').addEventListener('click', function() {
+        App.UI.hideModal();
+      });
+      document.getElementById('sessionNameInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('btnNewSessionOk').click();
+      });
+    });
+
+    document.getElementById('sessionNameHeader').addEventListener('click', function() {
+      if (App.Lock.isLocked()) return;
+      var html = '<h2>' + App.t('sessionNameLabel') + '</h2>';
+      html += '<input type="text" id="editSessionNameInput" value="' + App.UI._esc(App.state.name || '') + '" placeholder="' + App.t('sessionNamePlaceholder') + '" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; margin-bottom:16px;">';
+      html += '<div class="btn-row">';
+      html += '<button class="btn btn-success" id="btnEditSessionNameOk">' + App.t('ok') + '</button>';
+      html += '<button class="btn btn-secondary" id="btnEditSessionNameCancel">' + App.t('cancelAction') + '</button>';
+      html += '</div>';
+      self.showModal(html);
+      var input = document.getElementById('editSessionNameInput');
+      input.focus();
+      input.select();
+      document.getElementById('btnEditSessionNameOk').addEventListener('click', function() {
+        App.state.name = input.value.trim();
+        App.save();
+        App.UI.hideModal();
+        self.renderSessionName();
+      });
+      document.getElementById('btnEditSessionNameCancel').addEventListener('click', function() { App.UI.hideModal(); });
+      input.addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('btnEditSessionNameOk').click(); });
     });
 
     document.getElementById('btnResetToday').addEventListener('click', function() {

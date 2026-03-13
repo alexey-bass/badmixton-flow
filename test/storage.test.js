@@ -24,6 +24,20 @@ describe('App.Storage', function() {
       var loaded = App.Storage.load('2020-01-01');
       assert.strictEqual(loaded, null);
     });
+
+    it('should preserve full session structure through save/load round-trip', function() {
+      App.Session.create('Test Session');
+      App.Session.initCourts([1, 2]);
+      var id = App.Players.add('Alice');
+      App.Players.markPresent(id);
+      App.Storage.save();
+
+      var loaded = App.Storage.load(App.state.date);
+      assert.deepStrictEqual(Object.keys(loaded).sort(), Object.keys(App.state).sort());
+      assert.deepStrictEqual(Object.keys(loaded.settings).sort(), Object.keys(App.state.settings).sort());
+      assert.strictEqual(loaded.name, 'Test Session');
+      assert.deepStrictEqual(Object.keys(loaded.players[id]).sort(), Object.keys(App.state.players[id]).sort());
+    });
   });
 
   describe('_ensureState', function() {
@@ -72,6 +86,50 @@ describe('App.Storage', function() {
       assert.strictEqual(state.nextPlayerNumber, 5);
       assert.strictEqual(state.date, '2026-01-01');
     });
+
+    it('should produce all required top-level keys from minimal input', function() {
+      var state = App.Storage._ensureState({ players: {} });
+      var keys = Object.keys(state).sort();
+      assert.deepStrictEqual(keys, [
+        'courts', 'date', 'isAdmin', 'matches', 'name',
+        'nextPlayerNumber', 'players', 'settings', 'waitingQueue'
+      ]);
+    });
+
+    it('should produce all required settings keys from missing settings', function() {
+      var state = App.Storage._ensureState({ players: {} });
+      var keys = Object.keys(state.settings).sort();
+      assert.deepStrictEqual(keys, [
+        'autoLockTime', 'clearQueueOnLock', 'locked',
+        'resultsLimit', 'showResults', 'syncEnabled', 'syncSessionId'
+      ]);
+    });
+
+    it('should add all migration fields to minimal player', function() {
+      var state = App.Storage._ensureState({
+        players: { p1: { id: 'p1', name: 'Test', number: 1, present: true, gamesPlayed: 0, lastGameEndTime: 0, queueEntryTime: 0 } }
+      });
+      var keys = Object.keys(state.players.p1).sort();
+      assert.deepStrictEqual(keys, [
+        'gamesPlayed', 'id', 'lastGameEndTime', 'losses', 'name', 'number',
+        'opponentHistory', 'partnerHistory', 'pointsConceded', 'pointsScored',
+        'present', 'queueEntryTime', 'totalWaitTime', 'waitCount',
+        'wins', 'wishedPartners', 'wishesFulfilled'
+      ]);
+    });
+
+    it('should produce exact player keys via Players.add', function() {
+      App.Session.create();
+      var id = App.Players.add('Test');
+      var keys = Object.keys(App.state.players[id]).sort();
+      assert.deepStrictEqual(keys, [
+        'gamesPlayed', 'id', 'lastGameEndTime', 'losses', 'name', 'number',
+        'opponentHistory', 'partnerHistory', 'pointsConceded', 'pointsScored',
+        'present', 'queueEntryTime', 'totalWaitTime', 'waitCount',
+        'wins', 'wishedPartners', 'wishesFulfilled'
+      ]);
+    });
+
   });
 
   describe('_keySuffix', function() {
