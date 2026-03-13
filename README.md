@@ -147,6 +147,7 @@ Generates `simulation-report.html` with player leaderboard, pair statistics, mat
 - MacBook Air M3 (macOS, Chrome/Safari)
 - Samsung S24 Ultra (Android, Chrome)
 - Xiaomi Redmi Pad Pro 12.1" (HyperOS, Chrome)
+- Magcubic L018 (Google Chrome)
 
 ## License
 
