@@ -304,6 +304,17 @@ describe('Emoji name disambiguation', function() {
     it('should return false for empty players list', function() {
       assert.strictEqual(App.UI._hasNameDuplicate('Ola'), false);
     });
+
+    it('should exclude player by id', function() {
+      var id = App.Players.add('Ola');
+      assert.strictEqual(App.UI._hasNameDuplicate('Ola', id), false);
+    });
+
+    it('should still detect duplicates when excluding a different player', function() {
+      var id1 = App.Players.add('Ola');
+      var id2 = App.Players.add('Kasia');
+      assert.strictEqual(App.UI._hasNameDuplicate('Ola', id2), true);
+    });
   });
 
   describe('_emojiAnimals', function() {

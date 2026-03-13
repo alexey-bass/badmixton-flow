@@ -477,6 +477,15 @@ App.Players = {
     App.save();
   },
 
+  rename: function(playerId, newName) {
+    if (!newName || !newName.trim()) return false;
+    var p = App.state.players[playerId];
+    if (!p) return false;
+    p.name = newName.trim();
+    App.save();
+    return true;
+  },
+
   isOnCourt: function(playerId) {
     var matches = App.state.matches;
     return Object.values(matches).some(function(m) {
@@ -1670,6 +1679,9 @@ App.UI = {
           self.renderPlayers();
           self.renderQueue();
           break;
+        case 'rename':
+          self._showRenameDialog(playerId);
+          break;
         case 'set-wish':
           self._showWishDialog(playerId);
           break;
@@ -1688,10 +1700,11 @@ App.UI = {
 
   _emojiAnimals: ['🐶','🐱','🐰','🦊','🐼','🐸','🐯','🐨','🦁','🐮','🐷','🐵','🐔','🦄','🐢','🐬','🦋','🐝'],
 
-  _hasNameDuplicate: function(name) {
+  _hasNameDuplicate: function(name, excludeId) {
     var lower = name.toLowerCase();
     var players = App.state.players;
     for (var id in players) {
+      if (id === excludeId) continue;
       if (players[id].name.toLowerCase() === lower) return true;
     }
     return false;
@@ -1827,6 +1840,7 @@ App.UI = {
         }
       }
 
+      html += '<button class="btn btn-secondary btn-xs" data-action="rename" title="' + App.t('editPlayerName') + '">&#9998;</button>';
       html += '<button class="btn btn-secondary btn-xs" data-action="set-wish" title="' + App.t('wishPlayWith') + '" style="color:#e11d48">&#9829;</button>';
       if (status !== 'playing') {
         html += '<button class="btn btn-danger btn-xs" data-action="delete" title="' + App.t('deletePlayer') + '">&#10005;</button>';
@@ -1840,6 +1854,63 @@ App.UI = {
     }
 
     document.getElementById('playerList').innerHTML = html;
+  },
+
+  _showRenameDialog: function(playerId) {
+    var player = App.state.players[playerId];
+    if (!player) return;
+    var self = this;
+
+    var html = '<h2>' + App.t('editPlayerName') + '</h2>';
+    html += '<input type="text" id="renameInput" value="' + this._esc(player.name) + '" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; margin-bottom:12px;">';
+    html += '<div style="margin-bottom:12px;"><button class="btn btn-secondary btn-sm" id="btnRenameEmoji">🐾 ' + App.t('emojiToggleTooltip') + '</button></div>';
+    html += '<div id="renameEmojiChips" class="emoji-chips" hidden style="margin-bottom:12px;"></div>';
+    html += '<div class="btn-row">';
+    html += '<button class="btn btn-success" id="btnRenameSave">' + App.t('ok') + '</button>';
+    html += '<button class="btn btn-secondary" id="btnRenameCancel">' + App.t('cancelAction') + '</button>';
+    html += '</div>';
+
+    this.showModal(html);
+
+    var input = document.getElementById('renameInput');
+    input.focus();
+    input.select();
+
+    // Emoji toggle
+    var chips = document.getElementById('renameEmojiChips');
+    var chipsHtml = '';
+    self._emojiAnimals.forEach(function(emoji) {
+      chipsHtml += '<button data-emoji="' + emoji + '">' + emoji + '</button>';
+    });
+    chips.innerHTML = chipsHtml;
+
+    document.getElementById('btnRenameEmoji').addEventListener('click', function() {
+      chips.hidden = !chips.hidden;
+    });
+
+    chips.onclick = function(e) {
+      var btn = e.target.closest('[data-emoji]');
+      if (!btn) return;
+      input.value = input.value.trim() + ' ' + btn.dataset.emoji;
+      input.focus();
+    };
+
+    var doRename = function() {
+      var newName = input.value;
+      if (App.Players.rename(playerId, newName)) {
+        App.UI.showToast(App.t('playerRenamed'));
+        App.UI.hideModal();
+        self.renderPlayers();
+        self.renderQueue();
+        self.renderBoard();
+      }
+    };
+
+    document.getElementById('btnRenameSave').addEventListener('click', function() { doRename(); });
+    document.getElementById('btnRenameCancel').addEventListener('click', function() { App.UI.hideModal(); });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doRename();
+    });
   },
 
   _showWishDialog: function(playerId) {

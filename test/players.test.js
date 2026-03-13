@@ -192,6 +192,45 @@ describe('App.Players', function() {
     });
   });
 
+  describe('rename', function() {
+    it('should rename a player', function() {
+      var id = App.Players.add('Alice');
+      var result = App.Players.rename(id, 'Alicia');
+      assert.strictEqual(result, true);
+      assert.strictEqual(App.state.players[id].name, 'Alicia');
+    });
+
+    it('should trim whitespace', function() {
+      var id = App.Players.add('Alice');
+      App.Players.rename(id, '  Bob  ');
+      assert.strictEqual(App.state.players[id].name, 'Bob');
+    });
+
+    it('should return false for empty name', function() {
+      var id = App.Players.add('Alice');
+      assert.strictEqual(App.Players.rename(id, ''), false);
+      assert.strictEqual(App.Players.rename(id, '   '), false);
+      assert.strictEqual(App.Players.rename(id, null), false);
+      assert.strictEqual(App.state.players[id].name, 'Alice');
+    });
+
+    it('should return false for non-existent player', function() {
+      assert.strictEqual(App.Players.rename('fake_id', 'Test'), false);
+    });
+
+    it('should preserve all other player fields', function() {
+      var id = App.Players.add('Alice');
+      App.Players.markPresent(id);
+      var before = Object.assign({}, App.state.players[id]);
+      App.Players.rename(id, 'Alicia');
+      var after = App.state.players[id];
+      assert.strictEqual(after.name, 'Alicia');
+      assert.strictEqual(after.number, before.number);
+      assert.strictEqual(after.present, before.present);
+      assert.strictEqual(after.gamesPlayed, before.gamesPlayed);
+    });
+  });
+
   describe('getPresent', function() {
     it('should return only present players', function() {
       var id1 = App.Players.add('Alice');

@@ -203,6 +203,8 @@ App.i18n = {
       emojiSkip: 'dodaj tak',
       emojiToggleTooltip: 'Dodaj emoji do imienia',
       emojiPickName: 'Wybierz emoji:',
+      editPlayerName: 'Zmień imię',
+      playerRenamed: 'Imię zmienione',
       wishPlayWith: 'Chcę grać z...',
 
       // Queue
@@ -509,6 +511,8 @@ App.i18n = {
       emojiSkip: 'add as-is',
       emojiToggleTooltip: 'Add emoji to name',
       emojiPickName: 'Pick an emoji:',
+      editPlayerName: 'Edit name',
+      playerRenamed: 'Name updated',
       wishPlayWith: 'Want to play with...',
 
       // Queue

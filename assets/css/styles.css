@@ -518,6 +518,10 @@ body.player-mode .admin-only {
   gap: 4px;
 }
 
+.emoji-chips[hidden] {
+  display: none;
+}
+
 .emoji-chips button {
   background: var(--card);
   border: 1px solid var(--border);
