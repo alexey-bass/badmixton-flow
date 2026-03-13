@@ -582,6 +582,9 @@ body.player-mode .admin-only {
   flex: 1;
   font-weight: 500;
   font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player-games {
@@ -762,6 +765,13 @@ body.player-mode .admin-only {
   background: var(--gray-light);
   border-radius: var(--radius-sm);
   font-weight: 500;
+  overflow: hidden;
+}
+
+.team > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-a {
@@ -996,6 +1006,13 @@ body.player-mode .admin-only {
   gap: 10px;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.board-team > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 16px;
   font-weight: 600;
 }
@@ -1070,6 +1087,9 @@ body.player-mode .admin-only {
 .board-queue-item .bq-name {
   flex: 1;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .board-queue-item .bq-games {
