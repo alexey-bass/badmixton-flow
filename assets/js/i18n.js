@@ -315,6 +315,9 @@ App.i18n = {
       confirmDeleteSuffix: '?',
       confirmRemoveAll: 'Usunąć wszystkich graczy, którzy nie są na korcie?',
       removeAllPlayers: 'Usuń wszystkich',
+      renumberPlayers: 'Przenumeruj',
+      confirmRenumber: 'Przenumerować graczy od 1?',
+      playersRenumbered: 'Gracze przenumerowani',
       confirmUndoMatch: 'Cofnąć ostatni zakończony mecz?',
 
       // Day names
@@ -623,6 +626,9 @@ App.i18n = {
       confirmDeleteSuffix: '?',
       confirmRemoveAll: 'Remove all players who are not on court?',
       removeAllPlayers: 'Remove all',
+      renumberPlayers: 'Renumber',
+      confirmRenumber: 'Renumber players from 1?',
+      playersRenumbered: 'Players renumbered',
       confirmUndoMatch: 'Undo last finished match?',
 
       // Day names

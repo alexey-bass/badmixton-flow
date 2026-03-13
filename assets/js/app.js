@@ -486,6 +486,18 @@ App.Players = {
     return true;
   },
 
+  renumber: function() {
+    var present = this.getPresent().sort(function(a, b) {
+      return a.number - b.number;
+    });
+    var num = 1;
+    present.forEach(function(p) {
+      p.number = num++;
+    });
+    App.state.nextPlayerNumber = num;
+    App.save();
+  },
+
   isOnCourt: function(playerId) {
     var matches = App.state.matches;
     return Object.values(matches).some(function(m) {
@@ -1622,6 +1634,17 @@ App.UI = {
           self.renderPlayers();
           self.renderQueue();
         }
+      });
+    });
+
+    document.getElementById('btnRenumberPlayers').addEventListener('click', function() {
+      if (App.Lock.isLocked()) return;
+      self.showConfirm(App.t('confirmRenumber'), function() {
+        App.Players.renumber();
+        App.UI.showToast(App.t('playersRenumbered'));
+        self.renderPlayers();
+        self.renderQueue();
+        self.renderBoard();
       });
     });
 

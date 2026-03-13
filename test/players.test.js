@@ -231,6 +231,39 @@ describe('App.Players', function() {
     });
   });
 
+  describe('renumber', function() {
+    it('should renumber present players sequentially', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      var id3 = App.Players.add('Carol');
+      App.Players.markPresent(id1); // #1
+      App.Players.markPresent(id2); // #2
+      App.Players.markPresent(id3); // #3
+      App.Players.markAbsent(id2);  // remove Bob
+      // Alice=#1, Carol=#3 — gap at #2
+      App.Players.renumber();
+      assert.strictEqual(App.state.players[id1].number, 1);
+      assert.strictEqual(App.state.players[id3].number, 2);
+      assert.strictEqual(App.state.nextPlayerNumber, 3);
+    });
+
+    it('should preserve original order', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id2); // #1
+      App.Players.markPresent(id1); // #2
+      App.Players.renumber();
+      assert.strictEqual(App.state.players[id2].number, 1);
+      assert.strictEqual(App.state.players[id1].number, 2);
+    });
+
+    it('should handle no present players', function() {
+      App.Players.add('Alice');
+      App.Players.renumber();
+      assert.strictEqual(App.state.nextPlayerNumber, 1);
+    });
+  });
+
   describe('getPresent', function() {
     it('should return only present players', function() {
       var id1 = App.Players.add('Alice');
