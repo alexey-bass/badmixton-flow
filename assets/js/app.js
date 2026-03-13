@@ -186,7 +186,7 @@ App.Storage = {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'badminton_' + App.state.date + '.json';
+    a.download = App.Storage.SESSION_PREFIX + App.Storage._keySuffix() + '.json';
     a.click();
     URL.revokeObjectURL(url);
     App.Analytics.track('export_data');
