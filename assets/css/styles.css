@@ -1763,6 +1763,13 @@ tr.results-gold .results-name { color: #b8860b; }
 .schedule-game.ready { border-left-color: #f59e0b; background: #fffbeb; }
 .schedule-game.finished { opacity: 0.5; }
 
+/* Court game number */
+.court-game-num {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
 /* Mode badge */
 .mode-badge {
   display: inline-block;

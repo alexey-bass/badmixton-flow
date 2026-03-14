@@ -870,6 +870,15 @@ App.Courts = {
     var court = App.state.courts[courtId];
     if (!court || !court.gameStartTime) return 0;
     return Date.now() - court.gameStartTime;
+  },
+
+  // Count finished + playing games on this court
+  getGameNumber: function(courtId) {
+    var count = 0;
+    Object.values(App.state.matches).forEach(function(m) {
+      if (m.courtId === courtId && (m.status === 'finished' || m.status === 'playing')) count++;
+    });
+    return count;
   }
 };
 
@@ -3257,9 +3266,12 @@ App.UI = {
       }
 
       var cardClass = isOccupied ? 'occupied' : (readyEntry ? 'ready' : 'free');
+      var gameNum = App.Courts.getGameNumber(court.id);
       html += '<div class="board-court-card ' + cardClass + '" data-court-id="' + court.id + '">';
       html += '<div class="board-court-header">';
-      html += '<h2>' + App.t('court') + court.displayNumber + '</h2>';
+      html += '<h2>' + App.t('court') + court.displayNumber;
+      if (gameNum > 0) html += ' <span class="court-game-num">' + App.t('scheduleGame') + ' ' + gameNum + '</span>';
+      html += '</h2>';
       if (isOccupied) {
         html += '<span class="board-court-timer" data-start="' + court.gameStartTime + '">' +
           App.Utils.formatTime(Date.now() - court.gameStartTime) + '</span>';
