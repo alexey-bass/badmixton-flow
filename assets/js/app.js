@@ -872,11 +872,11 @@ App.Courts = {
     return Date.now() - court.gameStartTime;
   },
 
-  // Count finished + playing games on this court
+  // Count finished games on this court
   getGameNumber: function(courtId) {
     var count = 0;
     Object.values(App.state.matches).forEach(function(m) {
-      if (m.courtId === courtId && (m.status === 'finished' || m.status === 'playing')) count++;
+      if (m.courtId === courtId && m.status === 'finished') count++;
     });
     return count;
   }
@@ -3267,6 +3267,8 @@ App.UI = {
 
       var cardClass = isOccupied ? 'occupied' : (readyEntry ? 'ready' : 'free');
       var gameNum = App.Courts.getGameNumber(court.id);
+      // Ready/playing game counts as the next one
+      if (isOccupied || readyEntry) gameNum++;
       html += '<div class="board-court-card ' + cardClass + '" data-court-id="' + court.id + '">';
       html += '<div class="board-court-header">';
       html += '<h2>' + App.t('court') + court.displayNumber;
