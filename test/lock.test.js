@@ -30,7 +30,7 @@ describe('App.Lock', function() {
 
     it('should persist to localStorage', function() {
       App.Lock.lock();
-      var saved = App.Storage.load(App.state.date);
+      var saved = App.Storage.load(App.state.sessionId);
       assert.strictEqual(saved.settings.locked, true);
     });
 
@@ -71,7 +71,7 @@ describe('App.Lock', function() {
     it('should persist to localStorage', function() {
       App.state.settings.locked = true;
       App.Lock.unlock();
-      var saved = App.Storage.load(App.state.date);
+      var saved = App.Storage.load(App.state.sessionId);
       assert.strictEqual(saved.settings.locked, false);
     });
   });

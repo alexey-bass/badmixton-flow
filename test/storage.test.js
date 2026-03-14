@@ -14,14 +14,14 @@ describe('App.Storage', function() {
       App.Session.create();
       App.Storage.save();
 
-      var loaded = App.Storage.load(App.state.date);
+      var loaded = App.Storage.load(App.state.sessionId);
       assert.ok(loaded);
       assert.strictEqual(loaded.date, App.state.date);
       assert.deepStrictEqual(loaded.players, {});
     });
 
-    it('should return null for non-existent date', function() {
-      var loaded = App.Storage.load('2020-01-01');
+    it('should return null for non-existent key', function() {
+      var loaded = App.Storage.load('nonexistent-key');
       assert.strictEqual(loaded, null);
     });
 
@@ -32,7 +32,7 @@ describe('App.Storage', function() {
       App.Players.markPresent(id);
       App.Storage.save();
 
-      var loaded = App.Storage.load(App.state.date);
+      var loaded = App.Storage.load(App.state.sessionId);
       assert.deepStrictEqual(Object.keys(loaded).sort(), Object.keys(App.state).sort());
       assert.deepStrictEqual(Object.keys(loaded.settings).sort(), Object.keys(App.state.settings).sort());
       assert.strictEqual(loaded.name, 'Test Session');
@@ -92,7 +92,8 @@ describe('App.Storage', function() {
       var keys = Object.keys(state).sort();
       assert.deepStrictEqual(keys, [
         'courts', 'date', 'isAdmin', 'matches', 'mode', 'name',
-        'nextPlayerNumber', 'players', 'schedule', 'settings', 'waitingQueue'
+        'nextPlayerNumber', 'players', 'schedule', 'sessionId',
+        'settings', 'waitingQueue'
       ]);
     });
 
@@ -133,9 +134,10 @@ describe('App.Storage', function() {
   });
 
   describe('_keySuffix', function() {
-    it('should return date when sync is disabled', function() {
+    it('should return sessionId by default', function() {
       App.Session.create();
-      assert.strictEqual(App.Storage._keySuffix(), App.state.date);
+      assert.strictEqual(App.Storage._keySuffix(), App.state.sessionId);
+      assert.ok(App.state.sessionId.startsWith('bf-'));
     });
 
     it('should return syncSessionId when sync is enabled', function() {
@@ -158,17 +160,17 @@ describe('App.Storage', function() {
       assert.strictEqual(loaded.settings.syncSessionId, 'test-session-abc');
     });
 
-    it('should save sync session under sync key, not date key', function() {
+    it('should save sync session under sync key, not sessionId key', function() {
       App.Session.create();
-      localStorage.clear(); // clear the date-keyed save from create()
+      localStorage.clear(); // clear the sessionId-keyed save from create()
       App.state.settings.syncEnabled = true;
       App.state.settings.syncSessionId = 'test-session-xyz';
       App.Storage.save();
 
       // Should be found by sync ID
       assert.ok(App.Storage.load('test-session-xyz'));
-      // Should not be found by date
-      assert.strictEqual(App.Storage.load(App.state.date), null);
+      // Should not be found by sessionId
+      assert.strictEqual(App.Storage.load(App.state.sessionId), null);
     });
 
     it('should store last key suffix', function() {
@@ -200,7 +202,7 @@ describe('App.Storage', function() {
       App.Session.create();
       App.Storage.save();
       var index = App.Storage.getIndex();
-      assert.ok(index.includes(App.state.date));
+      assert.ok(index.includes(App.state.sessionId));
     });
   });
 });

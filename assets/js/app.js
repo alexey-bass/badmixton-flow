@@ -29,6 +29,13 @@ App.Utils = {
     return 'bf-' + Math.random().toString(36).substr(2, 7);
   },
 
+  updateUrlSession: function(sessionId) {
+    if (typeof history === 'undefined' || !history.replaceState) return;
+    var url = new URL(window.location.href);
+    url.searchParams.set('session', sessionId);
+    history.replaceState(null, '', url.toString());
+  },
+
   formatTime: function(ms) {
     if (!ms || ms <= 0) return '0:00';
     var totalSec = Math.floor(ms / 1000);
@@ -77,6 +84,9 @@ App.Storage = {
   _keySuffix: function() {
     if (App.state && App.state.settings.syncEnabled && App.state.settings.syncSessionId) {
       return App.state.settings.syncSessionId;
+    }
+    if (App.state && App.state.sessionId) {
+      return App.state.sessionId;
     }
     return App.state ? App.state.date : App.Utils.getISODate(new Date());
   },
@@ -133,6 +143,7 @@ App.Storage = {
     if (!state.date) state.date = App.Utils.getISODate(new Date());
     if (state.name === undefined) state.name = '';
     if (state.isAdmin === undefined) state.isAdmin = true;
+    if (!state.sessionId) state.sessionId = App.Utils.generateSessionId();
     if (!state.mode) state.mode = 'queue';
     if (!Array.isArray(state.schedule)) state.schedule = [];
     // Ensure player fields (migration)
@@ -226,6 +237,7 @@ App.Session = {
 
     App.state = {
       version: 1,
+      sessionId: App.Utils.generateSessionId(),
       date: dateStr,
       name: name || '',
       mode: mode || 'queue',
@@ -1985,6 +1997,7 @@ App.UI = {
         var mode = modeEl ? modeEl.value : 'queue';
         App.Session.create(name, mode);
         App.Session.initCourts([1, 2, 3, 4]);
+        App.Utils.updateUrlSession(App.state.sessionId);
         App.Analytics.track('session_create', { court_count: 4, mode: mode });
         App.UI.hideModal();
         App.UI.renderAll();
@@ -4617,14 +4630,25 @@ App.init = function() {
 
   var today = App.Utils.getISODate(new Date());
 
-  // Try to load today's session, then last session, otherwise create new
-  var saved = App.Storage.load(today);
+  // Check for ?session= URL parameter — try localStorage first
+  var urlParams = new URLSearchParams(window.location.search);
+  var sessionParam = urlParams.get('session');
+
+  var saved = null;
+  if (sessionParam) {
+    saved = App.Storage.load(sessionParam);
+  }
   if (!saved) {
+    // Try last session, then today's date (legacy)
     var lastSuffix = localStorage.getItem(App.Storage.LAST_KEY);
-    if (lastSuffix && lastSuffix !== today) {
+    if (lastSuffix) {
       saved = App.Storage.load(lastSuffix);
-      // Only restore if it's from today (sync session with different key)
+      // Only restore if it's from today
       if (saved && saved.date !== today) saved = null;
+    }
+    if (!saved) {
+      // Legacy: try date-keyed session
+      saved = App.Storage.load(today);
     }
   }
   if (saved) {
@@ -4635,18 +4659,20 @@ App.init = function() {
     App.Session.initCourts([1, 2, 3, 4]);
   }
 
+  // Update URL to reflect current session
+  App.Utils.updateUrlSession(App.state.sessionId);
+
   // Initialize UI
   App.UI.init();
   App.UI.renderAll();
 
-  // Check for ?session= URL parameter — auto-join
-  var urlParams = new URLSearchParams(window.location.search);
-  var sessionParam = urlParams.get('session');
-  if (sessionParam) {
+  // If ?session= param didn't match localStorage, try Firebase sync
+  if (sessionParam && !App.Storage.load(sessionParam)) {
     document.getElementById('sessionIdInput').value = sessionParam;
     App.Sync.init(sessionParam, false, function(ok) {
       if (ok) {
         App.Analytics.track('sync_join', { source: 'url' });
+        App.Utils.updateUrlSession(sessionParam);
         App.UI.renderSync();
       }
     });

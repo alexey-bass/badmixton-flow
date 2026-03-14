@@ -33,7 +33,7 @@ describe('App.Session', function() {
       assert.deepStrictEqual(keys, [
         'courts', 'date', 'isAdmin', 'lastModified', 'matches',
         'mode', 'name', 'nextPlayerNumber', 'players', 'schedule',
-        'settings', 'version', 'waitingQueue'
+        'sessionId', 'settings', 'version', 'waitingQueue'
       ]);
     });
 
