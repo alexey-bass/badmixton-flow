@@ -2753,7 +2753,10 @@ App.UI = {
         html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
         html += '<span style="font-size:12px; color:var(--text-secondary);">' + App.t('scheduleGame') + ' ' + gameNum + courtLabel + '</span>';
         if (entry.status === 'pending') {
+          html += '<span>';
+          html += '<button class="btn btn-secondary btn-xs" data-action="schedule-edit" data-game="' + entry.id + '">&#9998;</button> ';
           html += '<button class="btn btn-danger btn-xs" data-action="schedule-remove" data-game="' + entry.id + '">&#10005;</button>';
+          html += '</span>';
         }
         html += '</div>';
         html += '<div style="font-size:14px; font-weight:500;">' + teamANames + ' <span style="color:var(--text-secondary)">vs</span> ' + teamBNames + '</div>';
@@ -2791,6 +2794,10 @@ App.UI = {
             App.Shuffle.autoAssignAll();
             App.UI.renderAll();
           });
+          break;
+        case 'schedule-edit':
+          var editId = btn.dataset.game;
+          if (editId) App.UI._showScheduleEditModal(editId);
           break;
         case 'schedule-remove':
           var gameId = btn.dataset.game;
@@ -4020,6 +4027,44 @@ App.UI = {
 
   // --- Mode toggle ---
   // --- Finish game confirm ---
+  _showScheduleEditModal: function(scheduleId) {
+    var entry = App.state.schedule.find(function(e) { return e.id === scheduleId; });
+    if (!entry || entry.status !== 'pending') return;
+
+    var splitObj = { teamA: entry.teamA.slice(), teamB: entry.teamB.slice() };
+
+    var html = '<h2>' + App.t('scheduleGame') + '</h2>';
+    html += App.UI._buildCustomSplitHtml(splitObj.teamA, splitObj.teamB);
+    html += '<div class="btn-row">';
+    html += '<button class="btn btn-success" id="btnScheduleEditSave">' + App.t('ok') + '</button>';
+    html += '<button class="btn btn-secondary" onclick="App.UI.hideModal()">' + App.t('cancelAction') + '</button>';
+    html += '</div>';
+
+    this.showModal(html);
+
+    // Activate the custom split area immediately
+    var customArea = document.getElementById('customSplitArea');
+    customArea.classList.add('active');
+    App.UI._syncCustomSplit(customArea, splitObj);
+
+    // Handle chip clicks
+    document.getElementById('modalContent').addEventListener('click', function(e) {
+      var chip = e.target.closest('.custom-split-chip');
+      if (chip) {
+        App.UI._handleCustomChipClick(chip, customArea, splitObj);
+      }
+    });
+
+    // Save
+    document.getElementById('btnScheduleEditSave').addEventListener('click', function() {
+      entry.teamA = splitObj.teamA;
+      entry.teamB = splitObj.teamB;
+      App.save();
+      App.UI.hideModal();
+      App.UI.renderAll();
+    });
+  },
+
   _showFinishConfirm: function(courtId) {
     var court = App.state.courts[courtId];
     if (!court || !court.currentMatch) return;
