@@ -270,6 +270,7 @@ App.i18n = {
       // Wish dialog
       wishFor: 'Życzenie: ',
       selectPartner: 'Wybierz partnera do gry:',
+      wishShuffleHint: 'Ustaw przed losowaniem. Zmiana w trakcie wymaga ponownego losowania.',
       noWish: 'Bez życzenia',
       closeBtn: 'Zamknij',
       wishSet: 'Życzenie ustawione',
@@ -607,6 +608,7 @@ App.i18n = {
       // Wish dialog
       wishFor: 'Wish: ',
       selectPartner: 'Select partner:',
+      wishShuffleHint: 'Set before shuffling. Changes mid-session require reshuffle.',
       noWish: 'No preference',
       closeBtn: 'Close',
       wishSet: 'Wish set',

@@ -2576,6 +2576,9 @@ App.UI = {
     var present = App.Players.getPresent().filter(function(p) { return p.id !== playerId; });
     var html = '<h2>' + App.t('wishFor') + App.UI._esc(player.name) + '</h2>';
     html += '<p style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;">' + App.t('selectPartner') + '</p>';
+    if (App.Shuffle.isShuffleMode()) {
+      html += '<p style="color:var(--warning); font-size:12px; margin-bottom:12px;">' + App.t('wishShuffleHint') + '</p>';
+    }
     html += '<div class="modal-player-list" id="wishPlayerList">';
 
     // "Clear all" option
