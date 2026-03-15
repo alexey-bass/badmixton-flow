@@ -2687,10 +2687,12 @@ App.UI = {
     document.getElementById('queueCount').textContent = stats.pending + stats.ready;
 
     // Action buttons
+    var hasPending = stats.pending + stats.ready > 0;
     var html = '<div class="btn-row" style="margin-bottom:12px;">';
-    html += '<button class="btn btn-primary btn-sm" data-action="schedule-generate">' + App.t('shuffleGenerate') + '</button>';
-    html += '<button class="btn btn-secondary btn-sm" data-action="schedule-continue">' + App.t('shuffleContinue') + '</button>';
-    html += '<button class="btn btn-warning btn-sm" data-action="schedule-reshuffle">' + App.t('shuffleReshuffle') + '</button>';
+    html += '<button class="btn btn-primary btn-sm" data-action="schedule-generate">' + (schedule.length === 0 ? App.t('shuffleGenerate') : App.t('shuffleContinue')) + '</button>';
+    if (hasPending) {
+      html += '<button class="btn btn-warning btn-sm" data-action="schedule-reshuffle">' + App.t('shuffleReshuffle') + '</button>';
+    }
     html += '</div>';
 
     if (schedule.length === 0) {
@@ -2747,11 +2749,6 @@ App.UI = {
         case 'schedule-generate':
           var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
           App.Shuffle.generate(courtCount * 2);
-          App.Shuffle.autoAssignAll();
-          App.UI.renderAll();
-          break;
-        case 'schedule-continue':
-          App.Shuffle.continueShuffle();
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
           break;
@@ -3432,7 +3429,7 @@ App.UI = {
 
       // Continue shuffle button
       qhtml += '<div style="text-align:center; padding:8px 0;">';
-      qhtml += '<button class="btn btn-primary btn-sm" data-action="board-continue-shuffle">' + App.t('shuffleContinue') + '</button>';
+      qhtml += '<button class="btn btn-primary btn-sm" data-action="board-continue-shuffle">' + (upcoming.length === 0 && App.state.schedule.length === 0 ? App.t('shuffleGenerate') : App.t('shuffleContinue')) + '</button>';
       qhtml += '</div>';
 
       document.getElementById('boardQueueList').innerHTML = qhtml;
@@ -3509,7 +3506,8 @@ App.UI = {
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
       if (btn.dataset.action === 'board-continue-shuffle') {
-        App.Shuffle.continueShuffle();
+        var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
+        App.Shuffle.generate(courtCount * 2);
         App.Shuffle.autoAssignAll();
         App.UI.renderAll();
       }
