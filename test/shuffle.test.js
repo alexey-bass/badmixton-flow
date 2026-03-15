@@ -627,16 +627,18 @@ describe('App.Shuffle', function() {
 
   describe('full lifecycle', function() {
     it('should auto-assign next game after finishing', function() {
-      var ids = createShuffleSession(8);
+      // Need 12+ players so next pending game has free players while court 2 is busy
+      var ids = createShuffleSession(12);
       App.Shuffle.generate(4);
       App.Shuffle.autoAssignAll();
 
       // Start and finish game on court 1
       var ready1 = App.state.schedule.find(function(e) { return e.courtId === 'c_1' && e.status === 'ready'; });
+      assert.ok(ready1, 'Court 1 should have a ready game');
       App.Courts.startGame('c_1', ready1.teamA, ready1.teamB);
       App.Courts.finishGame('c_1');
 
-      // Court should have a new ready game auto-assigned
+      // Court should have a new ready game auto-assigned (players from finished game are now free)
       var newReady = App.state.schedule.find(function(e) { return e.courtId === 'c_1' && e.status === 'ready'; });
       assert.ok(newReady, 'Next game should be auto-assigned to freed court');
       assert.notStrictEqual(newReady.id, ready1.id);
@@ -657,6 +659,33 @@ describe('App.Shuffle', function() {
         assert.strictEqual(App.state.players[pid].gamesPlayed, 1);
       });
       assert.strictEqual(entry.status, 'finished');
+    });
+  });
+
+  describe('assignNextToCourt player conflict', function() {
+    it('should not assign game when players are in another ready game', function() {
+      // 2 players, 2 courts — only 1 game can be ready at a time
+      createShuffleSession(2);
+      App.Shuffle.generate(4);
+      App.Shuffle.autoAssignAll();
+
+      var readyCount = App.state.schedule.filter(function(e) { return e.status === 'ready'; }).length;
+      assert.strictEqual(readyCount, 1, 'Only 1 game should be ready with 2 players');
+    });
+
+    it('should assign next game after first finishes', function() {
+      createShuffleSession(2);
+      App.Shuffle.generate(2);
+      App.Shuffle.autoAssignAll();
+
+      // Start and finish the ready game
+      var ready = App.state.schedule.find(function(e) { return e.status === 'ready'; });
+      App.Courts.startGame(ready.courtId, ready.teamA, ready.teamB);
+      App.Courts.finishGame(ready.courtId);
+
+      // Now second game should be auto-assigned
+      var newReady = App.state.schedule.find(function(e) { return e.status === 'ready'; });
+      assert.ok(newReady, 'Second game should be assigned after first finishes');
     });
   });
 

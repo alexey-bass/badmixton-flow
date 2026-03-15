@@ -1546,15 +1546,33 @@ App.Shuffle = {
     return this.generate(courtCount * 2);
   },
 
-  // Assign first pending entry to this court (status → ready)
+  // Assign first eligible pending entry to this court (status → ready)
+  // Skips games where any player is already in a ready or playing entry
   assignNextToCourt: function(courtId) {
     var court = App.state.courts[courtId];
     if (!court || court.occupied) return null;
 
-    var pending = App.state.schedule.filter(function(e) { return e.status === 'pending'; });
-    if (pending.length === 0) return null;
+    // Collect players already busy in ready/playing schedule entries
+    var busyPids = {};
+    App.state.schedule.forEach(function(e) {
+      if (e.status === 'ready' || e.status === 'playing') {
+        e.teamA.concat(e.teamB).forEach(function(pid) { busyPids[pid] = true; });
+      }
+    });
 
-    var entry = pending[0];
+    var pending = App.state.schedule.filter(function(e) { return e.status === 'pending'; });
+    // Find first pending game where all players are free
+    var entry = null;
+    for (var i = 0; i < pending.length; i++) {
+      var all = pending[i].teamA.concat(pending[i].teamB);
+      var allFree = all.every(function(pid) { return !busyPids[pid]; });
+      if (allFree) {
+        entry = pending[i];
+        break;
+      }
+    }
+    if (!entry) return null;
+
     entry.status = 'ready';
     entry.courtId = courtId;
     return entry;
