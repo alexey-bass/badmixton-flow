@@ -2780,7 +2780,8 @@ App.UI = {
       switch (btn.dataset.action) {
         case 'schedule-generate':
           var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-          App.Shuffle.generate(courtCount * 2);
+          var isInitial = App.state.schedule.length === 0;
+          App.Shuffle.generate(isInitial ? courtCount * 2 : courtCount);
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
           break;
@@ -3467,9 +3468,14 @@ App.UI = {
         qhtml = '<div style="text-align:center; color:var(--text-secondary); padding:12px;">' + App.t('scheduleEmpty') + '</div>';
       }
 
-      // Continue shuffle button
-      qhtml += '<div style="text-align:center; padding:8px 0;">';
-      qhtml += '<button class="btn btn-primary btn-sm" data-action="board-continue-shuffle">' + (upcoming.length === 0 && App.state.schedule.length === 0 ? App.t('shuffleGenerate') : App.t('shuffleContinue')) + '</button>';
+      // Action buttons
+      var isInitial = App.state.schedule.length === 0;
+      var hasPendingBoard = upcoming.length > 0 || App.state.schedule.some(function(e) { return e.status === 'ready'; });
+      qhtml += '<div style="text-align:center; padding:8px 0; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">';
+      qhtml += '<button class="btn btn-primary btn-sm" data-action="board-continue-shuffle">' + (isInitial ? App.t('shuffleGenerate') : App.t('shuffleContinue')) + '</button>';
+      if (hasPendingBoard) {
+        qhtml += '<button class="btn btn-warning btn-sm" data-action="board-reshuffle">' + App.t('shuffleReshuffle') + '</button>';
+      }
       qhtml += '</div>';
 
       document.getElementById('boardQueueList').innerHTML = qhtml;
@@ -3545,11 +3551,21 @@ App.UI = {
       if (App.Lock.isLocked()) return;
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
-      if (btn.dataset.action === 'board-continue-shuffle') {
-        var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-        App.Shuffle.generate(courtCount * 2);
-        App.Shuffle.autoAssignAll();
-        App.UI.renderAll();
+      switch (btn.dataset.action) {
+        case 'board-continue-shuffle':
+          var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
+          var isInitial = App.state.schedule.length === 0;
+          App.Shuffle.generate(isInitial ? courtCount * 2 : courtCount);
+          App.Shuffle.autoAssignAll();
+          App.UI.renderAll();
+          break;
+        case 'board-reshuffle':
+          App.UI.showConfirm(App.t('confirmReshuffle'), function() {
+            App.Shuffle.reshuffle();
+            App.Shuffle.autoAssignAll();
+            App.UI.renderAll();
+          });
+          break;
       }
     });
   },
