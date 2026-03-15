@@ -75,12 +75,13 @@ App.Utils = {
     var browser = 'Unknown';
     var os = 'Unknown';
 
-    // Detect browser
-    if (ua.indexOf('Firefox/') !== -1) browser = 'Firefox';
-    else if (ua.indexOf('Edg/') !== -1) browser = 'Edge';
-    else if (ua.indexOf('OPR/') !== -1 || ua.indexOf('Opera') !== -1) browser = 'Opera';
-    else if (ua.indexOf('Chrome/') !== -1) browser = 'Chrome';
-    else if (ua.indexOf('Safari/') !== -1) browser = 'Safari';
+    // Detect browser with version
+    var m;
+    if ((m = ua.match(/Firefox\/([\d.]+)/))) browser = 'Firefox/' + m[1];
+    else if ((m = ua.match(/Edg\/([\d.]+)/))) browser = 'Edge/' + m[1];
+    else if ((m = ua.match(/OPR\/([\d.]+)/))) browser = 'Opera/' + m[1];
+    else if ((m = ua.match(/Chrome\/([\d.]+)/))) browser = 'Chrome/' + m[1];
+    else if ((m = ua.match(/Version\/([\d.]+).*Safari/))) browser = 'Safari/' + m[1];
 
     // Detect OS
     if (ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1) os = 'iOS';
