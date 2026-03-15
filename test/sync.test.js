@@ -241,6 +241,63 @@ describe('App.Sync', function() {
     });
   });
 
+  describe('disconnect', function() {
+    it('should set connected to false', function() {
+      App.Sync.connected = true;
+      App.Sync._listener = function() {};
+      App.Sync.ref = { off: function() {} };
+
+      var origUpdateStatus = App.Sync._updateStatus;
+      App.Sync._updateStatus = function() {};
+
+      App.Sync.disconnect();
+
+      assert.strictEqual(App.Sync.connected, false);
+      assert.strictEqual(App.Sync._listener, null);
+      assert.strictEqual(App.state.settings.syncEnabled, false);
+
+      App.Sync._updateStatus = origUpdateStatus;
+    });
+
+    it('should call ref.off to detach listener', function() {
+      var offCalled = false;
+      var offListener = null;
+      var listener = function() {};
+      App.Sync.connected = true;
+      App.Sync._listener = listener;
+      App.Sync.ref = {
+        off: function(event, fn) { offCalled = true; offListener = fn; }
+      };
+
+      var origUpdateStatus = App.Sync._updateStatus;
+      App.Sync._updateStatus = function() {};
+
+      App.Sync.disconnect();
+
+      assert.strictEqual(offCalled, true);
+      assert.strictEqual(offListener, listener);
+
+      App.Sync._updateStatus = origUpdateStatus;
+    });
+
+    it('should handle disconnect when ref is null', function() {
+      App.Sync.connected = true;
+      App.Sync._listener = null;
+      App.Sync.ref = null;
+
+      var origUpdateStatus = App.Sync._updateStatus;
+      App.Sync._updateStatus = function() {};
+
+      assert.doesNotThrow(function() {
+        App.Sync.disconnect();
+      });
+
+      assert.strictEqual(App.Sync.connected, false);
+
+      App.Sync._updateStatus = origUpdateStatus;
+    });
+  });
+
   describe('i18n keys', function() {
     it('should have sessionNotFound in both languages', function() {
       assert.notStrictEqual(App.i18n.translations.pl.sessionNotFound, undefined);

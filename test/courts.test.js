@@ -289,4 +289,62 @@ describe('App.Courts', function() {
       assert.strictEqual(available[0].id, 'c_2');
     });
   });
+
+  describe('getGameDuration', function() {
+    it('should return 0 for empty court', function() {
+      setupGameSession();
+      assert.strictEqual(App.Courts.getGameDuration('c_1'), 0);
+    });
+
+    it('should return elapsed time for active game', function() {
+      var ids = setupGameSession();
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      // Set start time to 60s ago
+      App.state.courts['c_1'].gameStartTime = Date.now() - 60000;
+
+      var duration = App.Courts.getGameDuration('c_1');
+      assert.ok(duration >= 59000, 'duration should be ~60s, got ' + duration);
+      assert.ok(duration <= 62000, 'duration should be ~60s, got ' + duration);
+    });
+
+    it('should return 0 for non-existent court', function() {
+      setupGameSession();
+      assert.strictEqual(App.Courts.getGameDuration('c_99'), 0);
+    });
+  });
+
+  describe('getGameNumber', function() {
+    it('should return 0 when no games played on court', function() {
+      setupGameSession();
+      assert.strictEqual(App.Courts.getGameNumber('c_1'), 0);
+    });
+
+    it('should count finished games on specific court', function() {
+      var ids = setupGameSession();
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1');
+
+      assert.strictEqual(App.Courts.getGameNumber('c_1'), 1);
+      assert.strictEqual(App.Courts.getGameNumber('c_2'), 0);
+    });
+
+    it('should not count playing games', function() {
+      var ids = setupGameSession();
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+
+      assert.strictEqual(App.Courts.getGameNumber('c_1'), 0);
+    });
+
+    it('should count multiple games', function() {
+      var ids = setupGameSession();
+      // Game 1
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1');
+      // Game 2
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1');
+
+      assert.strictEqual(App.Courts.getGameNumber('c_1'), 2);
+    });
+  });
 });

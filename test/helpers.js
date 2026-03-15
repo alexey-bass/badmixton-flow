@@ -28,7 +28,8 @@ function createMockElement(overrides) {
     appendChild: function() {},
     removeChild: function() {},
     remove: function() {},
-    focus: function() {}
+    focus: function() {},
+    click: function() {}
   }, overrides);
 }
 
@@ -70,7 +71,20 @@ function setupBrowserMocks() {
 
   global.URLSearchParams = require('url').URLSearchParams;
   global.URL = require('url').URL;
-  global.Blob = function() {};
+  global.Blob = function(parts, options) { this._parts = parts; this._options = options; };
+
+  global.URL.createObjectURL = function() { return 'blob:mock-url'; };
+  global.URL.revokeObjectURL = function() {};
+
+  global.FileReader = function() {};
+  global.FileReader.prototype.readAsText = function(file) {
+    var self = this;
+    if (self.onload) {
+      self.onload({ target: { result: file._content || '' } });
+    }
+  };
+
+  global.history = { replaceState: function() {} };
 
   localStorage.clear();
 }

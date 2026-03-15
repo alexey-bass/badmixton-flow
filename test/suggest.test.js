@@ -92,4 +92,161 @@ describe('App.Suggest', function() {
       assert.strictEqual(result.players.length, 4);
     });
   });
+
+  describe('_pairCount', function() {
+    it('should return 0 when no partner history', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      assert.strictEqual(App.Suggest._pairCount(id1, id2), 0);
+    });
+
+    it('should return partner count from history', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.state.players[id1].partnerHistory[id2] = 3;
+      assert.strictEqual(App.Suggest._pairCount(id1, id2), 3);
+    });
+
+    it('should return 0 for non-existent player', function() {
+      assert.strictEqual(App.Suggest._pairCount('fake', 'also_fake'), 0);
+    });
+  });
+
+  describe('_opponentCount', function() {
+    it('should return 0 when no opponent history', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      assert.strictEqual(App.Suggest._opponentCount(id1, id2), 0);
+    });
+
+    it('should return opponent count from history', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.state.players[id1].opponentHistory[id2] = 5;
+      assert.strictEqual(App.Suggest._opponentCount(id1, id2), 5);
+    });
+
+    it('should return 0 for non-existent player', function() {
+      assert.strictEqual(App.Suggest._opponentCount('fake', 'also_fake'), 0);
+    });
+  });
+
+  describe('_averageGames', function() {
+    it('should return 0 when no present players', function() {
+      assert.strictEqual(App.Suggest._averageGames(), 0);
+    });
+
+    it('should calculate average games of present players', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+      App.Players.markPresent(id2);
+      App.state.players[id1].gamesPlayed = 4;
+      App.state.players[id2].gamesPlayed = 6;
+
+      assert.strictEqual(App.Suggest._averageGames(), 5);
+    });
+
+    it('should ignore absent players', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+      // Bob stays absent
+      App.state.players[id1].gamesPlayed = 4;
+      App.state.players[id2].gamesPlayed = 100;
+
+      assert.strictEqual(App.Suggest._averageGames(), 4);
+    });
+  });
+
+  describe('_splitLabel', function() {
+    it('should format 2v2 team names', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      var id3 = App.Players.add('Carol');
+      var id4 = App.Players.add('Dave');
+
+      var label = App.Suggest._splitLabel({ teamA: [id1, id2], teamB: [id3, id4] });
+      assert.strictEqual(label, 'Alice + Bob  vs  Carol + Dave');
+    });
+
+    it('should format 1v1 team names', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+
+      var label = App.Suggest._splitLabel({ teamA: [id1], teamB: [id2] });
+      assert.strictEqual(label, 'Alice  vs  Bob');
+    });
+  });
+
+  describe('_buildExplanation', function() {
+    it('should include selected player names', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+      App.Players.markPresent(id2);
+
+      var players = [App.state.players[id1], App.state.players[id2]];
+      var selected = [
+        { player: App.state.players[id1], queueIndex: 0, reasons: [] },
+        { player: App.state.players[id2], queueIndex: 1, reasons: [] }
+      ];
+      var split = { teamA: [id1], teamB: [id2], reasons: [] };
+
+      var text = App.Suggest._buildExplanation(selected, split, players);
+      assert.ok(text.includes('Alice'), 'should mention Alice');
+      assert.ok(text.includes('Bob'), 'should mention Bob');
+    });
+
+    it('should include first-in-queue note when applicable', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+      App.Players.markPresent(id2);
+
+      var players = [App.state.players[id1], App.state.players[id2]];
+      var selected = [
+        { player: App.state.players[id1], queueIndex: 0, reasons: [] },
+        { player: App.state.players[id2], queueIndex: 1, reasons: [] }
+      ];
+      var split = { teamA: [id1], teamB: [id2], reasons: [] };
+
+      var text = App.Suggest._buildExplanation(selected, split, players);
+      assert.ok(text.includes(App.t('firstInQueue')), 'should include first-in-queue note');
+    });
+
+    it('should include player reasons when present', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+      App.Players.markPresent(id2);
+
+      var players = [App.state.players[id1], App.state.players[id2]];
+      var selected = [
+        { player: App.state.players[id1], queueIndex: 0, reasons: ['wish fulfilled'] },
+        { player: App.state.players[id2], queueIndex: 1, reasons: [] }
+      ];
+      var split = { teamA: [id1], teamB: [id2], reasons: [] };
+
+      var text = App.Suggest._buildExplanation(selected, split, players);
+      assert.ok(text.includes('Alice: wish fulfilled'), 'should include player reason');
+    });
+
+    it('should include split reasons when present', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+      App.Players.markPresent(id2);
+
+      var players = [App.state.players[id1], App.state.players[id2]];
+      var selected = [
+        { player: App.state.players[id1], queueIndex: 0, reasons: [] },
+        { player: App.state.players[id2], queueIndex: 1, reasons: [] }
+      ];
+      var split = { teamA: [id1], teamB: [id2], reasons: ['balanced teams'] };
+
+      var text = App.Suggest._buildExplanation(selected, split, players);
+      assert.ok(text.includes('balanced teams'), 'should include split reason');
+    });
+  });
 });

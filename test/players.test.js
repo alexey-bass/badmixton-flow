@@ -294,4 +294,113 @@ describe('App.Players', function() {
       assert.strictEqual(App.Players.isOnCourt(id), false);
     });
   });
+
+  describe('getCourtId', function() {
+    it('should return null for player not on court', function() {
+      var id = App.Players.add('Alice');
+      App.Players.markPresent(id);
+      assert.strictEqual(App.Players.getCourtId(id), null);
+    });
+
+    it('should return courtId for player on court', function() {
+      var ids = ['Alice', 'Bob', 'Carol', 'Dave'].map(function(name) {
+        var id = App.Players.add(name);
+        App.Players.markPresent(id);
+        return id;
+      });
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+
+      assert.strictEqual(App.Players.getCourtId(ids[0]), 'c_1');
+      assert.strictEqual(App.Players.getCourtId(ids[2]), 'c_1');
+    });
+
+    it('should return null after game finishes', function() {
+      var ids = ['Alice', 'Bob', 'Carol', 'Dave'].map(function(name) {
+        var id = App.Players.add(name);
+        App.Players.markPresent(id);
+        return id;
+      });
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1');
+
+      assert.strictEqual(App.Players.getCourtId(ids[0]), null);
+    });
+  });
+
+  describe('getStatus', function() {
+    it('should return "absent" for absent player', function() {
+      var id = App.Players.add('Alice');
+      assert.strictEqual(App.Players.getStatus(id), 'absent');
+    });
+
+    it('should return "waiting" for player in queue', function() {
+      var id = App.Players.add('Alice');
+      App.Players.markPresent(id);
+      assert.strictEqual(App.Players.getStatus(id), 'waiting');
+    });
+
+    it('should return "playing" for player on court', function() {
+      var ids = ['Alice', 'Bob', 'Carol', 'Dave'].map(function(name) {
+        var id = App.Players.add(name);
+        App.Players.markPresent(id);
+        return id;
+      });
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      assert.strictEqual(App.Players.getStatus(ids[0]), 'playing');
+    });
+
+    it('should return "present" for present player not in queue and not on court', function() {
+      var id = App.Players.add('Alice');
+      App.Players.markPresent(id);
+      // Remove from queue manually
+      App.Queue.remove(id);
+      assert.strictEqual(App.Players.getStatus(id), 'present');
+    });
+
+    it('should return "absent" for non-existent player', function() {
+      assert.strictEqual(App.Players.getStatus('fake_id'), 'absent');
+    });
+  });
+
+  describe('getSorted', function() {
+    it('should return present players before absent', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      App.Players.markPresent(id1);
+
+      var sorted = App.Players.getSorted();
+      assert.strictEqual(sorted.length, 2);
+      assert.strictEqual(sorted[0].present, true);
+      assert.strictEqual(sorted[1].present, false);
+    });
+
+    it('should sort present players by number', function() {
+      var id1 = App.Players.add('Alice');
+      var id2 = App.Players.add('Bob');
+      var id3 = App.Players.add('Carol');
+      App.Players.markPresent(id3); // #1
+      App.Players.markPresent(id1); // #2
+      App.Players.markPresent(id2); // #3
+
+      var sorted = App.Players.getSorted();
+      assert.strictEqual(sorted[0].name, 'Carol');
+      assert.strictEqual(sorted[1].name, 'Alice');
+      assert.strictEqual(sorted[2].name, 'Bob');
+    });
+
+    it('should sort absent players by name', function() {
+      App.Players.add('Carol');
+      App.Players.add('Alice');
+      App.Players.add('Bob');
+
+      var sorted = App.Players.getSorted();
+      assert.strictEqual(sorted[0].name, 'Alice');
+      assert.strictEqual(sorted[1].name, 'Bob');
+      assert.strictEqual(sorted[2].name, 'Carol');
+    });
+
+    it('should return empty array when no players', function() {
+      assert.deepStrictEqual(App.Players.getSorted(), []);
+    });
+  });
 });

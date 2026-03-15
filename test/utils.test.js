@@ -107,4 +107,45 @@ describe('App.Utils', function() {
       assert.match(info.screen, /^\d+x\d+$/);
     });
   });
+
+  describe('generateSessionId', function() {
+    it('should generate id starting with bf-', function() {
+      var id = App.Utils.generateSessionId();
+      assert.ok(id.startsWith('bf-'));
+    });
+
+    it('should generate unique ids', function() {
+      var id1 = App.Utils.generateSessionId();
+      var id2 = App.Utils.generateSessionId();
+      assert.notStrictEqual(id1, id2);
+    });
+  });
+
+  describe('updateUrlSession', function() {
+    it('should call history.replaceState with session param', function() {
+      var calledWith = null;
+      var origReplaceState = history.replaceState;
+      history.replaceState = function(state, title, url) {
+        calledWith = url;
+      };
+
+      App.Utils.updateUrlSession('test-session');
+
+      assert.ok(calledWith, 'should call replaceState');
+      assert.ok(calledWith.includes('session=test-session'), 'URL should contain session param');
+
+      history.replaceState = origReplaceState;
+    });
+
+    it('should not throw when history is unavailable', function() {
+      var origHistory = global.history;
+      global.history = undefined;
+
+      assert.doesNotThrow(function() {
+        App.Utils.updateUrlSession('test');
+      });
+
+      global.history = origHistory;
+    });
+  });
 });

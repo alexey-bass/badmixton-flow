@@ -219,4 +219,118 @@ describe('App.Storage', function() {
       assert.ok(index.includes(App.state.sessionId));
     });
   });
+
+  describe('getSettings', function() {
+    it('should return empty object when no settings', function() {
+      assert.deepStrictEqual(App.Storage.getSettings(), {});
+    });
+
+    it('should return saved settings', function() {
+      localStorage.setItem(App.Storage.SETTINGS_KEY, JSON.stringify({ lang: 'en' }));
+      assert.deepStrictEqual(App.Storage.getSettings(), { lang: 'en' });
+    });
+
+    it('should return empty object on corrupt JSON', function() {
+      localStorage.setItem(App.Storage.SETTINGS_KEY, '{bad json');
+      assert.deepStrictEqual(App.Storage.getSettings(), {});
+    });
+  });
+
+  describe('saveSettings', function() {
+    it('should persist settings to localStorage', function() {
+      App.Storage.saveSettings({ lang: 'pl', zoom: 1.5 });
+      var raw = JSON.parse(localStorage.getItem(App.Storage.SETTINGS_KEY));
+      assert.strictEqual(raw.lang, 'pl');
+      assert.strictEqual(raw.zoom, 1.5);
+    });
+
+    it('should overwrite previous settings', function() {
+      App.Storage.saveSettings({ lang: 'pl' });
+      App.Storage.saveSettings({ lang: 'en' });
+      assert.deepStrictEqual(App.Storage.getSettings(), { lang: 'en' });
+    });
+  });
+
+  describe('exportJSON', function() {
+    it('should create download with correct filename', function() {
+      App.Session.create();
+      var origShowToast = App.UI.showToast;
+      var toastMsg = null;
+      App.UI.showToast = function(msg) { toastMsg = msg; };
+
+      var createdEl = null;
+      var origCreateElement = document.createElement;
+      document.createElement = function(tag) {
+        createdEl = origCreateElement(tag);
+        return createdEl;
+      };
+
+      App.Storage.exportJSON();
+
+      assert.ok(createdEl, 'should create an anchor element');
+      assert.strictEqual(createdEl.href, 'blob:mock-url');
+      assert.ok(createdEl.download.endsWith('.json'), 'filename should end with .json');
+      assert.ok(createdEl.download.startsWith(App.Storage.SESSION_PREFIX));
+      assert.strictEqual(toastMsg, App.t('exportDone'));
+
+      App.UI.showToast = origShowToast;
+      document.createElement = origCreateElement;
+    });
+  });
+
+  describe('importJSON', function() {
+    it('should import valid state', function() {
+      App.Session.create();
+      var origShowToast = App.UI.showToast;
+      var origRenderAll = App.UI.renderAll;
+      var toastMsg = null;
+      App.UI.showToast = function(msg) { toastMsg = msg; };
+      App.UI.renderAll = function() {};
+
+      var validState = {
+        version: 1, sessionId: 'bf-test', date: '2026-01-01',
+        players: { p1: { name: 'Test' } }, courts: { c1: {} },
+        matches: {}, waitingQueue: [], schedule: [], name: '',
+        settings: { syncEnabled: false, locked: false, autoLockTime: '', clearQueueOnLock: false, showResults: true, resultsLimit: 0 },
+        nextPlayerNumber: 1, isAdmin: true, mode: 'queue'
+      };
+      var file = { _content: JSON.stringify(validState) };
+      App.Storage.importJSON(file);
+
+      assert.strictEqual(App.state.version, 1);
+      assert.strictEqual(App.state.players.p1.name, 'Test');
+      assert.strictEqual(toastMsg, App.t('importDone'));
+
+      App.UI.showToast = origShowToast;
+      App.UI.renderAll = origRenderAll;
+    });
+
+    it('should reject JSON without required fields', function() {
+      App.Session.create();
+      var origShowToast = App.UI.showToast;
+      var toastMsg = null;
+      App.UI.showToast = function(msg) { toastMsg = msg; };
+
+      var file = { _content: JSON.stringify({ foo: 'bar' }) };
+      App.Storage.importJSON(file);
+
+      assert.strictEqual(toastMsg, App.t('invalidFile'));
+
+      App.UI.showToast = origShowToast;
+    });
+
+    it('should handle invalid JSON', function() {
+      App.Session.create();
+      var origShowToast = App.UI.showToast;
+      var toastMsg = null;
+      App.UI.showToast = function(msg) { toastMsg = msg; };
+
+      var file = { _content: '{not valid json' };
+      App.Storage.importJSON(file);
+
+      assert.strictEqual(toastMsg, App.t('fileReadError'));
+
+      App.UI.showToast = origShowToast;
+    });
+  });
 });
