@@ -163,6 +163,14 @@ Two modes, chosen at session creation:
 
 Mode stored as `state.mode` ('queue' | 'shuffle'). Schedule stored as `state.schedule[]` with entries: `{ id, teamA, teamB, status, courtId, matchId }`. Status lifecycle: `pending` → `ready` (assigned to court) → `playing` → `finished`.
 
+**Shuffle algorithm** (`App.Shuffle.generate`):
+1. Collect present players, build virtual history (real stats + existing schedule entries)
+2. For each game: score players by `virtualGamesAboveAvg * 50` + wish bonus (`-80`), pick top N
+3. Diversify (`_diversifyPicked`): if 3+ of the 4 picked players were in the same recent game (finished match or scheduled entry), swap the lowest-priority overlapping player with the best available alternative — ensures players rotate through different opponents
+4. Constraint: no player appears twice within the same batch (batch = `courtCount` games)
+5. Split teams via `_splitWithVirtual` using accumulated partner/opponent history
+6. Initial generation: `courtCount * 2` games; `continueShuffle` adds one batch
+
 ### Living Queue
 Players arrive and get a sequential number (#1, #2, ...). New players (0 games played) are inserted ahead of players who have already played, so latecomers get to play sooner. After a game finishes, all players return to the **end** of the queue. Queue position is the primary factor for next game selection.
 
@@ -244,10 +252,11 @@ Header layout (left to right): title + session name, lock indicator (🔒) | lan
 - CSS `body.session-locked` class disables action buttons globally; JS guards provide defense in depth
 
 ### Firebase Sync
-- Admin creates a session on Session tab, shares the link
+- Admin clicks "Create session" — generates a unique sync ID automatically (no manual input)
 - Creating a session with existing data shows a modal: "Start fresh" or "Keep player list" (resets stats, preserves players)
-- Shareable URL with `?session=` parameter for auto-join
-- Join (URL or button) checks session existence first via `ref.once('value')` — rejects if not found
+- Shareable URL with `?session=` parameter for auto-join; share link + copy button shown after creation
+- Join: paste session ID into input field, or use the `?session=` URL directly
+- Join checks session existence first via `ref.once('value')` — rejects if not found
 - `init()` accepts optional callback for async join result
 - Config inlined in `index.html` `<head>` (public by design for web apps)
 - Not required for local single-device use
@@ -259,11 +268,12 @@ Header layout (left to right): title + session name, lock indicator (🔒) | lan
 
 ## Data Model
 
-Session state stored in `localStorage` as `bs_YYYY-MM-DD` (local) or `bs_<syncSessionId>` (synced). `bs_last` tracks the most recent key suffix. Index at `bs_index`.
+Session state stored in `localStorage` as `bs_<sessionId>` (e.g. `bs_bf-x7kQ9m`) or `bs_<syncSessionId>` (synced). Each session gets a unique `sessionId` (auto-generated hash). `bs_last` tracks the most recent key suffix. Index at `bs_index`. URL updates to `?session=<sessionId>` via `history.replaceState`.
 
 ```
 {
   version: 1,
+  sessionId: "bf-x7kQ9m",  // auto-generated unique hash
   date: "2026-03-10",
   name: "",
   mode: "queue",           // "queue" | "shuffle"
