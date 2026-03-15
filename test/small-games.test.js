@@ -281,6 +281,34 @@ describe('Small games (1v1 and 2v1)', function() {
       assert.deepStrictEqual(App.state.players[p1].partnerHistory, {});
     });
 
+    it('should undo declared winner wins/losses', function() {
+      App.Players.markPresent(p1);
+      App.Players.markPresent(p2);
+      App.Courts.startGame('c_1', [p1], [p2]);
+      App.Courts.finishGame('c_1', null, 'teamA');
+
+      assert.strictEqual(App.state.players[p1].wins, 1);
+      assert.strictEqual(App.state.players[p2].losses, 1);
+      App.Matches.undoLast();
+      assert.strictEqual(App.state.players[p1].wins, 0);
+      assert.strictEqual(App.state.players[p2].losses, 0);
+    });
+
+    it('should undo score-based wins/losses', function() {
+      App.Players.markPresent(p1);
+      App.Players.markPresent(p2);
+      App.Courts.startGame('c_1', [p1], [p2]);
+      App.Courts.finishGame('c_1', '21-15');
+
+      assert.strictEqual(App.state.players[p1].wins, 1);
+      assert.strictEqual(App.state.players[p2].losses, 1);
+      assert.strictEqual(App.state.players[p1].pointsScored, 21);
+      App.Matches.undoLast();
+      assert.strictEqual(App.state.players[p1].wins, 0);
+      assert.strictEqual(App.state.players[p2].losses, 0);
+      assert.strictEqual(App.state.players[p1].pointsScored, 0);
+    });
+
     it('should undo 2v1 partner history only for 2-player team', function() {
       App.Players.markPresent(p1);
       App.Players.markPresent(p2);

@@ -1449,20 +1449,78 @@ body.player-mode .admin-only {
 }
 
 /* --- Finish confirm --- */
-.finish-teams {
+.finish-winner-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   margin: 12px 0;
-  font-weight: 600;
+}
+
+.finish-winner-btn {
+  flex: 1;
+  padding: 14px 12px;
   font-size: 15px;
+  font-weight: 600;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: center;
+}
+
+.finish-winner-btn:hover,
+.finish-winner-btn:active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.finish-winner-icon {
+  display: inline;
+}
+
+.finish-draw-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin: 0 0 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.finish-draw-btn:hover,
+.finish-draw-btn:active {
+  background: var(--bg-secondary);
+  border-color: var(--primary);
 }
 
 .finish-vs {
   color: var(--text-secondary);
   font-weight: 400;
   font-size: 13px;
+}
+
+.finish-score-toggle {
+  text-align: center;
+  margin: 12px 0 4px;
+}
+
+.finish-score-toggle a {
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.finish-score-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 8px;
 }
 
 .finish-score-row {
@@ -1500,6 +1558,17 @@ body.player-mode .admin-only {
   font-size: 12px;
   color: var(--text-secondary);
   margin: 4px 0 16px;
+}
+
+.finish-cancel {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.finish-cancel a {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
 }
 
 /* --- Results table --- */

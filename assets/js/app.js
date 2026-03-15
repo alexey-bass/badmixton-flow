@@ -725,7 +725,7 @@ App.Courts = {
     return matchId;
   },
 
-  finishGame: function(courtId, score) {
+  finishGame: function(courtId, score, winner) {
     var court = App.state.courts[courtId];
     if (!court || !court.currentMatch) {
       App.UI.showToast(App.t('noActiveGame'));
@@ -738,6 +738,7 @@ App.Courts = {
     match.status = 'finished';
     match.endTime = Date.now();
     match.score = score || null;
+    match.winner = winner || null; // 'teamA' | 'teamB' | 'draw' | null
 
     // Update player stats
     var allPlayers = match.teamA.concat(match.teamB);
@@ -748,31 +749,44 @@ App.Courts = {
       p.lastGameEndTime = match.endTime;
     });
 
-    // Track win/loss/points if score provided (e.g. "21-15")
+    // Determine winners/losers from score or declared winner
+    var winnersTeam = null, losersTeam = null;
+    var winnerScore = null, loserScore = null;
+
     if (score) {
       var parts = score.split('-').map(function(s) { return parseInt(s.trim()); });
       if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         var scoreA = parts[0], scoreB = parts[1];
-        var winnersTeam = scoreA >= scoreB ? match.teamA : match.teamB;
-        var losersTeam = scoreA >= scoreB ? match.teamB : match.teamA;
-        var winnerScore = Math.max(scoreA, scoreB);
-        var loserScore = Math.min(scoreA, scoreB);
-
-        winnersTeam.forEach(function(pid) {
-          var p = App.state.players[pid];
-          if (!p) return;
-          p.wins = (p.wins || 0) + 1;
-          p.pointsScored = (p.pointsScored || 0) + winnerScore;
-          p.pointsConceded = (p.pointsConceded || 0) + loserScore;
-        });
-        losersTeam.forEach(function(pid) {
-          var p = App.state.players[pid];
-          if (!p) return;
-          p.losses = (p.losses || 0) + 1;
-          p.pointsScored = (p.pointsScored || 0) + loserScore;
-          p.pointsConceded = (p.pointsConceded || 0) + winnerScore;
-        });
+        if (scoreA !== scoreB) {
+          winnersTeam = scoreA > scoreB ? match.teamA : match.teamB;
+          losersTeam = scoreA > scoreB ? match.teamB : match.teamA;
+        }
+        winnerScore = Math.max(scoreA, scoreB);
+        loserScore = Math.min(scoreA, scoreB);
       }
+    } else if (winner === 'teamA') {
+      winnersTeam = match.teamA;
+      losersTeam = match.teamB;
+    } else if (winner === 'teamB') {
+      winnersTeam = match.teamB;
+      losersTeam = match.teamA;
+    }
+
+    if (winnersTeam) {
+      winnersTeam.forEach(function(pid) {
+        var p = App.state.players[pid];
+        if (!p) return;
+        p.wins = (p.wins || 0) + 1;
+        if (winnerScore !== null) p.pointsScored = (p.pointsScored || 0) + winnerScore;
+        if (loserScore !== null) p.pointsConceded = (p.pointsConceded || 0) + loserScore;
+      });
+      losersTeam.forEach(function(pid) {
+        var p = App.state.players[pid];
+        if (!p) return;
+        p.losses = (p.losses || 0) + 1;
+        if (loserScore !== null) p.pointsScored = (p.pointsScored || 0) + loserScore;
+        if (winnerScore !== null) p.pointsConceded = (p.pointsConceded || 0) + winnerScore;
+      });
     }
 
     // Update partner and opponent history
@@ -935,6 +949,44 @@ App.Matches = {
       if (!p) return;
       if (p.gamesPlayed > 0) p.gamesPlayed--;
     });
+
+    // Revert win/loss/points
+    var winnersTeam = null, losersTeam = null;
+    var winnerScore = null, loserScore = null;
+    if (last.score) {
+      var parts = last.score.split('-').map(function(s) { return parseInt(s.trim()); });
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        var scoreA = parts[0], scoreB = parts[1];
+        if (scoreA !== scoreB) {
+          winnersTeam = scoreA > scoreB ? last.teamA : last.teamB;
+          losersTeam = scoreA > scoreB ? last.teamB : last.teamA;
+        }
+        winnerScore = Math.max(scoreA, scoreB);
+        loserScore = Math.min(scoreA, scoreB);
+      }
+    } else if (last.winner === 'teamA') {
+      winnersTeam = last.teamA;
+      losersTeam = last.teamB;
+    } else if (last.winner === 'teamB') {
+      winnersTeam = last.teamB;
+      losersTeam = last.teamA;
+    }
+    if (winnersTeam) {
+      winnersTeam.forEach(function(pid) {
+        var p = App.state.players[pid];
+        if (!p) return;
+        if (p.wins > 0) p.wins--;
+        if (winnerScore !== null) p.pointsScored = Math.max(0, (p.pointsScored || 0) - winnerScore);
+        if (loserScore !== null) p.pointsConceded = Math.max(0, (p.pointsConceded || 0) - loserScore);
+      });
+      losersTeam.forEach(function(pid) {
+        var p = App.state.players[pid];
+        if (!p) return;
+        if (p.losses > 0) p.losses--;
+        if (loserScore !== null) p.pointsScored = Math.max(0, (p.pointsScored || 0) - loserScore);
+        if (winnerScore !== null) p.pointsConceded = Math.max(0, (p.pointsConceded || 0) - winnerScore);
+      });
+    }
 
     // Revert partner history
     [last.teamA, last.teamB].forEach(function(team) {
@@ -3813,7 +3865,15 @@ App.UI = {
       html += '</div>';
       html += '<div class="history-item-teams">';
       html += teamANames.join(' + ') + '  <strong>vs</strong>  ' + teamBNames.join(' + ');
-      if (m.score) html += '  <span style="color:var(--primary);">' + m.score + '</span>';
+      if (m.score) {
+        html += '  <span style="color:var(--primary);">' + m.score + '</span>';
+      } else if (m.winner === 'teamA') {
+        html += '  <span style="color:var(--success);">\uD83C\uDFC6 ' + teamANames.join(' + ') + '</span>';
+      } else if (m.winner === 'teamB') {
+        html += '  <span style="color:var(--success);">\uD83C\uDFC6 ' + teamBNames.join(' + ') + '</span>';
+      } else if (m.winner === 'draw') {
+        html += '  <span style="color:var(--text-secondary);">\uD83E\uDD1D</span>';
+      }
       html += '</div></div>';
     });
 
@@ -4168,11 +4228,29 @@ App.UI = {
     }).join(' & ');
 
     var html = '<h2>' + App.t('finishGameTitle') + ' ' + court.displayNumber + '</h2>';
-    html += '<div class="finish-teams">';
-    html += '<span class="finish-team-name">' + teamANames + '</span>';
+    html += '<p class="finish-hint" style="margin:0 0 12px">' + App.t('declareWinnerHint') + '</p>';
+
+    // Winner declaration buttons
+    html += '<div class="finish-winner-row">';
+    html += '<button class="btn finish-winner-btn" id="btnWinnerA">';
+    html += '<span class="finish-winner-icon">\uD83C\uDFC6</span> ' + teamANames;
+    html += '</button>';
     html += '<span class="finish-vs">vs</span>';
-    html += '<span class="finish-team-name">' + teamBNames + '</span>';
+    html += '<button class="btn finish-winner-btn" id="btnWinnerB">';
+    html += '<span class="finish-winner-icon">\uD83C\uDFC6</span> ' + teamBNames;
+    html += '</button>';
     html += '</div>';
+
+    // Draw button
+    html += '<button class="btn finish-draw-btn" id="btnDraw">';
+    html += '<span class="finish-winner-icon">\uD83E\uDD1D</span> ' + App.t('matchDraw');
+    html += '</button>';
+
+    // Expandable score section
+    html += '<div class="finish-score-toggle">';
+    html += '<a href="#" id="toggleScore">' + App.t('addScore') + '</a>';
+    html += '</div>';
+    html += '<div class="finish-score-section" id="scoreSection" style="display:none">';
     html += '<div class="finish-score-row">';
     html += '<input type="number" id="finishScoreA" class="score-input" min="0" max="99" placeholder="0">';
     html += '<span class="finish-score-sep">:</span>';
@@ -4181,28 +4259,53 @@ App.UI = {
     html += '<p class="finish-hint">' + App.t('scoreOptional') + '</p>';
     html += '<div class="btn-row">';
     html += '<button class="btn btn-success" id="btnFinishConfirm">' + App.t('finishConfirm') + '</button>';
-    html += '<button class="btn btn-secondary" id="btnFinishCancel">' + App.t('cancelAction') + '</button>';
     html += '</div>';
+    html += '</div>';
+
+    // Cancel
+    html += '<div class="finish-cancel"><a href="#" id="btnFinishCancel">' + App.t('cancelAction') + '</a></div>';
 
     this.showModal(html);
 
-    document.getElementById('finishScoreA').focus();
+    var self = this;
+    function doFinish(score, winner) {
+      var durationSec = Math.round((Date.now() - (App.state.courts[courtId].gameStartTime || Date.now())) / 1000);
+      App.Analytics.track('game_finish', { has_score: !!score, winner: winner || 'score', duration_sec: durationSec });
+      App.UI.hideModal();
+      App.Courts.finishGame(courtId, score, winner);
+      App.UI.renderAll();
+    }
+
+    document.getElementById('btnWinnerA').addEventListener('click', function() { doFinish(null, 'teamA'); });
+    document.getElementById('btnWinnerB').addEventListener('click', function() { doFinish(null, 'teamB'); });
+    document.getElementById('btnDraw').addEventListener('click', function() { doFinish(null, 'draw'); });
+
+    document.getElementById('toggleScore').addEventListener('click', function(e) {
+      e.preventDefault();
+      var section = document.getElementById('scoreSection');
+      var visible = section.style.display !== 'none';
+      section.style.display = visible ? 'none' : 'block';
+      this.textContent = visible ? App.t('addScore') : App.t('hideScore');
+      if (!visible) document.getElementById('finishScoreA').focus();
+    });
 
     document.getElementById('btnFinishConfirm').addEventListener('click', function() {
       var scoreA = document.getElementById('finishScoreA').value.trim();
       var scoreB = document.getElementById('finishScoreB').value.trim();
       var score = null;
+      var winner = null;
       if (scoreA && scoreB) {
         score = scoreA + '-' + scoreB;
+        var a = parseInt(scoreA), b = parseInt(scoreB);
+        if (a > b) winner = 'teamA';
+        else if (b > a) winner = 'teamB';
+        else winner = 'draw';
       }
-      var durationSec = Math.round((Date.now() - (App.state.courts[courtId].gameStartTime || Date.now())) / 1000);
-      App.Analytics.track('game_finish', { has_score: !!score, duration_sec: durationSec });
-      App.UI.hideModal();
-      App.Courts.finishGame(courtId, score);
-      App.UI.renderAll();
+      doFinish(score, winner);
     });
 
-    document.getElementById('btnFinishCancel').addEventListener('click', function() {
+    document.getElementById('btnFinishCancel').addEventListener('click', function(e) {
+      e.preventDefault();
       App.UI.hideModal();
     });
   },
@@ -4588,9 +4691,14 @@ App.UI = {
       if (m.score) {
         var parts = m.score.split('-').map(function(s) { return parseInt(s.trim()); });
         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-          var teamAWon = parts[0] >= parts[1];
-          won = (onTeamA && teamAWon) || (!onTeamA && !teamAWon);
+          var teamAWon = parts[0] > parts[1];
+          var teamBWon = parts[1] > parts[0];
+          if (teamAWon || teamBWon) {
+            won = (onTeamA && teamAWon) || (!onTeamA && teamBWon);
+          }
         }
+      } else if (m.winner === 'teamA' || m.winner === 'teamB') {
+        won = (onTeamA && m.winner === 'teamA') || (!onTeamA && m.winner === 'teamB');
       }
 
       var partners = myTeam.filter(function(id) { return id !== playerId; });

@@ -181,6 +181,51 @@ describe('App.Courts', function() {
       });
     });
 
+    it('should track wins/losses with declared winner teamA', function() {
+      var ids = setupGameSession();
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1', null, 'teamA');
+
+      assert.strictEqual(App.state.players[ids[0]].wins, 1);
+      assert.strictEqual(App.state.players[ids[1]].wins, 1);
+      assert.strictEqual(App.state.players[ids[2]].losses, 1);
+      assert.strictEqual(App.state.players[ids[3]].losses, 1);
+      // No points tracked without score
+      assert.strictEqual(App.state.players[ids[0]].pointsScored, 0);
+    });
+
+    it('should track wins/losses with declared winner teamB', function() {
+      var ids = setupGameSession();
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1', null, 'teamB');
+
+      assert.strictEqual(App.state.players[ids[0]].losses, 1);
+      assert.strictEqual(App.state.players[ids[1]].losses, 1);
+      assert.strictEqual(App.state.players[ids[2]].wins, 1);
+      assert.strictEqual(App.state.players[ids[3]].wins, 1);
+    });
+
+    it('should not track wins/losses on draw', function() {
+      var ids = setupGameSession();
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      App.Courts.finishGame('c_1', null, 'draw');
+
+      ids.forEach(function(id) {
+        assert.strictEqual(App.state.players[id].wins, 0);
+        assert.strictEqual(App.state.players[id].losses, 0);
+      });
+    });
+
+    it('should store winner field on match', function() {
+      var ids = setupGameSession();
+      App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);
+      var matchId = App.state.courts['c_1'].currentMatch;
+      App.Courts.finishGame('c_1', null, 'teamA');
+
+      assert.strictEqual(App.state.matches[matchId].winner, 'teamA');
+      assert.strictEqual(App.state.matches[matchId].score, null);
+    });
+
     it('should update partner history', function() {
       var ids = setupGameSession();
       App.Courts.startGame('c_1', [ids[0], ids[1]], [ids[2], ids[3]]);

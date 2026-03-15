@@ -109,6 +109,10 @@ App.i18n = {
       finishGameTitle: 'Zakończ grę — kort',
       scoreOptional: 'Wynik opcjonalny',
       finishConfirm: 'Zakończ',
+      declareWinnerHint: 'Wybierz zwycięski zespół',
+      matchDraw: 'Remis',
+      addScore: 'Dodaj wynik',
+      hideScore: 'Ukryj wynik',
 
       // Fullscreen & Wake Lock
       fullscreenTooltip: 'Pełny ekran',
@@ -455,6 +459,10 @@ App.i18n = {
       finishGameTitle: 'Finish game — court',
       scoreOptional: 'Score is optional',
       finishConfirm: 'Finish',
+      declareWinnerHint: 'Select the winning team',
+      matchDraw: 'Match Tied (Draw)',
+      addScore: 'Add score',
+      hideScore: 'Hide score',
 
       // Fullscreen & Wake Lock
       fullscreenTooltip: 'Fullscreen',
