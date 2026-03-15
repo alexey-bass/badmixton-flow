@@ -3867,7 +3867,9 @@ App.UI = {
   },
 
   _createSyncSession: function(sessionId, mode) {
-    if (mode === 'fresh') {
+    if (mode === 'sync') {
+      // Keep everything — just enable sync on current state
+    } else if (mode === 'fresh') {
       App.Session.create();
       App.Session.initCourts([1, 2, 3, 4]);
     } else if (mode === 'keepPlayers') {
@@ -3924,12 +3926,17 @@ App.UI = {
       var html = '<h2>' + App.t('createSessionTitle') + '</h2>' +
         '<p>' + App.t('createSessionDesc') + '</p>' +
         '<div class="btn-row" style="flex-direction:column;gap:8px">' +
-        '<button class="btn btn-primary" id="btnCreateFresh">' + App.t('createSessionFresh') + '</button>' +
+        '<button class="btn btn-primary" id="btnCreateSync">' + App.t('createSessionSync') + '</button>' +
         '<button class="btn btn-secondary" id="btnCreateKeepPlayers">' + App.t('createSessionKeepPlayers') + '</button>' +
+        '<button class="btn btn-secondary" id="btnCreateFresh">' + App.t('createSessionFresh') + '</button>' +
         '<button class="btn btn-secondary" onclick="App.UI.hideModal()">' + App.t('cancelAction') + '</button>' +
         '</div>';
       App.UI.showModal(html);
 
+      document.getElementById('btnCreateSync').addEventListener('click', function() {
+        App.UI.hideModal();
+        self._createSyncSession(sessionId, 'sync');
+      });
       document.getElementById('btnCreateFresh').addEventListener('click', function() {
         App.UI.hideModal();
         self._createSyncSession(sessionId, 'fresh');
