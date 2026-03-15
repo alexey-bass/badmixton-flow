@@ -2940,6 +2940,7 @@ App.UI = {
     var hasPending = stats.pending + stats.ready > 0;
     var html = '<div class="btn-row" style="margin-bottom:12px;">';
     html += '<button class="btn btn-primary btn-sm" data-action="schedule-generate">' + (schedule.length === 0 ? App.t('shuffleGenerate') : App.t('shuffleContinue')) + '</button>';
+    html += '<button class="btn btn-success btn-sm" data-action="schedule-create-game">+ ' + App.t('shuffleCreateGame') + '</button>';
     if (hasPending) {
       html += '<button class="btn btn-warning btn-sm" data-action="schedule-reshuffle">' + App.t('shuffleReshuffle') + '</button>';
       html += '<button class="btn btn-danger btn-sm" data-action="schedule-clear-pending">' + App.t('shuffleClearPending') + '</button>';
@@ -3024,6 +3025,9 @@ App.UI = {
             App.Shuffle.removeGame(gameId);
             App.UI.renderQueue();
           }
+          break;
+        case 'schedule-create-game':
+          App.UI._showScheduleCreateModal();
           break;
         case 'schedule-clear-pending':
           App.UI.showConfirm(App.t('confirmClearPending'), function() {
@@ -4236,6 +4240,108 @@ App.UI = {
     document.getElementById('btnScheduleEditSave').addEventListener('click', function() {
       entry.teamA = splitObj.teamA;
       entry.teamB = splitObj.teamB;
+      App.save();
+      App.UI.hideModal();
+      App.UI.renderAll();
+    });
+  },
+
+  _showScheduleCreateModal: function() {
+    var present = App.Players.getPresent().filter(function(p) {
+      return !App.Players.isOnCourt(p.id);
+    });
+    if (present.length < 2) {
+      App.UI.showToast(App.t('notEnoughPlayers'));
+      return;
+    }
+
+    var selectedIds = [];
+
+    var html = '<h2>' + App.t('shuffleCreateGame') + '</h2>';
+    html += '<p style="color:var(--text-secondary); font-size:13px; margin-bottom:10px;">' + App.t('select2to4Players') + '</p>';
+    html += '<div class="player-select-grid" id="playerSelectGrid">';
+    present.forEach(function(p) {
+      html += '<div class="player-select-item" data-pid="' + p.id + '">';
+      html += '<span class="player-select-num">#' + p.number + '</span> ' + App.UI._esc(p.name);
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '<div id="selectedTeamsPreview"></div>';
+    html += '<div class="btn-row">';
+    html += '<button class="btn btn-success" id="btnScheduleCreate" disabled>' + App.t('ok') + '</button>';
+    html += '<button class="btn btn-secondary" onclick="App.UI.hideModal()">' + App.t('cancelAction') + '</button>';
+    html += '</div>';
+
+    this.showModal(html);
+
+    var grid = document.getElementById('playerSelectGrid');
+    var btnCreate = document.getElementById('btnScheduleCreate');
+    var preview = document.getElementById('selectedTeamsPreview');
+    var chosenSplit = null;
+
+    grid.addEventListener('click', function(e) {
+      var item = e.target.closest('.player-select-item');
+      if (!item) return;
+      var pid = item.dataset.pid;
+
+      var idx = selectedIds.indexOf(pid);
+      if (idx !== -1) {
+        selectedIds.splice(idx, 1);
+        item.classList.remove('selected');
+      } else {
+        if (selectedIds.length >= 4) {
+          App.UI.showToast(App.t('already4Selected'));
+          return;
+        }
+        selectedIds.push(pid);
+        item.classList.add('selected');
+      }
+
+      btnCreate.disabled = selectedIds.length < 2 || selectedIds.length > 4;
+
+      if (selectedIds.length >= 2 && selectedIds.length <= 4) {
+        var selPlayers = selectedIds.map(function(id) { return App.state.players[id]; });
+        var split = App.Suggest.splitTeams(selPlayers);
+        chosenSplit = { teamA: split.teamA, teamB: split.teamB };
+
+        var phtml = '<h4>' + App.t('splitHeading') + '</h4><div class="team-split-options">';
+        split.allSplits.forEach(function(s, i) {
+          phtml += '<div class="team-split-option' + (i === 0 ? ' selected' : '') + '" data-sidx="' + i + '">';
+          phtml += '<strong>' + s.label + '</strong>';
+          if (s.reasons.length > 0) {
+            phtml += '<div style="font-size:11px; color:var(--text-secondary);">' + s.reasons.join('; ') + '</div>';
+          }
+          phtml += '</div>';
+        });
+        phtml += '</div>';
+        preview.innerHTML = phtml;
+
+        preview.addEventListener('click', function(e2) {
+          var opt = e2.target.closest('.team-split-option');
+          if (!opt) return;
+          preview.querySelectorAll('.team-split-option').forEach(function(o) { o.classList.remove('selected'); });
+          opt.classList.add('selected');
+          var sidx = parseInt(opt.dataset.sidx);
+          chosenSplit = split.allSplits[sidx];
+        });
+      } else {
+        preview.innerHTML = '';
+        chosenSplit = null;
+      }
+    });
+
+    btnCreate.addEventListener('click', function() {
+      if (!chosenSplit || selectedIds.length < 2) return;
+      var entry = {
+        id: App.Utils.generateId('sg'),
+        teamA: chosenSplit.teamA,
+        teamB: chosenSplit.teamB,
+        status: 'pending',
+        courtId: null,
+        matchId: null
+      };
+      App.state.schedule.push(entry);
+      App.Shuffle.autoAssignAll();
       App.save();
       App.UI.hideModal();
       App.UI.renderAll();

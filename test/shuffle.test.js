@@ -496,6 +496,86 @@ describe('App.Shuffle', function() {
     });
   });
 
+  describe('manual schedule entry creation', function() {
+    it('should add a manual game entry to schedule', function() {
+      var ids = createShuffleSession(4);
+      var entry = {
+        id: App.Utils.generateId('sg'),
+        teamA: [ids[0], ids[1]],
+        teamB: [ids[2], ids[3]],
+        status: 'pending',
+        courtId: null,
+        matchId: null
+      };
+      App.state.schedule.push(entry);
+      assert.strictEqual(App.state.schedule.length, 1);
+      assert.deepStrictEqual(App.state.schedule[0].teamA, [ids[0], ids[1]]);
+      assert.strictEqual(App.state.schedule[0].status, 'pending');
+    });
+
+    it('should auto-assign manual game to free court', function() {
+      var ids = createShuffleSession(4);
+      var entry = {
+        id: App.Utils.generateId('sg'),
+        teamA: [ids[0], ids[1]],
+        teamB: [ids[2], ids[3]],
+        status: 'pending',
+        courtId: null,
+        matchId: null
+      };
+      App.state.schedule.push(entry);
+      App.Shuffle.autoAssignAll();
+      assert.strictEqual(entry.status, 'ready');
+      assert.ok(entry.courtId !== null);
+    });
+
+    it('should allow 2v1 manual game', function() {
+      var ids = createShuffleSession(4);
+      var entry = {
+        id: App.Utils.generateId('sg'),
+        teamA: [ids[0], ids[1]],
+        teamB: [ids[2]],
+        status: 'pending',
+        courtId: null,
+        matchId: null
+      };
+      App.state.schedule.push(entry);
+      assert.strictEqual(entry.teamA.length, 2);
+      assert.strictEqual(entry.teamB.length, 1);
+    });
+
+    it('should allow 1v1 manual game', function() {
+      var ids = createShuffleSession(4);
+      var entry = {
+        id: App.Utils.generateId('sg'),
+        teamA: [ids[0]],
+        teamB: [ids[1]],
+        status: 'pending',
+        courtId: null,
+        matchId: null
+      };
+      App.state.schedule.push(entry);
+      assert.strictEqual(entry.teamA.length, 1);
+      assert.strictEqual(entry.teamB.length, 1);
+    });
+
+    it('should coexist with generated games', function() {
+      var ids = createShuffleSession(8);
+      App.Shuffle.generate(2);
+      var genCount = App.state.schedule.length;
+      var entry = {
+        id: App.Utils.generateId('sg'),
+        teamA: [ids[0]],
+        teamB: [ids[1]],
+        status: 'pending',
+        courtId: null,
+        matchId: null
+      };
+      App.state.schedule.push(entry);
+      assert.strictEqual(App.state.schedule.length, genCount + 1);
+    });
+  });
+
   describe('generate with wishes', function() {
     it('should place wished partners on the same team', function() {
       var ids = createShuffleSession(4);

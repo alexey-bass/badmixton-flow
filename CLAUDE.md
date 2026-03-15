@@ -168,7 +168,7 @@ When adding a player whose name already exists (case-insensitive), an emoji pick
 Two modes, chosen at session creation:
 
 - **Queue mode** (default): Players join a waiting queue, coach suggests/selects players per court, finished players return to queue end. Traditional flow.
-- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to all free courts when any game finishes. Sidebar shows upcoming games instead of queue. Schedule tab replaces Queue tab. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1.
+- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to free courts. Sidebar shows upcoming games instead of queue. Schedule tab replaces Queue tab. "Create game" button lets coach manually pick 2-4 players and add a custom game to the schedule. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1.
 
 Mode stored as `state.mode` ('queue' | 'shuffle'). Schedule stored as `state.schedule[]` with entries: `{ id, teamA, teamB, status, courtId, matchId }`. Status lifecycle: `pending` → `ready` (assigned to court) → `playing` → `finished`.
 
