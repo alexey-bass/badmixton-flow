@@ -71,6 +71,9 @@ service-worker.js               — Offline-first cache for app shell
 hooks/pre-commit                — Auto-stamps version, cache-bust params, SW version
 package.json                    — npm start script for local dev server
 CLAUDE.md                       — AI assistant context (architecture, data model)
+ALGO.md                         — Algorithm documentation with scoring and examples
+test/                           — Node.js tests (node:test runner)
+scripts/                        — Screenshots and simulation scripts
 ```
 
 ## How It Works

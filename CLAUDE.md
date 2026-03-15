@@ -21,13 +21,16 @@ Local web app for managing player queue and court assignments during amateur bad
 ```
 index.html                      — App shell, 10 tab panels, modal, toast container
 assets/css/styles.css           — All styles, CSS variables, responsive breakpoints
-assets/js/app.js                — Application logic (App.Utils through App.DnD)
+assets/js/app.js                — Application logic (App.Utils through App.Shuffle, App.DnD)
 assets/js/i18n.js               — App object init, translations (Polish + English), i18n engine
 assets/img/favicon-*.png        — Shuttlecock favicons (16px, 96px, 192px, 512px)
 manifest.json                   — PWA manifest (name, icons, theme)
 service-worker.js               — Offline-first cache for app shell
 hooks/pre-commit                — Auto-stamps version, cache-bust params, SW version
 package.json                    — npm start script (python3 http.server)
+ALGO.md                         — Algorithm documentation with scoring weights and examples
+test/                           — Node.js tests (node:test runner), mocks in test/helpers.js
+scripts/                        — Screenshots (Playwright) and simulation scripts
 ```
 
 **Load order:** `FIREBASE_CONFIG` (inline in head) → Firebase SDK (CDN, defer) → `assets/js/i18n.js` (defer) → `assets/js/app.js` (defer) → service worker registration
