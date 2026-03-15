@@ -68,6 +68,33 @@ App.Utils = {
     if (!ts) return '';
     var d = new Date(ts);
     return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  },
+
+  getDeviceInfo: function() {
+    var ua = navigator.userAgent || '';
+    var browser = 'Unknown';
+    var os = 'Unknown';
+
+    // Detect browser
+    if (ua.indexOf('Firefox/') !== -1) browser = 'Firefox';
+    else if (ua.indexOf('Edg/') !== -1) browser = 'Edge';
+    else if (ua.indexOf('OPR/') !== -1 || ua.indexOf('Opera') !== -1) browser = 'Opera';
+    else if (ua.indexOf('Chrome/') !== -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari/') !== -1) browser = 'Safari';
+
+    // Detect OS
+    if (ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1) os = 'iOS';
+    else if (ua.indexOf('Android') !== -1) os = 'Android';
+    else if (ua.indexOf('Mac OS') !== -1) os = 'macOS';
+    else if (ua.indexOf('Windows') !== -1) os = 'Windows';
+    else if (ua.indexOf('Linux') !== -1) os = 'Linux';
+
+    return {
+      browser: browser,
+      os: os,
+      screen: screen.width + 'x' + screen.height,
+      ts: Date.now()
+    };
   }
 };
 
@@ -82,9 +109,6 @@ App.Storage = {
 
   // Returns the localStorage key suffix for the current session
   _keySuffix: function() {
-    if (App.state && App.state.settings.syncEnabled && App.state.settings.syncSessionId) {
-      return App.state.settings.syncSessionId;
-    }
     if (App.state && App.state.sessionId) {
       return App.state.sessionId;
     }
@@ -132,7 +156,12 @@ App.Storage = {
     if (!state.courts || typeof state.courts !== 'object') state.courts = {};
     if (!state.matches || typeof state.matches !== 'object') state.matches = {};
     if (!state.settings || typeof state.settings !== 'object') {
-      state.settings = { syncEnabled: false, syncSessionId: null };
+      state.settings = { syncEnabled: false };
+    }
+    // Migrate: promote syncSessionId to sessionId, then remove from settings
+    if (state.settings.syncSessionId) {
+      if (!state.sessionId) state.sessionId = state.settings.syncSessionId;
+      delete state.settings.syncSessionId;
     }
     if (state.settings.locked === undefined) state.settings.locked = false;
     if (state.settings.autoLockTime === undefined) state.settings.autoLockTime = null;
@@ -248,13 +277,13 @@ App.Session = {
       schedule: [],
       settings: {
         syncEnabled: false,
-        syncSessionId: null,
         locked: false,
         autoLockTime: null,
         clearQueueOnLock: false,
         showResults: true,
         resultsLimit: null
       },
+      creatorInfo: App.Utils.getDeviceInfo(),
       nextPlayerNumber: 1,
       lastModified: Date.now(),
       isAdmin: true // session creator is admin
@@ -1808,7 +1837,6 @@ App.Sync = {
 
   _connect: function(sessionId, asAdmin) {
     App.state.settings.syncEnabled = true;
-    App.state.settings.syncSessionId = sessionId;
     App.state.isAdmin = !!asAdmin;
 
     var self = this;
@@ -1886,7 +1914,6 @@ App.Sync = {
     this.connected = false;
     this._listener = null;
     App.state.settings.syncEnabled = false;
-    App.state.settings.syncSessionId = null;
     App.save();
     this._updateStatus('disconnected');
   },
@@ -1909,7 +1936,7 @@ App.Sync = {
     var btnDisconnect = document.getElementById('btnDisconnect');
 
     if (status === 'connected') {
-      el.textContent = App.t('connectedToSession') + App.state.settings.syncSessionId;
+      el.textContent = App.t('connectedToSession') + App.state.sessionId;
       el.className = 'sync-status connected';
       indicator.hidden = false;
       indicator.className = 'sync-indicator';
@@ -1920,6 +1947,35 @@ App.Sync = {
       indicator.hidden = true;
       btnDisconnect.hidden = true;
     }
+  },
+
+  autoConnect: function(sessionId) {
+    var self = this;
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      this.init(sessionId, true, function(ok) {
+        if (ok) {
+          App.UI.renderSync();
+        }
+      });
+      return;
+    }
+    // Poll for Firebase SDK (loaded via defer)
+    var attempts = 0;
+    var maxAttempts = 20; // 500ms × 20 = 10s
+    var timer = setInterval(function() {
+      attempts++;
+      if (typeof firebase !== 'undefined' && firebase.database) {
+        clearInterval(timer);
+        self.init(sessionId, true, function(ok) {
+          if (ok) {
+            App.UI.renderSync();
+          }
+        });
+      } else if (attempts >= maxAttempts) {
+        clearInterval(timer);
+        // Give up silently — session works locally
+      }
+    }, 500);
   }
 };
 
@@ -2101,6 +2157,7 @@ App.UI = {
         App.Session.create(name, mode);
         App.Session.initCourts([1, 2, 3, 4]);
         App.Utils.updateUrlSession(App.state.sessionId);
+        App.Sync.autoConnect(App.state.sessionId);
         App.Analytics.track('session_create', { court_count: 4, mode: mode });
         App.UI.hideModal();
         App.UI.renderAll();
@@ -3892,18 +3949,15 @@ App.UI = {
   renderSync: function() {
     var shareLinkEl = document.getElementById('syncShareLink');
     var disconnectBtn = document.getElementById('btnDisconnect');
-    var createBtn = document.getElementById('btnCreateSession');
     var joinRow = document.getElementById('joinSessionRow');
     if (App.Sync.connected) {
       disconnectBtn.hidden = false;
-      if (createBtn) createBtn.hidden = true;
       if (joinRow) joinRow.hidden = true;
       shareLinkEl.hidden = false;
-      var url = this._buildShareUrl(App.state.settings.syncSessionId);
+      var url = this._buildShareUrl(App.state.sessionId);
       document.getElementById('syncShareUrl').value = url;
     } else {
       disconnectBtn.hidden = true;
-      if (createBtn) createBtn.hidden = false;
       if (joinRow) joinRow.hidden = false;
       shareLinkEl.hidden = true;
     }
@@ -3914,86 +3968,8 @@ App.UI = {
     return base + '?session=' + encodeURIComponent(sessionId);
   },
 
-  _createSyncSession: function(sessionId, mode) {
-    if (mode === 'sync') {
-      // Keep everything — just enable sync on current state
-    } else if (mode === 'fresh') {
-      App.Session.create();
-      App.Session.initCourts([1, 2, 3, 4]);
-    } else if (mode === 'keepPlayers') {
-      // Keep players but reset stats, queue, matches
-      var players = App.state.players;
-      var courtNumbers = Object.values(App.state.courts).map(function(c) { return c.displayNumber; });
-      if (courtNumbers.length === 0) courtNumbers = [1, 2, 3, 4];
-      App.Session.create();
-      App.state.players = players;
-      Object.keys(players).forEach(function(id) {
-        players[id].present = false;
-        players[id].gamesPlayed = 0;
-        players[id].lastGameEndTime = 0;
-        players[id].queueEntryTime = 0;
-        players[id].partnerHistory = {};
-        players[id].opponentHistory = {};
-        players[id].wishesFulfilled = [];
-        players[id].wishedPartners = [];
-        players[id].number = 0;
-        players[id].wins = 0;
-        players[id].losses = 0;
-        players[id].pointsScored = 0;
-        players[id].pointsConceded = 0;
-        players[id].totalWaitTime = 0;
-        players[id].waitCount = 0;
-      });
-      App.Session.initCourts(courtNumbers);
-    }
-
-    var ok = App.Sync.init(sessionId, true);
-    if (ok) {
-      App.Analytics.track('sync_create');
-      App.UI.showToast(App.t('sessionCreated') + sessionId);
-      App.UI.renderAll();
-      App.UI.renderSync();
-    }
-  },
-
   _bindSync: function() {
     var self = this;
-
-    document.getElementById('btnCreateSession').addEventListener('click', function() {
-      var sessionId = App.Utils.generateSessionId();
-
-      var hasData = Object.keys(App.state.players).length > 0 ||
-                    Object.keys(App.state.matches).length > 0;
-
-      if (!hasData) {
-        self._createSyncSession(sessionId, 'fresh');
-        return;
-      }
-
-      // Show modal with options
-      var html = '<h2>' + App.t('createSessionTitle') + '</h2>' +
-        '<p>' + App.t('createSessionDesc') + '</p>' +
-        '<div class="btn-row" style="flex-direction:column;gap:8px">' +
-        '<button class="btn btn-primary" id="btnCreateSync">' + App.t('createSessionSync') + '</button>' +
-        '<button class="btn btn-secondary" id="btnCreateKeepPlayers">' + App.t('createSessionKeepPlayers') + '</button>' +
-        '<button class="btn btn-secondary" id="btnCreateFresh">' + App.t('createSessionFresh') + '</button>' +
-        '<button class="btn btn-secondary" onclick="App.UI.hideModal()">' + App.t('cancelAction') + '</button>' +
-        '</div>';
-      App.UI.showModal(html);
-
-      document.getElementById('btnCreateSync').addEventListener('click', function() {
-        App.UI.hideModal();
-        self._createSyncSession(sessionId, 'sync');
-      });
-      document.getElementById('btnCreateFresh').addEventListener('click', function() {
-        App.UI.hideModal();
-        self._createSyncSession(sessionId, 'fresh');
-      });
-      document.getElementById('btnCreateKeepPlayers').addEventListener('click', function() {
-        App.UI.hideModal();
-        self._createSyncSession(sessionId, 'keepPlayers');
-      });
-    });
 
     document.getElementById('btnJoinSession').addEventListener('click', function() {
       var sessionId = document.getElementById('sessionIdInput').value.trim();
@@ -4132,7 +4108,7 @@ App.UI = {
         : '—';
       syncHtml = '<table class="debug-table">' +
         '<tr><td>Status</td><td><strong style="color:var(--success)">' + App.t('debugSyncOn') + '</strong></td></tr>' +
-        '<tr><td>' + App.t('debugSyncSession') + '</td><td><strong>' + (s.settings.syncSessionId || '—') + '</strong></td></tr>' +
+        '<tr><td>' + App.t('debugSyncSession') + '</td><td><strong>' + (s.sessionId || '—') + '</strong></td></tr>' +
         '<tr><td>Firebase ref</td><td><code>' + (App.Sync.ref ? App.Sync.ref.toString() : '—') + '</code></td></tr>' +
         '<tr><td>' + App.t('debugLastSync') + '</td><td><strong>' + lastSync + '</strong></td></tr>' +
         '</table>';
@@ -4140,6 +4116,23 @@ App.UI = {
       syncHtml = '<p style="color:var(--text-secondary)">' + App.t('debugSyncOff') + '</p>';
     }
     document.getElementById('debugSyncInfo').innerHTML = syncHtml;
+
+    // Creator info
+    var creatorEl = document.getElementById('debugCreatorInfo');
+    if (creatorEl) {
+      var ci = s.creatorInfo;
+      if (ci) {
+        var createdAt = ci.ts ? new Date(ci.ts).toLocaleString() : '—';
+        creatorEl.innerHTML = '<table class="debug-table">' +
+          '<tr><td>' + App.t('debugCreatorBrowser') + '</td><td><strong>' + App.UI._esc(ci.browser || '—') + '</strong></td></tr>' +
+          '<tr><td>' + App.t('debugCreatorOS') + '</td><td><strong>' + App.UI._esc(ci.os || '—') + '</strong></td></tr>' +
+          '<tr><td>' + App.t('debugCreatorScreen') + '</td><td><strong>' + App.UI._esc(ci.screen || '—') + '</strong></td></tr>' +
+          '<tr><td>' + App.t('debugCreatorTime') + '</td><td><strong>' + createdAt + '</strong></td></tr>' +
+          '</table>';
+      } else {
+        creatorEl.innerHTML = '<p style="color:var(--text-secondary)">—</p>';
+      }
+    }
 
     // LocalStorage info
     var keys = [];
@@ -4862,9 +4855,8 @@ App.init = function() {
         App.UI.renderSync();
       }
     });
-  } else if (App.state.settings.syncEnabled && App.state.settings.syncSessionId) {
-    // If sync was active — show session ID (user clicks to reconnect)
-    document.getElementById('sessionIdInput').value = App.state.settings.syncSessionId;
+  } else if (App.state.settings.syncEnabled) {
+    App.Sync.autoConnect(App.state.sessionId);
   }
 
   // Close modal on overlay click

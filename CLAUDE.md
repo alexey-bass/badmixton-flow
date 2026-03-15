@@ -233,14 +233,16 @@ Header layout (left to right): title + session name, lock indicator (🔒) | lan
 - CSS `body.session-locked` class disables action buttons globally; JS guards provide defense in depth
 
 ### Firebase Sync
-- Admin clicks "Create session" — generates a unique sync ID automatically (no manual input)
-- Creating a session with existing data shows a modal: "Start fresh" or "Keep player list" (resets stats, preserves players)
-- Shareable URL with `?session=` parameter for auto-join; share link + copy button shown after creation
+- Auto-connects to Firebase when creating a new session — no separate "Create session" step
+- `App.Sync.autoConnect(sessionId)` polls for Firebase SDK (deferred load) up to 10s, then gives up silently
+- Single unified `state.sessionId` used for localStorage, Firebase, and URL (no separate `syncSessionId`)
+- Auto-reconnects on page load if `settings.syncEnabled` is true
+- Shareable URL with `?session=` parameter for auto-join; share link + copy button shown when connected
 - Join: paste session ID into input field, or use the `?session=` URL directly
 - Join checks session existence first via `ref.once('value')` — rejects if not found
 - `init()` accepts optional callback for async join result
 - Config inlined in `index.html` `<head>` (public by design for web apps)
-- Not required for local single-device use
+- Falls back to local-only if Firebase SDK not loaded (offline, no network)
 
 ### Data Migration
 - `App.Storage._ensureState()` validates and fills missing fields on load
@@ -249,7 +251,7 @@ Header layout (left to right): title + session name, lock indicator (🔒) | lan
 
 ## Data Model
 
-Session state stored in `localStorage` as `bs_<sessionId>` (e.g. `bs_bf-x7kQ9m`) or `bs_<syncSessionId>` (synced). Each session gets a unique `sessionId` (auto-generated hash). `bs_last` tracks the most recent key suffix. Index at `bs_index`. URL updates to `?session=<sessionId>` via `history.replaceState`.
+Session state stored in `localStorage` as `bs_<sessionId>` (e.g. `bs_bf-x7kQ9m`). Each session gets a unique `sessionId` (auto-generated hash) used for both localStorage and Firebase sync. `bs_last` tracks the most recent key suffix. Index at `bs_index`. URL updates to `?session=<sessionId>` via `history.replaceState`.
 
 ```
 {
@@ -263,7 +265,7 @@ Session state stored in `localStorage` as `bs_<sessionId>` (e.g. `bs_bf-x7kQ9m`)
   courts: { [id]: Court },
   matches: { [id]: Match },
   schedule: [],            // shuffle mode only — ordered list of planned games
-  settings: { syncEnabled, syncSessionId, locked, autoLockTime, clearQueueOnLock, showResults, resultsLimit },
+  settings: { syncEnabled, locked, autoLockTime, clearQueueOnLock, showResults, resultsLimit },
   nextPlayerNumber: 1,
   isAdmin: true
 }

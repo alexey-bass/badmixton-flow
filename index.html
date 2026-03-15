@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260315-0159">
+  <meta name="version" content="v260315-0230">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -125,7 +125,6 @@
           <p class="section-desc" data-i18n="syncDesc"></p>
           <div id="syncSection">
             <div class="btn-row">
-              <button class="btn btn-primary" id="btnCreateSession" data-i18n="createSession"></button>
               <button class="btn btn-danger" id="btnDisconnect" hidden data-i18n="disconnect"></button>
             </div>
             <div class="form-row" id="joinSessionRow">
@@ -252,6 +251,10 @@
         <div id="debugSyncInfo" class="debug-info"></div>
       </div>
       <div class="section-block">
+        <h2 data-i18n="debugCreator"></h2>
+        <div id="debugCreatorInfo" class="debug-info"></div>
+      </div>
+      <div class="section-block">
         <h2 data-i18n="debugLocalStorage"></h2>
         <div id="debugStorageInfo" class="debug-info"></div>
         <pre id="debugStateJson" class="debug-json"></pre>
@@ -277,8 +280,8 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script defer src="assets/js/i18n.js?v=32"></script>
-  <script defer src="assets/js/app.js?v=56"></script>
+  <script defer src="assets/js/i18n.js?v=33"></script>
+  <script defer src="assets/js/app.js?v=57"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');

@@ -96,4 +96,16 @@ describe('App.Utils', function() {
       assert.strictEqual(App.Utils.formatWaitMinutes(120000), '2 min');
     });
   });
+
+  describe('getDeviceInfo', function() {
+    it('should return object with browser, os, screen, ts', function() {
+      var info = App.Utils.getDeviceInfo();
+      assert.strictEqual(typeof info.browser, 'string');
+      assert.strictEqual(typeof info.os, 'string');
+      assert.strictEqual(typeof info.screen, 'string');
+      assert.strictEqual(typeof info.ts, 'number');
+      assert.ok(info.ts > 0);
+      assert.match(info.screen, /^\d+x\d+$/);
+    });
+  });
 });

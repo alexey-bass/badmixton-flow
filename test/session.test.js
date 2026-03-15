@@ -24,14 +24,13 @@ describe('App.Session', function() {
       assert.strictEqual(App.state.nextPlayerNumber, 1);
       assert.strictEqual(App.state.isAdmin, true);
       assert.strictEqual(App.state.settings.syncEnabled, false);
-      assert.strictEqual(App.state.settings.syncSessionId, null);
     });
 
     it('should have exact top-level keys', function() {
       App.Session.create();
       var keys = Object.keys(App.state).sort();
       assert.deepStrictEqual(keys, [
-        'courts', 'date', 'isAdmin', 'lastModified', 'matches',
+        'courts', 'creatorInfo', 'date', 'isAdmin', 'lastModified', 'matches',
         'mode', 'name', 'nextPlayerNumber', 'players', 'schedule',
         'sessionId', 'settings', 'version', 'waitingQueue'
       ]);
@@ -42,8 +41,17 @@ describe('App.Session', function() {
       var keys = Object.keys(App.state.settings).sort();
       assert.deepStrictEqual(keys, [
         'autoLockTime', 'clearQueueOnLock', 'locked',
-        'resultsLimit', 'showResults', 'syncEnabled', 'syncSessionId'
+        'resultsLimit', 'showResults', 'syncEnabled'
       ]);
+    });
+
+    it('should include creatorInfo with device details', function() {
+      App.Session.create();
+      assert.ok(App.state.creatorInfo);
+      assert.strictEqual(typeof App.state.creatorInfo.browser, 'string');
+      assert.strictEqual(typeof App.state.creatorInfo.os, 'string');
+      assert.strictEqual(typeof App.state.creatorInfo.screen, 'string');
+      assert.strictEqual(typeof App.state.creatorInfo.ts, 'number');
     });
 
     it('should set today\'s date', function() {

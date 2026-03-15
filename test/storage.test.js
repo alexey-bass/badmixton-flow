@@ -102,7 +102,7 @@ describe('App.Storage', function() {
       var keys = Object.keys(state.settings).sort();
       assert.deepStrictEqual(keys, [
         'autoLockTime', 'clearQueueOnLock', 'locked',
-        'resultsLimit', 'showResults', 'syncEnabled', 'syncSessionId'
+        'resultsLimit', 'showResults', 'syncEnabled'
       ]);
     });
 
@@ -140,56 +140,70 @@ describe('App.Storage', function() {
       assert.ok(App.state.sessionId.startsWith('bf-'));
     });
 
-    it('should return syncSessionId when sync is enabled', function() {
+    it('should always return sessionId regardless of sync state', function() {
       App.Session.create();
       App.state.settings.syncEnabled = true;
-      App.state.settings.syncSessionId = 'badminton-2026-03-11-a3x9k';
-      assert.strictEqual(App.Storage._keySuffix(), 'badminton-2026-03-11-a3x9k');
+      assert.strictEqual(App.Storage._keySuffix(), App.state.sessionId);
     });
   });
 
   describe('sync-aware save and load', function() {
-    it('should save under sync key when sync is enabled', function() {
+    it('should save under sessionId key when sync is enabled', function() {
       App.Session.create();
       App.state.settings.syncEnabled = true;
-      App.state.settings.syncSessionId = 'test-session-abc';
       App.Storage.save();
 
-      var loaded = App.Storage.load('test-session-abc');
+      var loaded = App.Storage.load(App.state.sessionId);
       assert.ok(loaded);
-      assert.strictEqual(loaded.settings.syncSessionId, 'test-session-abc');
+      assert.strictEqual(loaded.settings.syncEnabled, true);
     });
 
-    it('should save sync session under sync key, not sessionId key', function() {
+    it('should always save under sessionId key', function() {
       App.Session.create();
-      localStorage.clear(); // clear the sessionId-keyed save from create()
+      var sessionId = App.state.sessionId;
       App.state.settings.syncEnabled = true;
-      App.state.settings.syncSessionId = 'test-session-xyz';
       App.Storage.save();
 
-      // Should be found by sync ID
-      assert.ok(App.Storage.load('test-session-xyz'));
-      // Should not be found by sessionId
-      assert.strictEqual(App.Storage.load(App.state.sessionId), null);
+      // Should be found by sessionId
+      assert.ok(App.Storage.load(sessionId));
     });
 
-    it('should store last key suffix', function() {
+    it('should store last key suffix as sessionId', function() {
       App.Session.create();
       App.state.settings.syncEnabled = true;
-      App.state.settings.syncSessionId = 'my-session';
       App.Storage.save();
 
-      assert.strictEqual(localStorage.getItem(App.Storage.LAST_KEY), 'my-session');
+      assert.strictEqual(localStorage.getItem(App.Storage.LAST_KEY), App.state.sessionId);
     });
 
-    it('should track sync session in index', function() {
+    it('should track session in index', function() {
       App.Session.create();
       App.state.settings.syncEnabled = true;
-      App.state.settings.syncSessionId = 'indexed-session';
       App.Storage.save();
 
       var index = App.Storage.getIndex();
-      assert.ok(index.includes('indexed-session'));
+      assert.ok(index.includes(App.state.sessionId));
+    });
+  });
+
+  describe('migration', function() {
+    it('should migrate syncSessionId from settings to sessionId', function() {
+      var state = App.Storage._ensureState({
+        players: {},
+        settings: { syncEnabled: true, syncSessionId: 'old-sync-id' }
+      });
+      assert.strictEqual(state.sessionId, 'old-sync-id');
+      assert.strictEqual(state.settings.syncSessionId, undefined);
+    });
+
+    it('should not overwrite existing sessionId during migration', function() {
+      var state = App.Storage._ensureState({
+        players: {},
+        sessionId: 'existing-id',
+        settings: { syncEnabled: true, syncSessionId: 'old-sync-id' }
+      });
+      assert.strictEqual(state.sessionId, 'existing-id');
+      assert.strictEqual(state.settings.syncSessionId, undefined);
     });
   });
 

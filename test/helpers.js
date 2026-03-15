@@ -66,6 +66,8 @@ function setupBrowserMocks() {
     location: { search: '', href: 'http://localhost:8080/' }
   };
 
+  global.screen = { width: 1024, height: 768 };
+
   global.URLSearchParams = require('url').URLSearchParams;
   global.URL = require('url').URL;
   global.Blob = function() {};
