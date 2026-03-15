@@ -2265,6 +2265,7 @@ App.UI = {
       input.select();
       document.getElementById('btnEditSessionNameOk').addEventListener('click', function() {
         App.state.name = input.value.trim();
+        App.Analytics.track('session_name_changed');
         App.save();
         App.UI.hideModal();
         self.renderSessionName();
@@ -2313,12 +2314,14 @@ App.UI = {
 
     document.getElementById('showResultsTab').addEventListener('change', function() {
       App.state.settings.showResults = this.checked;
+      App.Analytics.track('results_tab_toggled', { enabled: this.checked });
       App.save();
       App.UI._applyResultsTabVisibility();
     });
 
     document.getElementById('resultsLimit').addEventListener('change', function() {
       App.state.settings.resultsLimit = this.value ? parseInt(this.value) : null;
+      App.Analytics.track('results_limit_changed', { limit: this.value || 'all' });
       App.save();
     });
 
@@ -2523,6 +2526,7 @@ App.UI = {
       if (App.Lock.isLocked()) return;
       self.showConfirm(App.t('confirmRenumber'), function() {
         App.Players.renumber();
+        App.Analytics.track('players_renumbered');
         App.UI.showToast(App.t('playersRenumbered'));
         self.renderPlayers();
         self.renderQueue();
@@ -2803,6 +2807,7 @@ App.UI = {
     var doRename = function() {
       var newName = input.value;
       if (App.Players.rename(playerId, newName)) {
+        App.Analytics.track('player_renamed');
         App.UI.showToast(App.t('playerRenamed'));
         App.UI.hideModal();
         self.renderPlayers();
@@ -3005,28 +3010,35 @@ App.UI = {
           var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
           var isInitial = App.state.schedule.length === 0;
           App.Shuffle.generate(isInitial ? courtCount * 2 : courtCount);
+          App.Analytics.track('shuffle_generate', { initial: isInitial, game_count: App.Shuffle.getPending().length });
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
           break;
         case 'schedule-reshuffle':
           App.UI.showConfirm(App.t('confirmReshuffle'), function() {
             App.Shuffle.reshuffle();
+            App.Analytics.track('shuffle_reshuffle');
             App.Shuffle.autoAssignAll();
             App.UI.renderAll();
           });
           break;
         case 'schedule-edit':
           var editId = btn.dataset.game;
-          if (editId) App.UI._showScheduleEditModal(editId);
+          if (editId) {
+            App.Analytics.track('schedule_edit');
+            App.UI._showScheduleEditModal(editId);
+          }
           break;
         case 'schedule-remove':
           var gameId = btn.dataset.game;
           if (gameId) {
+            App.Analytics.track('schedule_game_removed');
             App.Shuffle.removeGame(gameId);
             App.UI.renderQueue();
           }
           break;
         case 'schedule-create-game':
+          App.Analytics.track('schedule_create');
           App.UI._showScheduleCreateModal();
           break;
         case 'schedule-clear-pending':
@@ -3852,12 +3864,14 @@ App.UI = {
           var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
           var isInitial = App.state.schedule.length === 0;
           App.Shuffle.generate(isInitial ? courtCount * 2 : courtCount);
+          App.Analytics.track('shuffle_generate', { initial: isInitial, game_count: App.Shuffle.getPending().length });
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
           break;
         case 'board-reshuffle':
           App.UI.showConfirm(App.t('confirmReshuffle'), function() {
             App.Shuffle.reshuffle();
+            App.Analytics.track('shuffle_reshuffle');
             App.Shuffle.autoAssignAll();
             App.UI.renderAll();
           });
@@ -4291,6 +4305,7 @@ App.UI = {
     document.getElementById('btnScheduleEditSave').addEventListener('click', function() {
       entry.teamA = splitObj.teamA;
       entry.teamB = splitObj.teamB;
+      App.Analytics.track('schedule_edit_saved');
       App.save();
       App.UI.hideModal();
       App.UI.renderAll();
@@ -4392,6 +4407,7 @@ App.UI = {
         matchId: null
       };
       App.state.schedule.push(entry);
+      App.Analytics.track('schedule_game_created', { player_count: selectedIds.length });
       App.Shuffle.autoAssignAll();
       App.save();
       App.UI.hideModal();
@@ -4683,6 +4699,7 @@ App.UI = {
       var idx = self._zoomLevels.indexOf(current);
       var next = self._zoomLevels[(idx + 1) % self._zoomLevels.length];
       localStorage.setItem('badminton_zoom', next);
+      App.Analytics.track('zoom_changed', { level: next });
       self._applyZoom();
       self._updateZoomButton(btn);
     });

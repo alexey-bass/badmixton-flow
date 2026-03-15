@@ -1,6 +1,6 @@
 // Service Worker — offline-first caching for Badmixton Flow
 // Cache version is bumped by the pre-commit hook via CACHE_VERSION below.
-var CACHE_VERSION = 73;
+var CACHE_VERSION = 74;
 var CACHE_NAME = 'badmixton-v' + CACHE_VERSION;
 
 var APP_SHELL = [
