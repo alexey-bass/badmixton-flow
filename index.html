@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260315-1135">
+  <meta name="version" content="v260315-1205">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -15,7 +15,7 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="assets/css/styles.css?v=29">
+  <link rel="stylesheet" href="assets/css/styles.css?v=30">
   <script>
     var FIREBASE_CONFIG = {
       apiKey: "AIzaSyDQV3njrl8xcpaC9X9weZknzlx2zzxoD9k",
@@ -233,7 +233,7 @@
         <select id="historyPlayerFilter">
           <option value="all" data-i18n="allPlayers"></option>
         </select>
-        <button class="btn btn-danger btn-sm" id="btnUndoLastMatch" data-i18n="undoLastMatch"></button>
+        <button class="btn btn-danger btn-sm admin-only" id="btnUndoLastMatch" data-i18n="undoLastMatch"></button>
       </div>
       <div class="history-list" id="historyList"></div>
     </section>
@@ -282,7 +282,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script defer src="assets/js/i18n.js?v=37"></script>
-  <script defer src="assets/js/app.js?v=63"></script>
+  <script defer src="assets/js/app.js?v=64"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');

@@ -812,8 +812,8 @@ App.Courts = {
       // Update schedule entry status
       var schEntry = App.state.schedule.find(function(e) { return e.matchId === match.id; });
       if (schEntry) schEntry.status = 'finished';
-      // Auto-assign next game to this court
-      App.Shuffle.assignNextToCourt(courtId);
+      // Auto-assign pending games to all free courts
+      App.Shuffle.autoAssignAll();
     } else {
       // Queue mode: players go to end of queue
       App.Queue.addMultipleToEnd(allPlayers);
@@ -1693,19 +1693,57 @@ App.Shuffle = {
 
   // Assign pending games to all free courts
   autoAssignAll: function() {
-    var self = this;
     var freeCourts = Object.values(App.state.courts).filter(function(c) {
       return c.active && !c.occupied;
     });
-    var assigned = 0;
-    freeCourts.forEach(function(court) {
-      // Check if court already has a ready game
-      var hasReady = App.state.schedule.some(function(e) {
+
+    // Courts that need a game assigned
+    var needAssign = freeCourts.filter(function(court) {
+      return !App.state.schedule.some(function(e) {
         return e.courtId === court.id && (e.status === 'ready' || e.status === 'playing');
       });
-      if (hasReady) return;
-      if (self.assignNextToCourt(court.id)) assigned++;
     });
+    if (needAssign.length === 0) return 0;
+
+    // Only players currently playing (on court) are truly busy
+    var playingPids = {};
+    App.state.schedule.forEach(function(e) {
+      if (e.status === 'playing') {
+        e.teamA.concat(e.teamB).forEach(function(pid) { playingPids[pid] = true; });
+      }
+    });
+
+    // Also include players in ready games on courts NOT in needAssign
+    var needAssignIds = {};
+    needAssign.forEach(function(c) { needAssignIds[c.id] = true; });
+    App.state.schedule.forEach(function(e) {
+      if (e.status === 'ready' && !needAssignIds[e.courtId]) {
+        e.teamA.concat(e.teamB).forEach(function(pid) { playingPids[pid] = true; });
+      }
+    });
+
+    var pending = App.state.schedule.filter(function(e) { return e.status === 'pending'; });
+    var assigned = 0;
+    var usedPids = {};
+    Object.keys(playingPids).forEach(function(pid) { usedPids[pid] = true; });
+
+    // Assign games to courts, tracking all newly assigned players
+    needAssign.forEach(function(court) {
+      for (var i = 0; i < pending.length; i++) {
+        var entry = pending[i];
+        if (entry.status !== 'pending') continue;
+        var all = entry.teamA.concat(entry.teamB);
+        var allFree = all.every(function(pid) { return !usedPids[pid]; });
+        if (allFree) {
+          entry.status = 'ready';
+          entry.courtId = court.id;
+          all.forEach(function(pid) { usedPids[pid] = true; });
+          assigned++;
+          break;
+        }
+      }
+    });
+
     if (assigned > 0) App.save();
     return assigned;
   },
@@ -3412,7 +3450,14 @@ App.UI = {
 
       var swapped = false;
 
-      if (firstInA && inB) {
+      // Same player clicked again — remove from team to bench (if team has >1)
+      if (first === pid && (firstInA || firstInB)) {
+        var team = firstInA ? splitObj.teamA : splitObj.teamB;
+        if (team.length > 1) {
+          team.splice(team.indexOf(first), 1);
+          swapped = true;
+        }
+      } else if (firstInA && inB) {
         // Swap between Team A and Team B
         splitObj.teamA[splitObj.teamA.indexOf(first)] = pid;
         splitObj.teamB[splitObj.teamB.indexOf(pid)] = first;
@@ -3442,7 +3487,7 @@ App.UI = {
       this._customSwapTarget = null;
       area.querySelectorAll('.custom-split-chip').forEach(function(c) { c.classList.remove('swap-selected'); });
       if (swapped) {
-        var swapType = (firstOnBench || onBench) ? 'bench' : 'team';
+        var swapType = (firstOnBench || onBench) ? 'bench' : (first === pid ? 'remove' : 'team');
         App.Analytics.track('custom_split_swap', { swap_type: swapType });
         this._syncCustomSplit(area, splitObj);
       }
@@ -3866,22 +3911,38 @@ App.UI = {
         return p ? ('#' + p.number + ' ' + p.name) : '?';
       });
 
+      // Determine which team won
+      var winnerSide = null;
+      if (m.winner === 'teamA' || m.winner === 'teamB') {
+        winnerSide = m.winner;
+      } else if (m.score) {
+        var parts = m.score.split('-').map(function(s) { return parseInt(s.trim()); });
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[0] !== parts[1]) {
+          winnerSide = parts[0] > parts[1] ? 'teamA' : 'teamB';
+        }
+      }
+      var isDraw = m.winner === 'draw' || (m.score && (function() {
+        var p = m.score.split('-').map(function(s) { return parseInt(s.trim()); });
+        return p.length === 2 && p[0] === p[1];
+      })());
+
+      var teamAStr = teamANames.join(' + ');
+      var teamBStr = teamBNames.join(' + ');
+      if (winnerSide === 'teamA') {
+        teamAStr = '<span style="color:var(--success)">\uD83C\uDFC6 ' + teamAStr + '</span>';
+      } else if (winnerSide === 'teamB') {
+        teamBStr = '<span style="color:var(--success)">\uD83C\uDFC6 ' + teamBStr + '</span>';
+      }
+
       html += '<div class="history-item">';
       html += '<div class="history-item-header">';
       html += '<span>' + App.t('court') + (courtObj ? courtObj.displayNumber : '?') + '</span>';
       html += '<span>' + App.Utils.formatTimestamp(m.startTime) + ' — ' + App.Utils.formatTimestamp(m.endTime) + '</span>';
       html += '</div>';
       html += '<div class="history-item-teams">';
-      html += teamANames.join(' + ') + '  <strong>vs</strong>  ' + teamBNames.join(' + ');
-      if (m.score) {
-        html += '  <span style="color:var(--primary);">' + m.score + '</span>';
-      } else if (m.winner === 'teamA') {
-        html += '  <span style="color:var(--success);">\uD83C\uDFC6 ' + teamANames.join(' + ') + '</span>';
-      } else if (m.winner === 'teamB') {
-        html += '  <span style="color:var(--success);">\uD83C\uDFC6 ' + teamBNames.join(' + ') + '</span>';
-      } else if (m.winner === 'draw') {
-        html += '  <span style="color:var(--text-secondary);">\uD83E\uDD1D</span>';
-      }
+      html += teamAStr + '  <strong>vs</strong>  ' + teamBStr;
+      if (m.score) html += '  <span style="color:var(--primary);">' + m.score + '</span>';
+      if (isDraw) html += '  <span>\uD83E\uDD1D</span>';
       html += '</div></div>';
     });
 

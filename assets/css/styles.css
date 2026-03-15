@@ -251,7 +251,6 @@ body.player-mode .admin-only {
 .tabs.player-mode .tab[data-tab="dashboard"],
 .tabs.player-mode .tab[data-tab="queue"],
 .tabs.player-mode .tab[data-tab="courts"],
-.tabs.player-mode .tab[data-tab="history"],
 .tabs.player-mode .tab[data-tab="sync"],
 .tabs.player-mode .tab[data-tab="debug"] {
   display: none;

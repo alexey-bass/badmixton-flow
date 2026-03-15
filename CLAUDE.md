@@ -148,7 +148,7 @@ Single global `App` object (created in `assets/js/i18n.js`) with modules:
 | Results   | panel-results   | Both        | Leaderboard (wins, points)     |
 | Courts    | panel-courts    | Admin only  | Court management, start games  |
 | Queue     | panel-queue     | Admin only  | Queue management, reorder      |
-| History   | panel-history   | Admin only  | Match history, filters, undo   |
+| History   | panel-history   | Both        | Match history, filters; undo admin-only |
 | Session   | panel-dashboard | Admin only  | Stats, settings, lock, actions |
 | Debug     | panel-debug     | Admin only  | State inspector, clear storage |
 
@@ -168,7 +168,7 @@ When adding a player whose name already exists (case-insensitive), an emoji pick
 Two modes, chosen at session creation:
 
 - **Queue mode** (default): Players join a waiting queue, coach suggests/selects players per court, finished players return to queue end. Traditional flow.
-- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to free courts. Sidebar shows upcoming games instead of queue. Schedule tab replaces Queue tab.
+- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to all free courts when any game finishes. Sidebar shows upcoming games instead of queue. Schedule tab replaces Queue tab. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1.
 
 Mode stored as `state.mode` ('queue' | 'shuffle'). Schedule stored as `state.schedule[]` with entries: `{ id, teamA, teamB, status, courtId, matchId }`. Status lifecycle: `pending` → `ready` (assigned to court) → `playing` → `finished`.
 
