@@ -163,13 +163,7 @@ Two modes, chosen at session creation:
 
 Mode stored as `state.mode` ('queue' | 'shuffle'). Schedule stored as `state.schedule[]` with entries: `{ id, teamA, teamB, status, courtId, matchId }`. Status lifecycle: `pending` → `ready` (assigned to court) → `playing` → `finished`.
 
-**Shuffle algorithm** (`App.Shuffle.generate`):
-1. Collect present players, build virtual history (real stats + existing schedule entries)
-2. For each game: score players by `virtualGamesAboveAvg * 50` + wish bonus (`-80`), pick top N
-3. Diversify (`_diversifyPicked`): if 3+ of the 4 picked players were in the same recent game (finished match or scheduled entry), swap the lowest-priority overlapping player with the best available alternative — ensures players rotate through different opponents
-4. Constraint: no player appears twice within the same batch (batch = `courtCount` games)
-5. Split teams via `_splitWithVirtual` using accumulated partner/opponent history
-6. Initial generation: `courtCount * 2` games; `continueShuffle` adds one batch
+See [ALGO.md](ALGO.md) for detailed algorithm description with scoring weights and examples.
 
 ### Living Queue
 Players arrive and get a sequential number (#1, #2, ...). New players (0 games played) are inserted ahead of players who have already played, so latecomers get to play sooner. After a game finishes, all players return to the **end** of the queue. Queue position is the primary factor for next game selection.
@@ -182,23 +176,7 @@ Players arrive and get a sequential number (#1, #2, ...). New players (0 games p
 The suggestion algorithm picks the best available format based on queue size. Teams of 1-2 players each. Partner history is only tracked for 2-player teams. All formats support score tracking, results, and undo.
 
 ### Suggestion Algorithm
-Scores each candidate by:
-- Queue position (weight: 100 per position)
-- Games above average penalty (weight: 50 per game)
-- Unfulfilled wish bonus (-80)
-
-Post-selection diversity (`_diversifySelection`, 2v2 only): if 3+ of the selected 4 were in the same recent match, swaps the lowest-priority overlapping player with the best available candidate not from that match. Checks last 10 finished matches, repeats until no match has 3+ overlap.
-
-Team split scoring (`splitTeams`, handles 2-4 players):
-- 4 players → 3 possible 2v2 splits
-- 3 players → 3 possible 2v1 splits (each player takes a turn solo)
-- 2 players → 1 trivial 1v1 split
-
-Split scoring (algorithmic options + custom):
-- Pair repeat penalty (30 per repeat, 2-player teams only)
-- Opponent repeat penalty (15 per repeat beyond 1st)
-- Wish fulfillment bonus (-100, 2-player teams only)
-- Custom option: tap-to-swap players between teams or with bench players from queue
+Picks players by scoring (queue position, games balance, wishes), diversifies to avoid re-grouping, then splits into teams minimizing partner/opponent repeats. Supports custom tap-to-swap in the suggestion modal. See [ALGO.md](ALGO.md) for full scoring weights and examples.
 
 ### Two UI Modes
 - **Board** (player-facing): Courts with teams + timer, queue list with games played counter and live wait timer, results. One-tap "Finish" with score input.
