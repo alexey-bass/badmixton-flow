@@ -1,5 +1,5 @@
 /* ============================================================
-   Badminton 2x2 — Internationalization
+   Badminton 2v2, 2v1 & 1v1 — Internationalization
    ============================================================ */
 
 // Global application object

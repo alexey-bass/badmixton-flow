@@ -1,4 +1,4 @@
-# Badmixton Flow — Badminton 2x2 Queue Manager
+# Badmixton Flow — Badminton 2v2, 2v1 & 1v1 Manager
 
 Web app for managing player queues and court assignments during amateur badminton doubles sessions. Designed for a coach or admin running sessions with 4–20 players on 1–5 courts.
 

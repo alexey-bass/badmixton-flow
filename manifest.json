@@ -1,7 +1,7 @@
 {
   "name": "Badmixton Flow",
   "short_name": "Badmixton",
-  "description": "Badminton 2x2 queue manager for courtside sessions",
+  "description": "Badminton 2v2, 2v1 & 1v1 manager for courtside sessions",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#2563eb",

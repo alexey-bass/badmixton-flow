@@ -1,5 +1,5 @@
 /* ============================================================
-   Badminton 2x2 — Queue Manager
+   Badminton 2v2, 2v1 & 1v1 — Manager
    Main application logic (App object defined in i18n.js)
    ============================================================ */
 
