@@ -10,6 +10,7 @@
     "simulation:shuffle": "node scripts/simulation-shuffle.js",
     "simulation:validate": "node scripts/simulation-validate.js",
     "screenshots": "node scripts/screenshots.js",
+    "screenshot:print": "node scripts/screenshot-print.js",
     "lighthouse": "node scripts/lighthouse.js"
   },
   "devDependencies": {

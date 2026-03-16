@@ -296,8 +296,8 @@ body.player-mode .admin-only {
 }
 
 .btn-secondary {
-  background: var(--gray-light);
-  color: var(--text);
+  background: #9ca3af;
+  color: #fff;
 }
 
 .btn-success {

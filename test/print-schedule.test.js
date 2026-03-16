@@ -84,9 +84,9 @@ describe('App.UI.printSchedule', function() {
     App.UI.printSchedule();
     window.open = origOpen;
 
-    // Should have vs separators for each game
-    var vsCount = (html._html.match(/>vs</g) || []).length;
-    assert.ok(vsCount >= 2, 'should have at least 2 game rows with vs');
+    // Should have table rows for each game
+    var trCount = (html._html.match(/<tr>/g) || []).length;
+    assert.ok(trCount >= 2, 'should have at least 2 game rows');
   });
 
   it('should have empty cells for pending games', function() {
@@ -160,7 +160,7 @@ describe('App.UI.printSchedule', function() {
     assert.ok(html._html.includes('Game schedule'), 'should have English title');
     assert.ok(html._html.includes('Player roster'), 'should have English roster heading');
     assert.ok(html._html.includes('Score'), 'should have Score header');
-    assert.ok(html._html.includes('Winner'), 'should have Winner header');
+    assert.ok(html._html.includes('Team A'), 'should have Team A header');
 
     App.i18n.setLang('pl');
   });

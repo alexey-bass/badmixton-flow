@@ -359,13 +359,13 @@ App.i18n = {
       statScheduleFinished: 'Rozegrane',
 
       // Print schedule
-      printSchedule: 'Drukuj harmonogram',
+      printSchedule: 'Drukuj',
       printTitle: 'Harmonogram gier',
       printPlayerRoster: 'Lista graczy',
-      printGame: 'Gra',
+      printTeam: 'Zespół',
+      printBench: 'Pauza',
       printCourt: 'Kort',
       printScore: 'Wynik',
-      printWinner: 'Zwycięzca',
 
       // Court utilization
       courtUtilization: 'Wykorzystanie kortów',
@@ -723,13 +723,13 @@ App.i18n = {
       statScheduleFinished: 'Finished',
 
       // Print schedule
-      printSchedule: 'Print schedule',
+      printSchedule: 'Print',
       printTitle: 'Game schedule',
       printPlayerRoster: 'Player roster',
-      printGame: 'Game',
+      printTeam: 'Team',
+      printBench: 'Bench',
       printCourt: 'Court',
       printScore: 'Score',
-      printWinner: 'Winner',
 
       // Court utilization
       courtUtilization: 'Court utilization',

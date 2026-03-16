@@ -4581,7 +4581,9 @@ App.UI = {
   },
 
   _seedSession: function(names, courtNumbers, lateIndices, mode) {
-    App.Session.create('', mode);
+    var sessionNames = ['Czwartkowy trening', 'Sobotni turniej', 'Wieczorny sparing', 'Poranki z lotką', 'Liga amatorów', 'Trening grupowy'];
+    var randomName = sessionNames[Math.floor(Math.random() * sessionNames.length)];
+    App.Session.create(randomName, mode);
     App.Session.initCourts(courtNumbers);
     names.forEach(function(name, i) {
       var id = App.Players.add(name);
@@ -5100,17 +5102,36 @@ App.UI = {
 
     var esc = this._esc;
     var sessionName = state.name ? esc(state.name) : '';
-    var dateStr = App.Utils.formatDate(state.date || new Date());
 
     // Player roster
     var presentPlayers = Object.values(state.players)
       .filter(function(p) { return p.present; })
       .sort(function(a, b) { return a.number - b.number; });
-    var rosterItems = presentPlayers.map(function(p) {
-      return '#' + p.number + ' ' + esc(p.name);
+    var rosterItems = presentPlayers.map(function(p, i) {
+      var name = '#' + p.number + ' ' + esc(p.name);
+      return i % 2 === 0 ? '<b>' + name + '</b>' : name;
     });
 
-    // Game rows
+    // Game rows — group by court count (round dividers)
+    var courtCount = Object.values(state.courts).filter(function(c) { return c.active; }).length || 1;
+    var presentIds = presentPlayers.map(function(p) { return p.id; });
+    var maxPerRound = courtCount * 4; // max players on courts (2v2)
+    var hasBench = presentIds.length > maxPerRound;
+
+    // Pre-compute bench players per round
+    var benchByRound = {};
+    if (hasBench) {
+      var totalRounds = Math.ceil(schedule.length / courtCount);
+      for (var r = 0; r < totalRounds; r++) {
+        var playingIds = {};
+        for (var g = r * courtCount; g < Math.min((r + 1) * courtCount, schedule.length); g++) {
+          schedule[g].teamA.forEach(function(pid) { playingIds[pid] = true; });
+          schedule[g].teamB.forEach(function(pid) { playingIds[pid] = true; });
+        }
+        benchByRound[r] = presentIds.filter(function(pid) { return !playingIds[pid]; });
+      }
+    }
+
     var gameRows = '';
     schedule.forEach(function(entry, idx) {
       var teamANames = entry.teamA.map(function(pid) {
@@ -5125,25 +5146,39 @@ App.UI = {
       var match = entry.matchId ? state.matches[entry.matchId] : null;
       var courtCell = '';
       var scoreCell = '';
-      var winnerCell = '';
       if (match && match.status === 'finished') {
         if (match.courtId && state.courts[match.courtId]) {
           courtCell = esc(String(state.courts[match.courtId].displayNumber));
         }
-        if (match.score) courtCell = courtCell || '', scoreCell = esc(match.score);
-        if (match.winner === 'teamA') winnerCell = teamANames;
-        else if (match.winner === 'teamB') winnerCell = teamBNames;
-        else if (match.winner === 'draw') winnerCell = '=';
+        if (match.score) scoreCell = esc(match.score);
       }
 
-      gameRows += '<tr>' +
-        '<td style="text-align:center">' + (idx + 1) + '</td>' +
+      var round = Math.floor(idx / courtCount);
+      var isFirstInRound = idx % courtCount === 0;
+      var rowspan = Math.min(courtCount, schedule.length - idx);
+      var isRoundEnd = courtCount > 1 && (idx + 1) % courtCount === 0 && idx < schedule.length - 1;
+      var rowClass = isRoundEnd ? ' class="round-end"' : '';
+
+      var roundCell = isFirstInRound
+        ? '<td style="text-align:center; vertical-align:top" rowspan="' + rowspan + '">' + (round + 1) + '</td>'
+        : '';
+
+      var benchCell = '';
+      if (hasBench && isFirstInRound) {
+        var benchNames = (benchByRound[round] || []).map(function(pid) {
+          var p = state.players[pid];
+          return p ? ('#' + p.number + ' ' + esc(p.name)) : '';
+        }).filter(Boolean).join(', ');
+        benchCell = '<td style="vertical-align:top; font-size:11px" rowspan="' + rowspan + '">' + benchNames + '</td>';
+      }
+
+      gameRows += '<tr' + rowClass + '>' +
+        roundCell +
         '<td>' + teamANames + '</td>' +
-        '<td style="text-align:center; color:#888">vs</td>' +
         '<td>' + teamBNames + '</td>' +
         '<td class="fill">' + courtCell + '</td>' +
         '<td class="fill">' + scoreCell + '</td>' +
-        '<td class="fill">' + winnerCell + '</td>' +
+        benchCell +
         '</tr>';
     });
 
@@ -5153,7 +5188,6 @@ App.UI = {
       '* { margin:0; padding:0; box-sizing:border-box; }' +
       'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size:12px; padding:15mm; color:#222; }' +
       'h1 { font-size:18px; margin-bottom:2px; }' +
-      '.date { color:#666; margin-bottom:12px; }' +
       'h2 { font-size:14px; margin:12px 0 6px; }' +
       '.roster { margin-bottom:12px; line-height:1.6; }' +
       'table { width:100%; border-collapse:collapse; }' +
@@ -5161,26 +5195,26 @@ App.UI = {
       'th { background:#f5f5f5; font-weight:600; text-align:left; }' +
       'td.fill { min-width:60px; }' +
       'tr { break-inside:avoid; }' +
+      'tr.round-end td { border-bottom:2px solid #666; }' +
       '.footer { margin-top:16px; font-size:10px; color:#999; }' +
       '@media print { body { padding:0; } }' +
       '@page { margin:15mm; size:A4 portrait; }' +
       '</style></head><body>' +
       '<h1>' + App.t('printTitle') + (sessionName ? ' — ' + sessionName : '') + '</h1>' +
-      '<div class="date">' + dateStr + '</div>' +
       '<h2>' + App.t('printPlayerRoster') + '</h2>' +
       '<div class="roster">' + rosterItems.join(', ') + '</div>' +
       '<table><thead><tr>' +
       '<th style="width:30px">#</th>' +
-      '<th>' + App.t('printGame') + ' A</th>' +
-      '<th style="width:24px"></th>' +
-      '<th>' + App.t('printGame') + ' B</th>' +
+      '<th>' + App.t('printTeam') + ' A</th>' +
+      '<th>' + App.t('printTeam') + ' B</th>' +
       '<th>' + App.t('printCourt') + '</th>' +
       '<th>' + App.t('printScore') + '</th>' +
-      '<th>' + App.t('printWinner') + '</th>' +
+      (hasBench ? '<th>' + App.t('printBench') + '</th>' : '') +
       '</tr></thead><tbody>' +
       gameRows +
       '</tbody></table>' +
-      '<div class="footer">' + App.t('printTitle') + ' — ' + new Date().toLocaleString() + '</div>' +
+      '<div class="footer">' + App.t('printTitle') + ' — ' + new Date().toLocaleString() +
+      '<br>Badmixton Flow &copy; ' + new Date().getFullYear() + ' — github.com/alexey-bass/badmixton-flow</div>' +
       '</body></html>';
 
     var w = window.open('', '_blank');

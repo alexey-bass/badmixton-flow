@@ -102,7 +102,8 @@ Queue simulation generates `simulation-report.html`, shuffle generates `simulati
 
 ### Screenshots:
 ```bash
-npm run screenshots   # regenerate all screenshots in screenshots/
+npm run screenshots      # regenerate all screenshots in screenshots/
+npm run screenshot:print # print schedule screenshot (shuffle 13/3, 11 rounds)
 ```
 
 Uses Playwright (Chromium) to capture each tab at 768×1024 @2x. PNGs are auto-optimized with `pngquant` (lossy, ~70% smaller); skipped gracefully if not installed (`brew install pngquant`). The script (`scripts/screenshots.js`) starts a local server, seeds demo data (12 players, finished matches, active games), and captures:
@@ -114,6 +115,7 @@ Uses Playwright (Chromium) to capture each tab at 768×1024 @2x. PNGs are auto-o
 - `06-session` — Session tab in admin mode
 - `07-history` — History tab in admin mode
 - `08-help` — Help modal overlay
+- `09-print-schedule` — Print schedule A4 page (shuffle mode, 13 players, 3 courts, 11 rounds)
 
 When adding new tabs or modals, add an entry to the `TABS` array in the script. Screenshots are committed to `screenshots/` and referenced in README.
 
@@ -168,7 +170,7 @@ When adding a player whose name already exists (case-insensitive), an emoji pick
 Two modes, chosen at session creation:
 
 - **Queue mode** (default): Players join a waiting queue, coach suggests/selects players per court, finished players return to queue end. Traditional flow.
-- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to free courts. Sidebar shows upcoming games instead of queue. Schedule tab replaces Queue tab. "Create game" button lets coach manually pick 2-4 players and add a custom game to the schedule. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1.
+- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to free courts. Sidebar shows upcoming games instead of queue. Schedule tab replaces Queue tab. "Create game" button lets coach manually pick 2-4 players and add a custom game to the schedule. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1. "Print" button generates an A4-friendly page with player roster, game table grouped by rounds, bench column (when players > courts can fit), and empty Court/Score columns for handwriting. Works when session is locked.
 
 Mode stored as `state.mode` ('queue' | 'shuffle'). Schedule stored as `state.schedule[]` with entries: `{ id, teamA, teamB, status, courtId, matchId }`. Status lifecycle: `pending` → `ready` (assigned to court) → `playing` → `finished`.
 
