@@ -1870,11 +1870,11 @@ tr.results-gold .results-name { color: #b8860b; }
 /* Large tablet / desktop */
 @media (min-width: 1024px) {
   .board-courts {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
   .courts-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 }
 
