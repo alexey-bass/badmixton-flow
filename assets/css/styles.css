@@ -1877,6 +1877,44 @@ tr.results-gold .results-name { color: #b8860b; }
    Shuffle mode
    ============================================================ */
 
+/* Shuffle mode: no sidebar, content below courts */
+.board-layout.shuffle-layout {
+  flex-direction: column;
+}
+.board-layout.shuffle-layout .board-courts {
+  flex: none;
+}
+.board-layout.shuffle-layout .board-queue {
+  flex: none;
+  min-width: 0;
+}
+
+/* Upcoming heading inside courts grid — spans all columns */
+.board-upcoming-heading {
+  grid-column: 1 / -1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-top: 8px;
+}
+
+/* Round bench row — spans all grid columns */
+.board-round-bench {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 0;
+  margin: -6px 0;
+  text-align: center;
+}
+
+/* Round separator — spans all grid columns */
+.board-round-separator {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
 /* Court card: ready state (game assigned, waiting for players) */
 .board-court-card.ready {
   background: #fffbeb;
@@ -1896,13 +1934,28 @@ tr.results-gold .results-name { color: #b8860b; }
 .schedule-game {
   padding: 8px 12px;
   border-left: 3px solid var(--border);
-  margin-bottom: 4px;
+  margin-bottom: 0;
   border-radius: var(--radius-sm);
   background: var(--card);
 }
 .schedule-game.playing { border-left-color: var(--success); background: #f0fdf4; }
 .schedule-game.ready { border-left-color: #f59e0b; background: #fffbeb; }
 .schedule-game.finished { opacity: 0.5; }
+
+/* Schedule game team colors (compact) */
+.sg-team {
+  display: inline;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.sg-team-a { background: #dbeafe; }
+.sg-team-b { background: #fef3c7; }
+.sg-vs {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
 
 /* Court game number */
 .court-game-num {

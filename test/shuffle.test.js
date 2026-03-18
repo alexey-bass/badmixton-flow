@@ -851,6 +851,260 @@ describe('App.Shuffle', function() {
     });
   });
 
+  describe('autoAssignAll on finish (3 courts)', function() {
+    function createSession3Courts(playerCount) {
+      App.Session.create('Test', 'shuffle');
+      App.Session.initCourts([1, 2, 3]);
+      var ids = [];
+      for (var i = 0; i < playerCount; i++) {
+        var id = App.Players.add('P' + (i + 1));
+        App.Players.markPresent(id);
+        ids.push(id);
+      }
+      return ids;
+    }
+
+    it('should assign games to all free courts after sequential finishes', function() {
+      createSession3Courts(13);
+      App.Shuffle.generate(12);
+      App.Shuffle.autoAssignAll();
+
+      // 3 games should be ready on 3 courts
+      var ready = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      assert.strictEqual(ready.length, 3);
+
+      // Start all 3
+      ready.forEach(function(e) {
+        App.Courts.startGame(e.courtId, e.teamA, e.teamB);
+      });
+
+      // Finish one at a time (sequential — the bug scenario)
+      var courts = Object.values(App.state.courts).filter(function(c) { return c.occupied; });
+      courts.forEach(function(c) {
+        App.Courts.finishGame(c.id, '21-15');
+      });
+      App.Shuffle.autoAssignAll(); // UI calls this after finish
+
+      // After all 3 finished, all 3 courts should have new ready games
+      var newReady = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      assert.strictEqual(newReady.length, 3, 'All 3 courts should have ready games after sequential finishes');
+
+      // Each should be on a different court
+      var courtIds = newReady.map(function(e) { return e.courtId; });
+      var uniqueCourts = new Set(courtIds);
+      assert.strictEqual(uniqueCourts.size, 3, 'Ready games should be on 3 different courts');
+    });
+
+    it('should retry previously failed courts when other courts finish', function() {
+      createSession3Courts(13);
+      App.Shuffle.generate(6); // 2 rounds
+      App.Shuffle.autoAssignAll();
+
+      var ready = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      assert.strictEqual(ready.length, 3);
+
+      // Start all
+      ready.forEach(function(e) {
+        App.Courts.startGame(e.courtId, e.teamA, e.teamB);
+      });
+
+      // Finish one at a time
+      var occupiedCourts = Object.values(App.state.courts).filter(function(c) { return c.occupied; });
+      occupiedCourts.forEach(function(c) {
+        App.Courts.finishGame(c.id, '21-15');
+      });
+      App.Shuffle.autoAssignAll(); // UI calls this after finish
+
+      // After ALL finished: 3 finished + 3 ready, 0 pending
+      var finalReady = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      var pending = App.state.schedule.filter(function(e) { return e.status === 'pending'; });
+      assert.strictEqual(finalReady.length, 3, 'All 3 remaining games should be ready');
+      assert.strictEqual(pending.length, 0, 'No games should remain pending');
+    });
+
+    it('should not duplicate players across ready games', function() {
+      createSession3Courts(13);
+      App.Shuffle.generate(12);
+      App.Shuffle.autoAssignAll();
+
+      // Start and finish first round
+      var ready = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      ready.forEach(function(e) {
+        App.Courts.startGame(e.courtId, e.teamA, e.teamB);
+      });
+      Object.values(App.state.courts).filter(function(c) { return c.occupied; }).forEach(function(c) {
+        App.Courts.finishGame(c.id, '21-15');
+      });
+      App.Shuffle.autoAssignAll(); // UI calls this after finish
+
+      // No player should appear in multiple ready games
+      var newReady = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      var allPlayers = [];
+      newReady.forEach(function(e) {
+        allPlayers = allPlayers.concat(e.teamA).concat(e.teamB);
+      });
+      var unique = new Set(allPlayers);
+      assert.strictEqual(unique.size, allPlayers.length, 'No player should appear in multiple ready games');
+    });
+
+    it('should work for two full rounds of finishes', function() {
+      createSession3Courts(13);
+      App.Shuffle.generate(9); // 3 rounds
+      App.Shuffle.autoAssignAll();
+
+      // Play through 2 full rounds
+      for (var round = 0; round < 2; round++) {
+        var ready = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+        ready.forEach(function(e) {
+          App.Courts.startGame(e.courtId, e.teamA, e.teamB);
+        });
+        Object.values(App.state.courts).filter(function(c) { return c.occupied; }).forEach(function(c) {
+          App.Courts.finishGame(c.id, '21-15');
+        });
+        App.Shuffle.autoAssignAll(); // UI calls this after finish
+      }
+
+      var finished = App.state.schedule.filter(function(e) { return e.status === 'finished'; });
+      var ready2 = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      var pending2 = App.state.schedule.filter(function(e) { return e.status === 'pending'; });
+      assert.strictEqual(finished.length, 6, 'Should have 6 finished games');
+      assert.strictEqual(ready2.length, 3, 'Should have 3 ready games for round 3');
+      assert.strictEqual(pending2.length, 0, 'No games should remain pending');
+    });
+
+    it('should only assign games whose players are all free', function() {
+      createSession3Courts(13);
+      App.Shuffle.generate(9);
+      App.Shuffle.autoAssignAll();
+
+      // Start all 3 ready games
+      App.state.schedule.filter(function(e) { return e.status === 'ready'; }).forEach(function(e) {
+        App.Courts.startGame(e.courtId, e.teamA, e.teamB);
+      });
+
+      // Finish all 3 courts sequentially
+      Object.values(App.state.courts).filter(function(c) { return c.occupied; }).forEach(function(c) {
+        App.Courts.finishGame(c.id, '21-15');
+      });
+      App.Shuffle.autoAssignAll(); // UI calls this after finish
+
+      // All ready games should have players that are free
+      var playingPids = {};
+      App.state.schedule.forEach(function(e) {
+        if (e.status === 'playing') {
+          e.teamA.concat(e.teamB).forEach(function(pid) { playingPids[pid] = true; });
+        }
+      });
+      var readyGames = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      readyGames.forEach(function(e) {
+        e.teamA.concat(e.teamB).forEach(function(pid) {
+          assert.ok(!playingPids[pid], 'Ready game player should not be playing on another court');
+        });
+      });
+    });
+
+    it('should not assign games when all pending have busy players', function() {
+      // Create a scenario where the next pending game has players on other courts
+      createSession3Courts(4); // Only 4 players — every game uses all 4
+      App.Shuffle.generate(3);
+      App.Shuffle.autoAssignAll();
+
+      // Only 1 court can have a ready game (4 players = 1 game at a time with 2v2)
+      var ready = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      assert.strictEqual(ready.length, 1);
+
+      // Start it
+      App.Courts.startGame(ready[0].courtId, ready[0].teamA, ready[0].teamB);
+
+      // While game is playing, remaining games can't be assigned (same players)
+      var pending = App.state.schedule.filter(function(e) { return e.status === 'pending'; });
+      assert.strictEqual(pending.length, 2, 'Should have 2 pending games waiting');
+
+      // No new ready games should be created (players are busy)
+      var newReady = App.state.schedule.filter(function(e) { return e.status === 'ready'; });
+      assert.strictEqual(newReady.length, 0, 'Should not skip ahead to assign games with busy players');
+    });
+  });
+
+  describe('round-based bench calculation', function() {
+    function createSession3Courts(playerCount) {
+      App.Session.create('Test', 'shuffle');
+      App.Session.initCourts([1, 2, 3]);
+      var ids = [];
+      for (var i = 0; i < playerCount; i++) {
+        var id = App.Players.add('P' + (i + 1));
+        App.Players.markPresent(id);
+        ids.push(id);
+      }
+      return ids;
+    }
+
+    it('should compute bench from the round, not from courts', function() {
+      var ids = createSession3Courts(13);
+      App.Shuffle.generate(6); // 2 rounds
+      App.Shuffle.autoAssignAll();
+
+      // Round 1: games 0,1,2 — all 3 ready on courts
+      var round1Players = {};
+      for (var i = 0; i < 3; i++) {
+        App.state.schedule[i].teamA.concat(App.state.schedule[i].teamB).forEach(function(pid) {
+          round1Players[pid] = true;
+        });
+      }
+      var round1Bench = ids.filter(function(id) { return !round1Players[id]; });
+
+      // Start all 3 games
+      App.state.schedule.filter(function(e) { return e.status === 'ready'; }).forEach(function(e) {
+        App.Courts.startGame(e.courtId, e.teamA, e.teamB);
+      });
+
+      // Finish court 1 — game from round 2 gets assigned to court 1
+      var court1 = Object.values(App.state.courts).find(function(c) {
+        return c.displayNumber === 1 && c.occupied;
+      });
+      App.Courts.finishGame(court1.id, '21-15');
+      App.Shuffle.autoAssignAll(); // UI calls this after finish
+
+      // Round 1 bench should still be the same (computed from round, not courts)
+      // Even though court 1 now has a round-2 game
+      var round1BenchAfter = ids.filter(function(id) { return !round1Players[id]; });
+      assert.deepStrictEqual(round1BenchAfter, round1Bench,
+        'Round 1 bench should not change when a court gets a game from the next round');
+    });
+
+    it('should compute upcoming round bench from all games in the round', function() {
+      var ids = createSession3Courts(13);
+      App.Shuffle.generate(6);
+      App.Shuffle.autoAssignAll();
+
+      // Round 2: games 3,4,5 — compute bench from ALL 3 games
+      var round2AllPlayers = {};
+      for (var i = 3; i < 6; i++) {
+        App.state.schedule[i].teamA.concat(App.state.schedule[i].teamB).forEach(function(pid) {
+          round2AllPlayers[pid] = true;
+        });
+      }
+      var round2Bench = ids.filter(function(id) { return !round2AllPlayers[id]; });
+      assert.ok(round2Bench.length > 0, 'Round 2 should have bench players with 13 players');
+
+      // Start and finish round 1, which assigns round 2 game to a court
+      App.state.schedule.filter(function(e) { return e.status === 'ready'; }).forEach(function(e) {
+        App.Courts.startGame(e.courtId, e.teamA, e.teamB);
+      });
+      var court1 = Object.values(App.state.courts).find(function(c) {
+        return c.displayNumber === 1 && c.occupied;
+      });
+      App.Courts.finishGame(court1.id, '21-15');
+      App.Shuffle.autoAssignAll(); // UI calls this after finish
+
+      // Even though 1 game from round 2 is now on a court,
+      // round 2 bench should still be computed from ALL 3 round-2 games
+      var round2BenchAfter = ids.filter(function(id) { return !round2AllPlayers[id]; });
+      assert.deepStrictEqual(round2BenchAfter, round2Bench,
+        'Round 2 bench should include all round-2 game players, even if some are on courts');
+    });
+  });
+
   describe('_ensureState migration', function() {
     it('should add mode and schedule to old state', function() {
       var state = App.Storage._ensureState({

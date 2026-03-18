@@ -3612,8 +3612,14 @@ App.UI = {
     });
     var isShuffle = App.Shuffle.isShuffleMode();
 
+    // Toggle layout class for shuffle mode (no sidebar, content below courts)
+    var boardLayout = document.querySelector('.board-layout');
+    if (boardLayout) boardLayout.classList.toggle('shuffle-layout', isShuffle);
+
     // Courts
     var html = '';
+    var courtPlayerIds = {}; // Track all players shown on courts (for bench calc)
+    var previewedPendingIds = {}; // Track pending games already previewed on other free courts
     courts.forEach(function(court) {
       var match = court.currentMatch ? App.state.matches[court.currentMatch] : null;
       var isOccupied = court.occupied && match && match.status === 'playing';
@@ -3642,6 +3648,7 @@ App.UI = {
       html += '</div>';
 
       if (isOccupied) {
+        match.teamA.concat(match.teamB).forEach(function(pid) { courtPlayerIds[pid] = true; });
         html += '<div class="board-court-teams">';
         html += '<div class="board-team board-team-a">';
         match.teamA.forEach(function(pid) {
@@ -3663,6 +3670,7 @@ App.UI = {
         html += '</div>';
       } else if (readyEntry) {
         // Shuffle mode: ready game assigned to this court
+        readyEntry.teamA.concat(readyEntry.teamB).forEach(function(pid) { courtPlayerIds[pid] = true; });
         var allReady = App.Shuffle.arePlayersReady(readyEntry.id);
         html += '<div class="board-court-teams">';
         html += '<div class="board-team board-team-a">';
@@ -3687,9 +3695,11 @@ App.UI = {
         html += '<button class="btn btn-success" data-action="board-start-ready" data-court="' + court.id + '" data-schedule="' + readyEntry.id + '"' + (allReady ? '' : ' disabled') + '>' + App.t('startGame') + '</button>';
         html += '</div>';
       } else if (isShuffle) {
-        // Show next pending game so coach sees what's coming
-        var nextPending = App.state.schedule.find(function(e) { return e.status === 'pending'; });
+        // Show next pending game so coach sees what's coming (skip already-previewed ones)
+        var nextPending = App.state.schedule.find(function(e) { return e.status === 'pending' && !previewedPendingIds[e.id]; });
         if (nextPending) {
+          previewedPendingIds[nextPending.id] = true;
+          nextPending.teamA.concat(nextPending.teamB).forEach(function(pid) { courtPlayerIds[pid] = true; });
           // Match assignNextToCourt logic: players in ready/playing entries are busy
           var _busyPids = {};
           App.state.schedule.forEach(function(e) {
@@ -3738,33 +3748,93 @@ App.UI = {
       html += '</div>';
     });
 
+    // Rounds: group upcoming games by court count, with bench per round
+    if (isShuffle) {
+      var courtCount = courts.length;
+      var presentPlayers = Object.values(App.state.players).filter(function(p) { return p.present; });
+      presentPlayers.sort(function(a, b) { return (a.number || 999) - (b.number || 999); });
+
+      // Build round info from schedule (each round = courtCount consecutive games)
+      var roundMap = {};
+      App.state.schedule.forEach(function(entry, idx) {
+        var rIdx = Math.floor(idx / courtCount);
+        if (!roundMap[rIdx]) roundMap[rIdx] = { allPlayerIds: {}, pendingGames: [] };
+        entry.teamA.concat(entry.teamB).forEach(function(pid) { roundMap[rIdx].allPlayerIds[pid] = true; });
+        if (entry.status === 'pending' && !previewedPendingIds[entry.id]) {
+          roundMap[rIdx].pendingGames.push(entry);
+        }
+      });
+
+      // Current round = the round that has playing or ready games
+      var currentRoundIdx = -1;
+      App.state.schedule.forEach(function(entry, idx) {
+        if (currentRoundIdx === -1 && (entry.status === 'playing' || entry.status === 'ready')) {
+          currentRoundIdx = Math.floor(idx / courtCount);
+        }
+      });
+
+      // Current round bench (fixed per round, not per court)
+      if (currentRoundIdx >= 0 && roundMap[currentRoundIdx]) {
+        var currentBench = presentPlayers.filter(function(p) { return !roundMap[currentRoundIdx].allPlayerIds[p.id]; });
+        if (currentBench.length > 0) {
+          html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
+            currentBench.map(function(p) { return '#' + p.number + ' ' + App.UI._esc(p.name); }).join(', ') + '</div>';
+        }
+      }
+
+      // Upcoming rounds: rounds after current that have pending games to show
+      var upcomingRoundKeys = Object.keys(roundMap).map(Number).filter(function(k) {
+        return k > currentRoundIdx && roundMap[k].pendingGames.length > 0;
+      }).sort(function(a, b) { return a - b; });
+
+      if (upcomingRoundKeys.length > 0) {
+        html += '<div class="board-upcoming-heading">' + App.t('nextGames') + '</div>';
+
+        upcomingRoundKeys.forEach(function(roundKey, idx) {
+          var round = roundMap[roundKey];
+
+          if (idx > 0) html += '<div class="board-round-separator"></div>';
+
+          // Game cards (only pending, not already on courts)
+          round.pendingGames.forEach(function(entry) {
+            var teamANames = entry.teamA.map(function(pid) {
+              var p = App.state.players[pid];
+              return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
+            }).join('  ');
+            var teamBNames = entry.teamB.map(function(pid) {
+              var p = App.state.players[pid];
+              return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
+            }).join('  ');
+
+            html += '<div class="schedule-game pending">' +
+              '<span class="sg-team sg-team-a">' + teamANames + '</span>' +
+              ' <span class="sg-vs">vs</span> ' +
+              '<span class="sg-team sg-team-b">' + teamBNames + '</span>' +
+              '</div>';
+          });
+
+          // Round bench (based on ALL games in the round, not just pending)
+          var roundBench = presentPlayers.filter(function(p) { return !round.allPlayerIds[p.id]; });
+          if (roundBench.length > 0) {
+            html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
+              roundBench.map(function(p) { return '#' + p.number + ' ' + App.UI._esc(p.name); }).join(', ') + '</div>';
+          }
+        });
+      }
+    }
+
     document.getElementById('boardCourts').innerHTML = html;
 
     // Sidebar: Queue or Upcoming
     if (isShuffle) {
-      var upcoming = App.Shuffle.getUpcoming();
-      var sidebarHeading = App.t('upcoming');
-      var _bqh = document.querySelector('.board-queue h2'); if (_bqh) _bqh.innerHTML = '<span>' + sidebarHeading + '</span> <span class="badge" id="boardQueueCount">' + upcoming.length + '</span>';
+      var upcoming = App.Shuffle.getUpcoming().filter(function(e) { return !previewedPendingIds[e.id]; });
+      // Hide sidebar heading in shuffle mode (content rendered below courts)
+      var _bqh = document.querySelector('.board-queue h2'); if (_bqh) _bqh.style.display = 'none';
 
       var qhtml = '';
-      upcoming.forEach(function(entry, idx) {
-        var teamANames = entry.teamA.map(function(pid) {
-          var p = App.state.players[pid];
-          return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
-        }).join(' + ');
-        var teamBNames = entry.teamB.map(function(pid) {
-          var p = App.state.players[pid];
-          return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
-        }).join(' + ');
 
-        qhtml += '<div class="schedule-game pending">' +
-          '<div style="font-size:12px; color:var(--text-secondary); margin-bottom:2px;">' + App.t('scheduleGame') + ' ' + (idx + 1) + '</div>' +
-          '<div style="font-size:14px; font-weight:500;">' + teamANames + ' <span style="color:var(--text-secondary)">vs</span> ' + teamBNames + '</div>' +
-          '</div>';
-      });
-
-      if (upcoming.length === 0) {
-        qhtml = '<div style="text-align:center; color:var(--text-secondary); padding:12px;">' + App.t('scheduleEmpty') + '</div>';
+      if (upcoming.length === 0 && App.state.schedule.length === 0) {
+        qhtml += '<div style="text-align:center; color:var(--text-secondary); padding:12px;">' + App.t('scheduleEmpty') + '</div>';
       }
 
       // Action buttons
@@ -3781,7 +3851,7 @@ App.UI = {
     } else {
       // Queue mode (original)
       var queue = App.state.waitingQueue;
-      var _bqh = document.querySelector('.board-queue h2'); if (_bqh) _bqh.innerHTML = '<span data-i18n="queue">' + App.t('queue') + '</span> <span class="badge" id="boardQueueCount">' + queue.length + '</span>';
+      var _bqh = document.querySelector('.board-queue h2'); if (_bqh) { _bqh.style.display = ''; _bqh.innerHTML = '<span data-i18n="queue">' + App.t('queue') + '</span> <span class="badge" id="boardQueueCount">' + queue.length + '</span>'; }
 
       var qhtml = '';
       queue.forEach(function(pid, idx) {
@@ -4480,6 +4550,8 @@ App.UI = {
       App.Analytics.track('game_finish', { has_score: !!score, winner: winner || 'score', duration_sec: durationSec });
       App.UI.hideModal();
       App.Courts.finishGame(courtId, score, winner);
+      // Retry all free courts (a previously skipped court may now have free players)
+      if (App.Shuffle.isShuffleMode()) App.Shuffle.autoAssignAll();
       App.UI.renderAll();
     }
 

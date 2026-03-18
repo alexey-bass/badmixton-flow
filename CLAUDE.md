@@ -107,7 +107,7 @@ npm run screenshot:print # print schedule screenshot (shuffle 13/3, 11 rounds)
 ```
 
 Uses Playwright (Chromium) to capture each tab at 768×1024 @2x. PNGs are auto-optimized with `pngquant` (lossy, ~70% smaller); skipped gracefully if not installed (`brew install pngquant`). The script (`scripts/screenshots.js`) starts a local server, seeds demo data (12 players, finished matches, active games), and captures:
-- `01-board` — Board tab in player mode: 4 courts (2v2, 2v1, 1v1, empty), queue sidebar
+- `01-board` — Board tab in player mode: 4 courts (2v2, 2v1, 1v1, empty); queue mode shows queue sidebar, shuffle mode shows round-based upcoming games below
 - `02-players` — Players tab in admin mode
 - `03-results` — Results leaderboard + session highlights in player mode
 - `04-queue` — Queue tab in admin mode
@@ -170,7 +170,7 @@ When adding a player whose name already exists (case-insensitive), an emoji pick
 Two modes, chosen at session creation:
 
 - **Queue mode** (default): Players join a waiting queue, coach suggests/selects players per court, finished players return to queue end. Traditional flow.
-- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to free courts. Sidebar shows upcoming games instead of queue. Schedule tab replaces Queue tab. "Create game" button lets coach manually pick 2-4 players and add a custom game to the schedule. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1. "Print" button generates an A4-friendly page with player roster, game table grouped by rounds, bench column (when players > courts can fit), and empty Court/Score columns for handwriting. Works when session is locked.
+- **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to free courts in strict schedule order — if the next pending game has players busy on other courts, the court waits rather than skipping ahead. Board tab shows courts full-width (no sidebar), with upcoming games and bench displayed below in a round-based layout: games are grouped into rounds (courtCount consecutive games), each round's game cards align to the court grid columns, bench ("Pauza") players are shown centered per round, and rounds are separated by divider lines. Bench is computed per-round from the original schedule, staying stable even when games from the next round are assigned early to a freed court. Free courts preview the next pending game (no duplicates across courts) and show random motivational/funny phrases (20 per language) instead of "Waiting for schedule...". Upcoming game cards use the same blue (#dbeafe) / yellow (#fef3c7) team background colors as court cards. Schedule tab replaces Queue tab. "Create game" button lets coach manually pick 2-4 players and add a custom game to the schedule. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1. "Print" button generates an A4-friendly page with player roster, game table grouped by rounds, bench column (when players > courts can fit), and empty Court/Score columns for handwriting. Works when session is locked.
 
 Mode stored as `state.mode` ('queue' | 'shuffle'). Schedule stored as `state.schedule[]` with entries: `{ id, teamA, teamB, status, courtId, matchId }`. Status lifecycle: `pending` → `ready` (assigned to court) → `playing` → `finished`.
 
@@ -190,7 +190,7 @@ The suggestion algorithm picks the best available format based on queue size. Te
 Picks players by scoring (queue position, games balance, wishes), diversifies to avoid re-grouping, then splits into teams minimizing partner/opponent repeats. Supports custom tap-to-swap in the suggestion modal. See [ALGO.md](ALGO.md) for full scoring weights and examples.
 
 ### Two UI Modes
-- **Board** (player-facing): Courts with teams + timer, queue list with games played counter and live wait timer, results. One-tap "Finish" with score input.
+- **Board** (player-facing): Courts with teams + timer, results. In queue mode: right sidebar with queue list (games played counter, live wait timer). In shuffle mode: full-width courts with round-based upcoming games and bench below. One-tap "Finish" with score input.
 - **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
 
 Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated) with app version in the footer.

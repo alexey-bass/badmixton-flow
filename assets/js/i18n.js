@@ -341,7 +341,29 @@ App.i18n = {
       shuffleCreateGame: 'Utwórz grę',
       shuffleReshuffle: 'Przetasuj pozostałe',
       upcoming: 'Zaplanowane',
-      waitingForSchedule: 'Oczekiwanie na harmonogram...',
+      nextGames: 'Kolejne gry',
+      waitingForSchedule: [
+        'Gotowi do gry? Losuj!',
+        'Kort czeka na wojowników!',
+        'Czas na lotki!',
+        'Kto pierwszy, ten wygrywa!',
+        'Niech wygra lepszy!',
+        'Walka!',
+        'Szykuj rakietę!',
+        'Rozgrzewka skończona!',
+        'Do boju!',
+        'Lotka nie czeka!',
+        'Czas na smecze!',
+        'Rakiety w dłoń!',
+        'Na pozycje!',
+        'Będzie się działo!',
+        'Nie ma litości!',
+        'Start za moment!',
+        'Kto odpadnie pierwszy?',
+        'Turniej czas zacząć!',
+        'Przygotuj się na epicką bitwę!',
+        'Bez mercy!'
+      ],
       waitingForPlayers: 'Oczekiwanie na {n} graczy...',
       allPlayersReady: 'Gotowi — można zacząć',
       scheduleGenerated: 'Wygenerowano gier: ',
@@ -705,7 +727,29 @@ App.i18n = {
       shuffleCreateGame: 'Create game',
       shuffleReshuffle: 'Reshuffle remaining',
       upcoming: 'Upcoming',
-      waitingForSchedule: 'Waiting for schedule...',
+      nextGames: 'Next games',
+      waitingForSchedule: [
+        'Players ready — shuffle!',
+        'The court awaits warriors!',
+        'Time to smash!',
+        'Fight!',
+        'Round one... FIGHT!',
+        'Finish them!',
+        'Ready? Let\'s go!',
+        'Grab your rackets!',
+        'No mercy!',
+        'Shuttlecock incoming!',
+        'Prepare for battle!',
+        'Flawless victory awaits!',
+        'Choose your fighters!',
+        'It\'s game time!',
+        'May the best team win!',
+        'Show no weakness!',
+        'Epic rally incoming!',
+        'Fatality... on the court!',
+        'Warm-up is over!',
+        'Tournament starts NOW!'
+      ],
       waitingForPlayers: 'Waiting for {n} players...',
       allPlayersReady: 'All ready — start game',
       scheduleGenerated: 'Games generated: ',
@@ -745,7 +789,10 @@ App.i18n = {
   // Get translation by key
   t: function(key) {
     var dict = this.translations[this.currentLang] || this.translations.pl;
-    return dict[key] !== undefined ? dict[key] : key;
+    var val = dict[key];
+    if (val === undefined) return key;
+    if (Array.isArray(val)) return val[Math.floor(Math.random() * val.length)];
+    return val;
   },
 
   // Plural: 1 → 'one', 2-4 → 'few' (PL only), 5+ → 'many' (PL teens always 'many')
