@@ -326,3 +326,53 @@ describe('Emoji name disambiguation', function() {
     });
   });
 });
+
+describe('Player name with games superscript (_pname)', function() {
+  beforeEach(function() {
+    localStorage.clear();
+    App.Session.create();
+    App.Session.initCourts([1]);
+  });
+
+  it('should return escaped name without superscript when 0 games', function() {
+    var id = App.Players.add('Ola');
+    var p = App.state.players[id];
+    var result = App.UI._pname(p);
+    assert.strictEqual(result, 'Ola');
+    assert.ok(!result.includes('<sup>'), 'Should not have superscript for 0 games');
+  });
+
+  it('should return name with superscript when games > 0', function() {
+    var id = App.Players.add('Aleks');
+    var p = App.state.players[id];
+    p.gamesPlayed = 3;
+    var result = App.UI._pname(p);
+    assert.strictEqual(result, 'Aleks<sup>3</sup>');
+  });
+
+  it('should escape HTML in player name', function() {
+    var id = App.Players.add('<script>');
+    var p = App.state.players[id];
+    p.gamesPlayed = 1;
+    var result = App.UI._pname(p);
+    assert.ok(!result.includes('<script>'), 'Name should be escaped');
+    assert.ok(result.includes('<sup>1</sup>'), 'Should have superscript');
+  });
+
+  it('should handle emoji names', function() {
+    var id = App.Players.add('Ola 🐶');
+    var p = App.state.players[id];
+    p.gamesPlayed = 5;
+    var result = App.UI._pname(p);
+    assert.ok(result.includes('🐶'));
+    assert.ok(result.includes('<sup>5</sup>'));
+  });
+
+  it('should work with just player id', function() {
+    var id = App.Players.add('Marek');
+    App.state.players[id].gamesPlayed = 2;
+    // _pname should also accept a player object from state lookup
+    var result = App.UI._pname(App.state.players[id]);
+    assert.strictEqual(result, 'Marek<sup>2</sup>');
+  });
+});

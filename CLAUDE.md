@@ -67,6 +67,12 @@ npm run validate   # runs syntax check + tests + simulation quality check + ligh
 - Lighthouse scores must stay at 100 across all categories. `npm run validate` runs Lighthouse after tests.
 - Shuffle algorithm must pass quality criteria (see ALGO.md). `npm run validate` runs 10 simulations after tests.
 
+### Games Played Superscript:
+- Every rendered player name includes a `<sup>N</sup>` suffix showing finished games played (e.g. `Ola<sup>3</sup>`)
+- When `gamesPlayed` is 0, no superscript is shown
+- Use `App.UI._pname(player)` instead of `App.UI._esc(player.name)` for all player name rendering
+- Exception: HTML input `value` attributes use `_esc()` (HTML tags don't render in inputs)
+
 ### Long Player Names:
 - Player names are truncated with CSS `text-overflow: ellipsis` in player list (`.player-name`), board queue (`.bq-name`), board court cards (`.board-team > span`), and admin courts (`.team > span`)
 - Truncation is dynamic — based on available pixel width, no character limit

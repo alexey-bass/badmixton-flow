@@ -2728,7 +2728,7 @@ App.UI = {
       html += '<div class="player-row ' + statusClass + '" data-id="' + p.id + '">' +
         '<span class="player-number">' + (p.number || '-') + '</span>' +
         '<div class="player-info">' +
-          '<span class="player-name">' + App.UI._esc(p.name) + '</span>' +
+          '<span class="player-name">' + App.UI._pname(p) + '</span>' +
           wishText +
         '</div>' +
         '<span class="player-games">' + App.tGames(p.gamesPlayed) + '</span>' +
@@ -2829,7 +2829,7 @@ App.UI = {
     if (!Array.isArray(player.wishedPartners)) player.wishedPartners = [];
 
     var present = App.Players.getPresent().filter(function(p) { return p.id !== playerId; });
-    var html = '<h2>' + App.t('wishFor') + App.UI._esc(player.name) + '</h2>';
+    var html = '<h2>' + App.t('wishFor') + App.UI._pname(player) + '</h2>';
     html += '<p style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;">' + App.t('selectPartner') + '</p>';
     if (App.Shuffle.isShuffleMode()) {
       html += '<p style="color:var(--warning); font-size:12px; margin-bottom:12px;">' + App.t('wishShuffleHint') + '</p>';
@@ -2844,7 +2844,7 @@ App.UI = {
       var selected = player.wishedPartners.indexOf(p.id) !== -1 ? ' selected' : '';
       html += '<div class="modal-player-item' + selected + '" data-wish-id="' + p.id + '">' +
         '<span style="font-weight:700; color:var(--primary); margin-right:6px;">' + (p.number || '-') + '</span>' +
-        '<span>' + App.UI._esc(p.name) + '</span></div>';
+        '<span>' + App.UI._pname(p) + '</span></div>';
     });
 
     html += '</div>';
@@ -2910,7 +2910,7 @@ App.UI = {
         '<span class="drag-handle">&#9776;</span>' +
         '<span class="queue-pos">' + (idx + 1) + '</span>' +
         '<span class="queue-number">#' + (p.number || '?') + '</span>' +
-        '<span class="queue-name">' + App.UI._esc(p.name) + '</span>' +
+        '<span class="queue-name">' + App.UI._pname(p) + '</span>' +
         '<span class="queue-wait">' + App.tGames(p.gamesPlayed) + '</span>' +
         '<span class="queue-timer" data-queue-start="' + (p.queueEntryTime || 0) + '">' +
           App.Utils.formatWaitMinutes(p.queueEntryTime ? Date.now() - p.queueEntryTime : 0) + '</span>' +
@@ -2965,11 +2965,11 @@ App.UI = {
         var statusClass = entry.status;
         var teamANames = entry.teamA.map(function(pid) {
           var p = App.state.players[pid];
-          return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
+          return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
         }).join(' + ');
         var teamBNames = entry.teamB.map(function(pid) {
           var p = App.state.players[pid];
-          return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
+          return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
         }).join(' + ');
 
         var courtLabel = '';
@@ -3191,14 +3191,14 @@ App.UI = {
     html += '<div class="team team-a">';
     entry.teamA.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div>';
     html += '<div class="vs">vs</div>';
     html += '<div class="team team-b">';
     entry.teamB.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div></div>';
     return html;
@@ -3209,14 +3209,14 @@ App.UI = {
     html += '<div class="team team-a">';
     match.teamA.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div>';
     html += '<div class="vs">vs</div>';
     html += '<div class="team team-b">';
     match.teamB.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div></div>';
     return html;
@@ -3362,13 +3362,13 @@ App.UI = {
     html += '<div class="custom-split-team custom-split-team-a" id="customTeamA">';
     html += '<h5>Team A</h5>';
     teamA.forEach(function(id) {
-      html += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+      html += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._pname(App.state.players[id]) + '</span>';
     });
     html += '</div>';
     html += '<div class="custom-split-team custom-split-team-b" id="customTeamB">';
     html += '<h5>Team B</h5>';
     teamB.forEach(function(id) {
-      html += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+      html += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._pname(App.state.players[id]) + '</span>';
     });
     html += '</div>';
     html += '</div>';
@@ -3376,7 +3376,7 @@ App.UI = {
       html += '<div class="custom-split-bench" id="customBench">';
       html += '<h5>' + App.t('customBench') + '</h5>';
       bench.forEach(function(id) {
-        html += '<span class="custom-split-chip bench-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+        html += '<span class="custom-split-chip bench-chip" data-pid="' + id + '">' + App.UI._pname(App.state.players[id]) + '</span>';
       });
       html += '</div>';
     }
@@ -3391,13 +3391,13 @@ App.UI = {
     var benchEl = area.querySelector('#customBench') || area.querySelector('.custom-split-bench');
     var htmlA = '<h5>Team A</h5>';
     splitObj.teamA.forEach(function(id) {
-      htmlA += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+      htmlA += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._pname(App.state.players[id]) + '</span>';
     });
     teamAEl.innerHTML = htmlA;
 
     var htmlB = '<h5>Team B</h5>';
     splitObj.teamB.forEach(function(id) {
-      htmlB += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+      htmlB += '<span class="custom-split-chip" data-pid="' + id + '">' + App.UI._pname(App.state.players[id]) + '</span>';
     });
     teamBEl.innerHTML = htmlB;
 
@@ -3413,7 +3413,7 @@ App.UI = {
       });
       var htmlBench = '<h5>' + App.t('customBench') + '</h5>';
       bench.forEach(function(id) {
-        htmlBench += '<span class="custom-split-chip bench-chip" data-pid="' + id + '">' + App.UI._esc(App.state.players[id].name) + '</span>';
+        htmlBench += '<span class="custom-split-chip bench-chip" data-pid="' + id + '">' + App.UI._pname(App.state.players[id]) + '</span>';
       });
       benchEl.innerHTML = htmlBench;
       benchEl.style.display = bench.length > 0 ? '' : 'none';
@@ -3501,7 +3501,7 @@ App.UI = {
       var inQueue = queue.indexOf(p.id) !== -1;
       html += '<div class="player-select-item" data-pid="' + p.id + '">' +
         '<span class="ps-number">#' + (p.number || '?') + '</span> ' +
-        App.UI._esc(p.name) +
+        App.UI._pname(p) +
         (inQueue ? '<div style="font-size:10px; color:var(--text-secondary);">' + App.t('inQueueLabel') + '</div>' : '') +
         '</div>';
     });
@@ -3653,14 +3653,14 @@ App.UI = {
         html += '<div class="board-team board-team-a">';
         match.teamA.forEach(function(pid) {
           var p = App.state.players[pid];
-          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div>';
         html += '<div class="board-vs">vs</div>';
         html += '<div class="board-team board-team-b">';
         match.teamB.forEach(function(pid) {
           var p = App.state.players[pid];
-          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div></div>';
 
@@ -3677,7 +3677,7 @@ App.UI = {
         readyEntry.teamA.forEach(function(pid) {
           var p = App.state.players[pid];
           var busy = App.Players.isOnCourt(pid);
-          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div>';
         html += '<div class="board-vs">vs</div>';
@@ -3685,7 +3685,7 @@ App.UI = {
         readyEntry.teamB.forEach(function(pid) {
           var p = App.state.players[pid];
           var busy = App.Players.isOnCourt(pid);
-          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div></div>';
         var busyCount = readyEntry.teamA.concat(readyEntry.teamB).filter(function(pid) { return App.Players.isOnCourt(pid); }).length;
@@ -3714,7 +3714,7 @@ App.UI = {
           nextPending.teamA.forEach(function(pid) {
             var p = App.state.players[pid];
             var busy = _busyPids[pid] || App.Players.isOnCourt(pid);
-            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
           });
           html += '</div>';
           html += '<div class="board-vs">vs</div>';
@@ -3722,7 +3722,7 @@ App.UI = {
           nextPending.teamB.forEach(function(pid) {
             var p = App.state.players[pid];
             var busy = _busyPids[pid] || App.Players.isOnCourt(pid);
-            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._esc(p.name) : '?') + '</span>';
+            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
           });
           html += '</div></div>';
           if (_busyCount > 0) {
@@ -3778,7 +3778,7 @@ App.UI = {
         var currentBench = presentPlayers.filter(function(p) { return !roundMap[currentRoundIdx].allPlayerIds[p.id]; });
         if (currentBench.length > 0) {
           html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
-            currentBench.map(function(p) { return '#' + p.number + ' ' + App.UI._esc(p.name); }).join(', ') + '</div>';
+            currentBench.map(function(p) { return '#' + p.number + ' ' + App.UI._pname(p); }).join(', ') + '</div>';
         }
       }
 
@@ -3799,11 +3799,11 @@ App.UI = {
           round.pendingGames.forEach(function(entry) {
             var teamANames = entry.teamA.map(function(pid) {
               var p = App.state.players[pid];
-              return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
+              return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
             }).join('  ');
             var teamBNames = entry.teamB.map(function(pid) {
               var p = App.state.players[pid];
-              return p ? ('#' + p.number + ' ' + App.UI._esc(p.name)) : '?';
+              return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
             }).join('  ');
 
             html += '<div class="schedule-game pending">' +
@@ -3817,7 +3817,7 @@ App.UI = {
           var roundBench = presentPlayers.filter(function(p) { return !round.allPlayerIds[p.id]; });
           if (roundBench.length > 0) {
             html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
-              roundBench.map(function(p) { return '#' + p.number + ' ' + App.UI._esc(p.name); }).join(', ') + '</div>';
+              roundBench.map(function(p) { return '#' + p.number + ' ' + App.UI._pname(p); }).join(', ') + '</div>';
           }
         });
       }
@@ -3860,7 +3860,7 @@ App.UI = {
         qhtml += '<div class="board-queue-item">' +
           '<span class="bq-pos">' + (idx + 1) + '.</span>' +
           '<span class="bq-number">#' + (p.number || '?') + '</span>' +
-          '<span class="bq-name">' + App.UI._esc(p.name) + '</span>' +
+          '<span class="bq-name">' + App.UI._pname(p) + '</span>' +
           '<span class="bq-games">' + App.tGames(p.gamesPlayed) + '</span>' +
           '<span class="bq-timer" data-queue-start="' + (p.queueEntryTime || 0) + '">' +
             App.Utils.formatWaitMinutes(p.queueEntryTime ? Date.now() - p.queueEntryTime : 0) + '</span>' +
@@ -4002,7 +4002,7 @@ App.UI = {
     App.Players.getSorted().forEach(function(p) {
       playerOpts += '<option value="' + p.id + '"' +
         (currentPlayer === p.id ? ' selected' : '') +
-        '>' + (p.number || '-') + '. ' + p.name + '</option>';
+        '>' + (p.number || '-') + '. ' + App.UI._esc(p.name) + '</option>';
     });
     playerSelect.innerHTML = playerOpts;
 
@@ -4013,11 +4013,11 @@ App.UI = {
       var courtObj = App.state.courts[m.courtId];
       var teamANames = m.teamA.map(function(id) {
         var p = App.state.players[id];
-        return p ? ('#' + p.number + ' ' + p.name) : '?';
+        return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
       });
       var teamBNames = m.teamB.map(function(id) {
         var p = App.state.players[id];
-        return p ? ('#' + p.number + ' ' + p.name) : '?';
+        return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
       });
 
       // Determine which team won
@@ -4116,7 +4116,7 @@ App.UI = {
 
       html += '<tr class="' + medal + ' results-row-clickable" data-player-id="' + p.id + '">';
       html += '<td class="results-rank">' + (idx + 1) + '</td>';
-      html += '<td class="results-name">' + App.UI._esc(p.name) + '</td>';
+      html += '<td class="results-name">' + App.UI._pname(p) + '</td>';
       html += '<td>' + p.gamesPlayed + '</td>';
       html += '<td class="results-wins">' + wins + '</td>';
       html += '<td class="results-losses">' + losses + '</td>';
@@ -4159,6 +4159,7 @@ App.UI = {
   _buildHighlights: function(players) {
     var highlights = [];
     var esc = this._esc.bind(this);
+    var pname = this._pname.bind(this);
 
     // 1. Most active — most games played
     var mostActive = players.reduce(function(a, b) { return b.gamesPlayed > a.gamesPlayed ? b : a; }, players[0]);
@@ -4166,7 +4167,7 @@ App.UI = {
       highlights.push({
         icon: '🏸',
         label: App.t('hlMostActive'),
-        value: esc(mostActive.name) + ' (' + mostActive.gamesPlayed + ')'
+        value: pname(mostActive) + ' (' + mostActive.gamesPlayed + ')'
       });
     }
 
@@ -4219,7 +4220,7 @@ App.UI = {
         highlights.push({
           icon: '🎯',
           label: App.t('hlTopScorer'),
-          value: esc(topScorer.name) + ' (' + topScorer.pointsScored + ')'
+          value: pname(topScorer) + ' (' + topScorer.pointsScored + ')'
         });
       }
     }
@@ -4235,7 +4236,7 @@ App.UI = {
       highlights.push({
         icon: '🦋',
         label: App.t('hlSocialButterfly'),
-        value: esc(mostPartners.name) + ' (' + partnerCount + ')'
+        value: pname(mostPartners) + ' (' + partnerCount + ')'
       });
     }
 
@@ -4272,7 +4273,7 @@ App.UI = {
         highlights.push({
           icon: '⏳',
           label: App.t('hlMostPatient'),
-          value: esc(mostPatient.name) + ' (' + App.Utils.formatTime(waitMs) + ')'
+          value: pname(mostPatient) + ' (' + App.Utils.formatTime(waitMs) + ')'
         });
       }
     }
@@ -4407,7 +4408,7 @@ App.UI = {
     html += '<div class="player-select-grid" id="playerSelectGrid">';
     present.forEach(function(p) {
       html += '<div class="player-select-item" data-pid="' + p.id + '">';
-      html += '<span class="player-select-num">#' + p.number + '</span> ' + App.UI._esc(p.name);
+      html += '<span class="player-select-num">#' + p.number + '</span> ' + App.UI._pname(p);
       html += '</div>';
     });
     html += '</div>';
@@ -4502,11 +4503,11 @@ App.UI = {
 
     var teamANames = match.teamA.map(function(pid) {
       var p = App.state.players[pid];
-      return p ? App.UI._esc(p.name) : '?';
+      return p ? App.UI._pname(p) : '?';
     }).join(' & ');
     var teamBNames = match.teamB.map(function(pid) {
       var p = App.state.players[pid];
-      return p ? App.UI._esc(p.name) : '?';
+      return p ? App.UI._pname(p) : '?';
     }).join(' & ');
 
     var html = '<h2>' + App.t('finishGameTitle') + ' ' + court.displayNumber + '</h2>';
@@ -5087,13 +5088,14 @@ App.UI = {
     if (!stats) return;
     var p = stats.player;
     var esc = this._esc.bind(this);
+    var pname = this._pname.bind(this);
     var wins = p.wins || 0;
     var losses = p.losses || 0;
     var rate = p.gamesPlayed ? Math.round(100 * wins / p.gamesPlayed) : 0;
     var diff = (p.pointsScored || 0) - (p.pointsConceded || 0);
     var diffStr = diff > 0 ? '+' + diff : '' + diff;
 
-    var html = '<h2>' + esc(p.name) + '</h2>';
+    var html = '<h2>' + pname(p) + '</h2>';
 
     // Overview grid
     html += '<div class="ps-section"><div class="ps-stat-grid">';
@@ -5111,7 +5113,7 @@ App.UI = {
       html += '<div class="ps-section ps-highlight">';
       html += '<span class="ps-highlight-icon">🤝</span> ';
       html += '<strong>' + App.t('psFavoritePartner') + ':</strong> ';
-      html += esc(App.state.players[stats.favoritePartner].name);
+      html += pname(App.state.players[stats.favoritePartner]);
       html += ' <span class="ps-subtle">(' + stats.favoritePartnerGames + ' ' + App.t('psTimesPlayed') + ')</span>';
       html += '</div>';
     }
@@ -5121,7 +5123,7 @@ App.UI = {
       html += '<div class="ps-section ps-highlight">';
       html += '<span class="ps-highlight-icon">⚔️</span> ';
       html += '<strong>' + App.t('psMostCommonOpponent') + ':</strong> ';
-      html += esc(App.state.players[stats.mostCommonOpp].name);
+      html += pname(App.state.players[stats.mostCommonOpp]);
       html += ' <span class="ps-subtle">(' + stats.mostCommonOppGames + ' ' + App.t('psTimesPlayed') + ')</span>';
       html += '</div>';
     }
@@ -5131,7 +5133,7 @@ App.UI = {
       html += '<div class="ps-section ps-highlight">';
       html += '<span class="ps-highlight-icon">🏆</span> ';
       html += '<strong>' + App.t('psBestPair') + ':</strong> ';
-      html += esc(App.state.players[stats.bestPair].name);
+      html += pname(App.state.players[stats.bestPair]);
       html += ' <span class="ps-subtle">(' + Math.round(stats.bestPairRate * 100) + '% ' + App.t('psBestPairRate') + ', ' + stats.bestPairGames + ' ' + App.t('psTimesPlayed') + ')</span>';
       html += '</div>';
     }
@@ -5152,7 +5154,7 @@ App.UI = {
         var opp = App.state.players[oppId];
         var rec = stats.h2h[oppId];
         html += '<tr>';
-        html += '<td>' + esc(opp.name) + '</td>';
+        html += '<td>' + pname(opp) + '</td>';
         html += '<td>' + rec.games + '</td>';
         html += '<td><span class="results-wins">' + rec.wins + '</span>-<span class="results-losses">' + rec.losses + '</span></td>';
         html += '</tr>';
@@ -5173,6 +5175,7 @@ App.UI = {
     if (!schedule || schedule.length === 0) return;
 
     var esc = this._esc;
+    var pname = this._pname.bind(this);
     var sessionName = state.name ? esc(state.name) : '';
 
     // Player roster
@@ -5180,7 +5183,7 @@ App.UI = {
       .filter(function(p) { return p.present; })
       .sort(function(a, b) { return a.number - b.number; });
     var rosterItems = presentPlayers.map(function(p, i) {
-      var name = '#' + p.number + ' ' + esc(p.name);
+      var name = '#' + p.number + ' ' + pname(p);
       return i % 2 === 0 ? '<b>' + name + '</b>' : name;
     });
 
@@ -5208,11 +5211,11 @@ App.UI = {
     schedule.forEach(function(entry, idx) {
       var teamANames = entry.teamA.map(function(pid) {
         var p = state.players[pid];
-        return p ? ('#' + p.number + ' ' + esc(p.name)) : '?';
+        return p ? ('#' + p.number + ' ' + pname(p)) : '?';
       }).join(' + ');
       var teamBNames = entry.teamB.map(function(pid) {
         var p = state.players[pid];
-        return p ? ('#' + p.number + ' ' + esc(p.name)) : '?';
+        return p ? ('#' + p.number + ' ' + pname(p)) : '?';
       }).join(' + ');
 
       var match = entry.matchId ? state.matches[entry.matchId] : null;
@@ -5239,7 +5242,7 @@ App.UI = {
       if (hasBench && isFirstInRound) {
         var benchNames = (benchByRound[round] || []).map(function(pid) {
           var p = state.players[pid];
-          return p ? ('#' + p.number + ' ' + esc(p.name)) : '';
+          return p ? ('#' + p.number + ' ' + pname(p)) : '';
         }).filter(Boolean).join(', ');
         benchCell = '<td style="vertical-align:top; font-size:11px" rowspan="' + rowspan + '">' + benchNames + '</td>';
       }
@@ -5301,6 +5304,11 @@ App.UI = {
   },
 
   // --- Utilities ---
+  _pname: function(p) {
+    var name = this._esc(p.name);
+    return p.gamesPlayed ? name + '<sup>' + p.gamesPlayed + '</sup>' : name;
+  },
+
   _esc: function(str) {
     return String(str)
       .replace(/&/g, '&amp;')
