@@ -2965,11 +2965,11 @@ App.UI = {
         var statusClass = entry.status;
         var teamANames = entry.teamA.map(function(pid) {
           var p = App.state.players[pid];
-          return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
+          return p ? ('#' + p.number + '\u00a0' + App.UI._pname(p)) : '?';
         }).join(' + ');
         var teamBNames = entry.teamB.map(function(pid) {
           var p = App.state.players[pid];
-          return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
+          return p ? ('#' + p.number + '\u00a0' + App.UI._pname(p)) : '?';
         }).join(' + ');
 
         var courtLabel = '';
@@ -3192,14 +3192,14 @@ App.UI = {
     html += '<div class="team team-a">';
     entry.teamA.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div>';
     html += '<div class="vs">vs</div>';
     html += '<div class="team team-b">';
     entry.teamB.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div></div>';
     return html;
@@ -3210,14 +3210,14 @@ App.UI = {
     html += '<div class="team team-a">';
     match.teamA.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div>';
     html += '<div class="vs">vs</div>';
     html += '<div class="team team-b">';
     match.teamB.forEach(function(pid) {
       var p = App.state.players[pid];
-      html += '<span><strong>#' + (p ? p.number : '?') + '</strong> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+      html += '<span><strong>#' + (p ? p.number : '?') + '</strong>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
     });
     html += '</div></div>';
     return html;
@@ -3650,14 +3650,14 @@ App.UI = {
         html += '<div class="board-team board-team-a">';
         match.teamA.forEach(function(pid) {
           var p = App.state.players[pid];
-          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div>';
         html += '<div class="board-vs">vs</div>';
         html += '<div class="board-team board-team-b">';
         match.teamB.forEach(function(pid) {
           var p = App.state.players[pid];
-          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+          html += '<span><span class="board-player-num">#' + (p ? p.number : '?') + '</span>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div></div>';
 
@@ -3674,7 +3674,7 @@ App.UI = {
         readyEntry.teamA.forEach(function(pid) {
           var p = App.state.players[pid];
           var busy = App.Players.isOnCourt(pid);
-          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div>';
         html += '<div class="board-vs">vs</div>';
@@ -3682,7 +3682,7 @@ App.UI = {
         readyEntry.teamB.forEach(function(pid) {
           var p = App.state.players[pid];
           var busy = App.Players.isOnCourt(pid);
-          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+          html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
         });
         html += '</div></div>';
         var busyCount = readyEntry.teamA.concat(readyEntry.teamB).filter(function(pid) { return App.Players.isOnCourt(pid); }).length;
@@ -3711,7 +3711,7 @@ App.UI = {
           nextPending.teamA.forEach(function(pid) {
             var p = App.state.players[pid];
             var busy = _busyPids[pid] || App.Players.isOnCourt(pid);
-            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
           });
           html += '</div>';
           html += '<div class="board-vs">vs</div>';
@@ -3719,7 +3719,7 @@ App.UI = {
           nextPending.teamB.forEach(function(pid) {
             var p = App.state.players[pid];
             var busy = _busyPids[pid] || App.Players.isOnCourt(pid);
-            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span> ' + (p ? App.UI._pname(p) : '?') + '</span>';
+            html += '<span' + (busy ? ' class="player-busy"' : '') + '><span class="board-player-num">#' + (p ? p.number : '?') + '</span>\u00a0' + (p ? App.UI._pname(p) : '?') + '</span>';
           });
           html += '</div></div>';
           if (_busyCount > 0) {
@@ -3733,7 +3733,8 @@ App.UI = {
             html += '</div>';
           }
         } else {
-          html += '<div class="court-empty">' + App.t('waitingForSchedule') + '</div>';
+          var phrases = App.t('waitingForSchedule');
+          html += '<div class="court-empty">' + (Array.isArray(phrases) ? phrases[Math.floor(Math.random() * phrases.length)] : phrases) + '</div>';
         }
       } else {
         html += '<div class="court-empty">' + App.t('boardFree') + '</div>';
@@ -3775,7 +3776,7 @@ App.UI = {
         var currentBench = presentPlayers.filter(function(p) { return !roundMap[currentRoundIdx].allPlayerIds[p.id]; });
         if (currentBench.length > 0) {
           html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
-            currentBench.map(function(p) { return '#' + p.number + ' ' + App.UI._pname(p); }).join(', ') + '</div>';
+            currentBench.map(function(p) { return '#' + p.number + '\u00a0' + App.UI._pname(p); }).join(', ') + '</div>';
         }
       }
 
@@ -3796,11 +3797,11 @@ App.UI = {
           round.pendingGames.forEach(function(entry) {
             var teamANames = entry.teamA.map(function(pid) {
               var p = App.state.players[pid];
-              return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
+              return p ? ('#' + p.number + '\u00a0' + App.UI._pname(p)) : '?';
             }).join('  ');
             var teamBNames = entry.teamB.map(function(pid) {
               var p = App.state.players[pid];
-              return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
+              return p ? ('#' + p.number + '\u00a0' + App.UI._pname(p)) : '?';
             }).join('  ');
 
             html += '<div class="schedule-game pending">' +
@@ -3814,7 +3815,7 @@ App.UI = {
           var roundBench = presentPlayers.filter(function(p) { return !round.allPlayerIds[p.id]; });
           if (roundBench.length > 0) {
             html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
-              roundBench.map(function(p) { return '#' + p.number + ' ' + App.UI._pname(p); }).join(', ') + '</div>';
+              roundBench.map(function(p) { return '#' + p.number + '\u00a0' + App.UI._pname(p); }).join(', ') + '</div>';
           }
         });
       }
@@ -4010,11 +4011,11 @@ App.UI = {
       var courtObj = App.state.courts[m.courtId];
       var teamANames = m.teamA.map(function(id) {
         var p = App.state.players[id];
-        return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
+        return p ? ('#' + p.number + '\u00a0' + App.UI._pname(p)) : '?';
       });
       var teamBNames = m.teamB.map(function(id) {
         var p = App.state.players[id];
-        return p ? ('#' + p.number + ' ' + App.UI._pname(p)) : '?';
+        return p ? ('#' + p.number + '\u00a0' + App.UI._pname(p)) : '?';
       });
 
       // Determine which team won
@@ -4405,7 +4406,7 @@ App.UI = {
     html += '<div class="player-select-grid" id="playerSelectGrid">';
     present.forEach(function(p) {
       html += '<div class="player-select-item" data-pid="' + p.id + '">';
-      html += '<span class="player-select-num">#' + p.number + '</span> ' + App.UI._pname(p);
+      html += '<span class="player-select-num">#' + p.number + '</span>\u00a0' + App.UI._pname(p);
       html += '</div>';
     });
     html += '</div>';
@@ -5180,7 +5181,7 @@ App.UI = {
       .filter(function(p) { return p.present; })
       .sort(function(a, b) { return a.number - b.number; });
     var rosterItems = presentPlayers.map(function(p, i) {
-      var name = '#' + p.number + ' ' + pname(p);
+      var name = '#' + p.number + '\u00a0' + pname(p);
       return i % 2 === 0 ? '<b>' + name + '</b>' : name;
     });
 
@@ -5208,11 +5209,11 @@ App.UI = {
     schedule.forEach(function(entry, idx) {
       var teamANames = entry.teamA.map(function(pid) {
         var p = state.players[pid];
-        return p ? ('#' + p.number + ' ' + pname(p)) : '?';
+        return p ? ('#' + p.number + '\u00a0' + pname(p)) : '?';
       }).join(' + ');
       var teamBNames = entry.teamB.map(function(pid) {
         var p = state.players[pid];
-        return p ? ('#' + p.number + ' ' + pname(p)) : '?';
+        return p ? ('#' + p.number + '\u00a0' + pname(p)) : '?';
       }).join(' + ');
 
       var match = entry.matchId ? state.matches[entry.matchId] : null;
@@ -5239,7 +5240,7 @@ App.UI = {
       if (hasBench && isFirstInRound) {
         var benchNames = (benchByRound[round] || []).map(function(pid) {
           var p = state.players[pid];
-          return p ? ('#' + p.number + ' ' + pname(p)) : '';
+          return p ? ('#' + p.number + '\u00a0' + pname(p)) : '';
         }).filter(Boolean).join(', ');
         benchCell = '<td style="vertical-align:top; font-size:11px" rowspan="' + rowspan + '">' + benchNames + '</td>';
       }

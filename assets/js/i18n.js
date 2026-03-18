@@ -791,7 +791,6 @@ App.i18n = {
     var dict = this.translations[this.currentLang] || this.translations.pl;
     var val = dict[key];
     if (val === undefined) return key;
-    if (Array.isArray(val)) return val[Math.floor(Math.random() * val.length)];
     return val;
   },
 
