@@ -3733,8 +3733,7 @@ App.UI = {
             html += '</div>';
           }
         } else {
-          var phrases = App.t('waitingForSchedule');
-          html += '<div class="court-empty">' + (Array.isArray(phrases) ? phrases[Math.floor(Math.random() * phrases.length)] : phrases) + '</div>';
+          html += '<div class="court-empty">' + App.t('waitingForSchedule') + '</div>';
         }
       } else {
         html += '<div class="court-empty">' + App.t('boardFree') + '</div>';
