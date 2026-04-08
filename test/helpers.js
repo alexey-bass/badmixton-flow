@@ -69,7 +69,8 @@ function setupBrowserMocks() {
     open: function() {
       var doc = { _html: '', write: function(h) { this._html += h; }, close: function() {} };
       return { document: doc, focus: function() {}, print: function() {} };
-    }
+    },
+    matchMedia: function() { return { matches: false }; }
   };
 
   global.screen = { width: 1024, height: 768 };

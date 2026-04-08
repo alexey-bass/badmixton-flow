@@ -3910,7 +3910,12 @@ App.UI = {
       }
     }
 
-    document.getElementById('boardCourts').innerHTML = html;
+    var boardCourtsEl = document.getElementById('boardCourts');
+    boardCourtsEl.innerHTML = html;
+    boardCourtsEl.style.gridTemplateColumns = '';
+    if (courts.length > 0 && window.matchMedia('(min-width: 1024px)').matches) {
+      boardCourtsEl.style.gridTemplateColumns = 'repeat(' + courts.length + ', 1fr)';
+    }
 
     // Sidebar: Queue or Upcoming
     if (isShuffle) {
