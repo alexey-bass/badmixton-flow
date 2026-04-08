@@ -2798,10 +2798,22 @@ App.UI = {
     document.getElementById('playerList').innerHTML = html;
   },
 
+  _shortenName: function(name) {
+    var parts = name.split(/\s+/);
+    if (parts.length < 2) return name;
+    var last = parts[0];
+    var first = parts.slice(1).join(' ');
+    return first + ' ' + last.charAt(0);
+  },
+
   _showBulkAddDialog: function() {
     var self = this;
     var html = '<h2>' + App.t('bulkAddTitle') + '</h2>';
     html += '<textarea id="bulkAddTextarea" rows="10" placeholder="' + this._esc(App.t('bulkAddHint')) + '" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; font-family:inherit; resize:vertical; margin-bottom:12px;"></textarea>';
+    html += '<label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer;">';
+    html += '<input type="checkbox" id="bulkAddShorten" checked>';
+    html += '<span>' + App.t('bulkAddShortenNames') + '</span>';
+    html += '</label>';
     html += '<label style="display:flex; align-items:center; gap:8px; margin-bottom:16px; cursor:pointer;">';
     html += '<input type="checkbox" id="bulkAddPresent" checked>';
     html += '<span>' + App.t('bulkAddMarkPresent') + '</span>';
@@ -2816,6 +2828,7 @@ App.UI = {
 
     var doAdd = function() {
       var text = document.getElementById('bulkAddTextarea').value;
+      var shortenNames = document.getElementById('bulkAddShorten').checked;
       var markPresent = document.getElementById('bulkAddPresent').checked;
       var lines = text.split(/\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
       if (lines.length === 0) return;
@@ -2823,6 +2836,7 @@ App.UI = {
       var added = 0;
       var skipped = 0;
       lines.forEach(function(name) {
+        if (shortenNames) name = self._shortenName(name);
         if (self._hasNameDuplicate(name)) {
           skipped++;
           return;

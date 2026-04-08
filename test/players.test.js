@@ -316,6 +316,19 @@ describe('App.Players', function() {
       assert.strictEqual(Object.keys(App.state.players).length, 2);
     });
 
+    it('should shorten "LastName FirstName" to "FirstName L"', function() {
+      assert.strictEqual(App.UI._shortenName('Kowalski Jan'), 'Jan K');
+      assert.strictEqual(App.UI._shortenName('Nowak Anna'), 'Anna N');
+    });
+
+    it('should not shorten single-word names', function() {
+      assert.strictEqual(App.UI._shortenName('Ola'), 'Ola');
+    });
+
+    it('should handle multi-part first names', function() {
+      assert.strictEqual(App.UI._shortenName('Kowalski Jan Maria'), 'Jan Maria K');
+    });
+
     it('should skip empty lines', function() {
       var text = 'Alice\n\n  \nBob\n';
       var names = text.split(/\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
