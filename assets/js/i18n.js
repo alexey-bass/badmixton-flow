@@ -328,6 +328,13 @@ App.i18n = {
       renumberPlayers: 'Przenumeruj',
       confirmRenumber: 'Przenumerować obecnych graczy od 1? Gracze nieoznaczeni jako obecni stracą swoje numery i dostaną nowe po ponownym dołączeniu.',
       playersRenumbered: 'Gracze przenumerowani',
+      bulkAddPlayers: 'Dodaj wielu',
+      bulkAddTitle: 'Dodaj wielu graczy',
+      bulkAddHint: 'Jedno imię na linię',
+      bulkAddMarkPresent: 'Oznacz wszystkich jako obecnych',
+      bulkAddSubmit: 'Dodaj',
+      bulkAddDone: ' graczy dodanych',
+      bulkAddDuplicateSkipped: ' pominięto',
       confirmUndoMatch: 'Cofnąć ostatni zakończony mecz?',
 
       // Shuffle mode
@@ -694,6 +701,13 @@ App.i18n = {
       renumberPlayers: 'Renumber',
       confirmRenumber: 'Renumber present players starting from 1? Players not marked as present will lose their numbers and get new ones when they rejoin.',
       playersRenumbered: 'Players renumbered',
+      bulkAddPlayers: 'Bulk add',
+      bulkAddTitle: 'Bulk add players',
+      bulkAddHint: 'One name per line',
+      bulkAddMarkPresent: 'Mark all as arrived',
+      bulkAddSubmit: 'Add',
+      bulkAddDone: ' players added',
+      bulkAddDuplicateSkipped: ' skipped',
       confirmUndoMatch: 'Undo last finished match?',
 
       // Shuffle mode

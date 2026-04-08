@@ -2559,6 +2559,11 @@ App.UI = {
       });
     });
 
+    document.getElementById('btnBulkAddPlayers').addEventListener('click', function() {
+      if (App.Lock.isLocked()) return;
+      self._showBulkAddDialog();
+    });
+
     document.getElementById('playerNameInput').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
         self._addPlayerFromInput();
@@ -2791,6 +2796,63 @@ App.UI = {
     }
 
     document.getElementById('playerList').innerHTML = html;
+  },
+
+  _showBulkAddDialog: function() {
+    var self = this;
+    var html = '<h2>' + App.t('bulkAddTitle') + '</h2>';
+    html += '<textarea id="bulkAddTextarea" rows="10" placeholder="' + this._esc(App.t('bulkAddHint')) + '" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; font-family:inherit; resize:vertical; margin-bottom:12px;"></textarea>';
+    html += '<label style="display:flex; align-items:center; gap:8px; margin-bottom:16px; cursor:pointer;">';
+    html += '<input type="checkbox" id="bulkAddPresent" checked>';
+    html += '<span>' + App.t('bulkAddMarkPresent') + '</span>';
+    html += '</label>';
+    html += '<div class="btn-row">';
+    html += '<button class="btn btn-success" id="btnBulkAddSubmit">' + App.t('bulkAddSubmit') + '</button>';
+    html += '<button class="btn btn-secondary" id="btnBulkAddCancel">' + App.t('cancelAction') + '</button>';
+    html += '</div>';
+
+    this.showModal(html);
+    document.getElementById('bulkAddTextarea').focus();
+
+    var doAdd = function() {
+      var text = document.getElementById('bulkAddTextarea').value;
+      var markPresent = document.getElementById('bulkAddPresent').checked;
+      var lines = text.split(/\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+      if (lines.length === 0) return;
+
+      var added = 0;
+      var skipped = 0;
+      lines.forEach(function(name) {
+        if (self._hasNameDuplicate(name)) {
+          skipped++;
+          return;
+        }
+        var id = App.Players.add(name);
+        if (id) {
+          if (markPresent) App.Players.markPresent(id);
+          added++;
+        }
+      });
+
+      if (added > 0) {
+        App.Analytics.track('player_bulk_add', { added_count: added, skipped_count: skipped });
+        App.save();
+        self.renderPlayers();
+        self.renderQueue();
+        self.renderBoard();
+      }
+      self.hideModal();
+      if (added > 0) {
+        var msg = added + App.t('bulkAddDone');
+        if (skipped > 0) msg += ' (' + skipped + App.t('bulkAddDuplicateSkipped') + ')';
+        self.showToast(msg);
+      }
+    };
+
+    document.getElementById('btnBulkAddSubmit').addEventListener('click', doAdd);
+    document.getElementById('btnBulkAddCancel').addEventListener('click', function() {
+      self.hideModal();
+    });
   },
 
   _showRenameDialog: function(playerId) {

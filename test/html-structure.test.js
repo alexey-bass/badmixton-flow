@@ -179,3 +179,24 @@ describe('Emoji picker in Players panel', function() {
     assert.ok(formIdx < pickerIdx, 'emoji picker should come after the form');
   });
 });
+
+describe('Bulk add players button', function() {
+  it('should have bulk add button in HTML', function() {
+    assert.ok(html.includes('id="btnBulkAddPlayers"'), 'bulk add button should exist');
+  });
+
+  it('should have _showBulkAddDialog method', function() {
+    assert.strictEqual(typeof App.UI._showBulkAddDialog, 'function');
+  });
+
+  it('should have bulk add translations in both languages', function() {
+    App.i18n.currentLang = 'pl';
+    assert.ok(App.t('bulkAddTitle').length > 0);
+    assert.ok(App.t('bulkAddHint').length > 0);
+    assert.ok(App.t('bulkAddMarkPresent').length > 0);
+    App.i18n.currentLang = 'en';
+    assert.ok(App.t('bulkAddTitle').length > 0);
+    assert.ok(App.t('bulkAddHint').length > 0);
+    assert.ok(App.t('bulkAddMarkPresent').length > 0);
+  });
+});

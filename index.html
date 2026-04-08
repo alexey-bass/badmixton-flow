@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Badmixton Flow</title>
   <meta name="description" content="Manage player queue and court assignments during amateur badminton 2x2 sessions. Track scores, auto-suggest teams, sync across devices.">
-  <meta name="version" content="v260319-1341">
+  <meta name="version" content="v260408-1118">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
@@ -206,6 +206,7 @@
       </div>
       <div class="player-list" id="playerList"></div>
       <div class="admin-only" style="text-align:center; padding:12px 0; display:flex; justify-content:center; gap:8px;">
+        <button class="btn btn-primary btn-sm" id="btnBulkAddPlayers" data-i18n="bulkAddPlayers">Dodaj wielu</button>
         <button class="btn btn-primary btn-sm" id="btnRenumberPlayers" data-i18n="renumberPlayers">Przenumeruj</button>
         <button class="btn btn-danger btn-sm" id="btnRemoveAllPlayers" data-i18n="removeAllPlayers">Usuń wszystkich</button>
       </div>
@@ -289,8 +290,8 @@
   <!-- Firebase SDK (loaded from CDN) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script defer src="assets/js/i18n.js?v=46"></script>
-  <script defer src="assets/js/app.js?v=77"></script>
+  <script defer src="assets/js/i18n.js?v=47"></script>
+  <script defer src="assets/js/app.js?v=78"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');

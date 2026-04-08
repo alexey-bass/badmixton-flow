@@ -276,6 +276,53 @@ describe('App.Players', function() {
     });
   });
 
+  describe('bulk add (core logic)', function() {
+    it('should add multiple players at once', function() {
+      var names = ['Alice', 'Bob', 'Carol'];
+      var ids = names.map(function(name) { return App.Players.add(name); });
+      ids.forEach(function(id) { assert.ok(id); });
+      assert.strictEqual(Object.keys(App.state.players).length, 3);
+    });
+
+    it('should mark all as present when requested', function() {
+      var names = ['Alice', 'Bob', 'Carol'];
+      var ids = names.map(function(name) {
+        var id = App.Players.add(name);
+        App.Players.markPresent(id);
+        return id;
+      });
+      ids.forEach(function(id) {
+        assert.strictEqual(App.state.players[id].present, true);
+      });
+      assert.strictEqual(App.state.waitingQueue.length, 3);
+    });
+
+    it('should skip duplicate names', function() {
+      App.Players.add('Alice');
+      var existingNames = {};
+      Object.keys(App.state.players).forEach(function(id) {
+        existingNames[App.state.players[id].name.toLowerCase()] = true;
+      });
+      var names = ['Alice', 'Bob', 'alice'];
+      var added = 0;
+      names.forEach(function(name) {
+        if (!existingNames[name.toLowerCase()]) {
+          App.Players.add(name);
+          existingNames[name.toLowerCase()] = true;
+          added++;
+        }
+      });
+      assert.strictEqual(added, 1); // only Bob
+      assert.strictEqual(Object.keys(App.state.players).length, 2);
+    });
+
+    it('should skip empty lines', function() {
+      var text = 'Alice\n\n  \nBob\n';
+      var names = text.split(/\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+      assert.deepStrictEqual(names, ['Alice', 'Bob']);
+    });
+  });
+
   describe('getPresent', function() {
     it('should return only present players', function() {
       var id1 = App.Players.add('Alice');
