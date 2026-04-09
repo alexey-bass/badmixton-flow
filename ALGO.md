@@ -71,84 +71,98 @@ The algorithm picks Anna+Cleo vs Bob+Dan (or Anna+Dan vs Bob+Cleo — tie broken
 
 ---
 
-## Shuffle Mode
+## Shuffle Mode (generate-and-select)
 
 Coach adds players, then taps "Shuffle games" to generate a batch of games at once.
 
-### How generation works
+Unlike queue mode's single-game greedy approach, shuffle mode uses a **generate-and-select** strategy: it builds multiple randomized candidate batches, scores each batch holistically, and picks the best one. This lets the algorithm see the whole batch at once and avoid locally-good but globally-bad choices.
 
-1. Collect all present players
-2. Build **virtual history** — starts from real stats (games played, partner/opponent history), then layers on all already-scheduled games. This way game #8 "knows about" games #1–7.
-3. Generate games in a loop:
+### High-level flow
 
-### Scoring (same idea as queue mode, but no queue positions)
+1. Build **virtual history** — starts from real stats (games played, partner/opponent history), then layers on all already-scheduled games. This way game #8 "knows about" games #1–7.
+2. For each batch of `courtCount` games:
+   - Generate **50 candidate batches** (1 deterministic, 49 randomized)
+   - Score each candidate holistically (see scoring below)
+   - Pick the lowest-penalty candidate
+   - Append its games to the schedule and update virtual history
+3. Repeat until `count` games are generated.
 
-| Factor | Weight | Example |
-|--------|--------|---------|
-| Virtual games above average | +50 per extra game | Avg 3, player has 5 → +100 |
-| Unfulfilled wish | -80 per wish | Player wants to play with someone → -80 |
+### Candidate generation
 
-Lower score = picked first. This ensures everyone plays roughly the same number of games.
+Each candidate is built greedily, game-by-game:
 
-### Batch constraint
+**Player scoring (same idea as queue mode, no queue positions):**
 
-Games are generated in **batches** of `courtCount` (e.g. 4 courts = batches of 4 games). Within a batch, **each player can only appear once**. This models reality: one batch fills all courts, next batch fills them again after those games finish.
+| Factor | Weight |
+|--------|--------|
+| Virtual games above average | +50 per extra game |
+| Unfulfilled wish | -80 per wish |
+| **Random tiebreaker** (non-deterministic candidates only) | 0–10 |
 
-**Example:** 12 players, 3 courts → batch of 3 games → 12 slots but some players sit out. Next batch: everyone available again.
+The random tiebreaker is small enough not to override fairness scoring but large enough to shuffle equally-scored players across candidates. The first candidate (`n === 0`) uses no randomness, so it matches a deterministic baseline.
 
-### Diversification
+**Game building loop:**
+1. Pick top 4 players by score (or 2-3 for 1v1/2v1)
+2. Split into teams via `_splitWithVirtual` (3 possible splits, pick lowest penalty)
+3. Mark players as used in this batch (each player appears at most once per batch)
+4. Update the *clone* virtual history so the next game in the batch sees the update
+5. Repeat for `courtCount` games
 
-After picking 4 players for a game, the algorithm runs two diversification passes.
+### Batch scoring (holistic)
 
-#### Pass 1: Group overlap (3+ players from the same game)
+A complete candidate batch is scored by summing penalties across all games. **Lower is better.**
 
-Checks all previous schedule entries and last 10 finished matches. If **3+ of the 4** picked players were in the same earlier game, swaps the lowest-priority overlapping player with someone else.
+| Factor | Penalty | Rationale |
+|--------|---------|-----------|
+| Partner repeat (exponential) | `(count+1)² × 100` | Heavily penalize reusing the same pair |
+| Opponent repeat (3+) | `(count-1)² × 50` | Exponential — 3x is tolerable, 4x+ is bad |
+| Group regrouping (same 4 players as any past game) | +500 | Forbidden |
+| Intra-batch partner repeat (same pair in two games of this batch) | +400 | Should never happen |
+| Intra-batch opponent repeat | +60 | Shouldn't concentrate opponents within one batch |
+| 3+ player overlap with existing games | +30 | Mild penalty |
+| Games spread > 2 | +40 per extra | Keep game counts even across players |
+| **Sequential auto-assign failure** | +400 per failed finish | See below |
 
-**Example:** Game #1 was Anna+Bob vs Cleo+Dan. When generating game #5, the algorithm picks Anna, Bob, Cleo, Eva. That's 3 from game #1 (Anna, Bob, Cleo) → swap Cleo with the next best candidate.
+### Sequential auto-assign constraint
 
-#### Pass 2: Partner pair repeat
+When the previous batch is already playing on courts, the new batch must be **assignable in order** as the previous batch finishes. Each time a court frees up, `assignNextToCourt()` looks for any pending game whose players are all free.
 
-Checks all pairs among the 4 picked players against their virtual partner history. If two players have **already been partners** (on the same team) in any previous or scheduled game, swaps the worse-scoring of the pair with a replacement who hasn't partnered with **any** of the remaining players.
+The scoring simulates this: it walks through `prevBatchGames` one finish at a time, adding their players to a "free pool", and checks whether *some* game in the new batch can be assigned at each step. If a step has no assignable game, it's a **400-point penalty**.
 
-**Why "any remaining":** A naive approach that only checks the replacement against the kept partner can cascade — fixing one pair creates another. By checking against all 3 remaining players, each swap is clean and doesn't introduce new conflicts.
+This replaces the old algorithm's greedy per-game batch logic (which happened to produce assignable schedules by construction but couldn't optimize globally).
 
-**Why this matters:** Without this check, two players can end up as partners repeatedly even though the team-split step penalizes it. That's because the split step only chooses among 3 possible splits — if all 3 have penalties, the pair repeats anyway.
+### Team splitting (same as before)
 
-**Example of the problem (17 players, 4 courts):**
+`_splitWithVirtual` is unchanged — 3 possible splits scored by partner/opponent repeats and wish bonus:
 
-With 17 players and 4 courts, each round uses 16 players — almost everyone plays every round. Suppose Aleksy and Renata both have low game counts (Renata arrived late). The scorer picks both for game #12, and the split pairs them. Two rounds later, both still have relatively fewer games → picked again for game #18, split pairs them again.
-
-The 3+ group overlap check doesn't help here — only 2 of 4 players overlap, not 3. The split penalty of +100 isn't enough if the other 2 possible splits have even higher penalties (e.g. those players also have repeat histories).
-
-**How the pair check fixes it:**
-
-| Step | Game #12 | Game #18 (without pair check) | Game #18 (with pair check) |
-|------|----------|-------------------------------|----------------------------|
-| Picked | Aleksy, Renata, Bob, Cleo | Aleksy, Renata, Dan, Eva | Aleksy, **Filip**, Dan, Eva |
-| vPartner[Aleksy][Renata] | 0 → OK | 1 → **repeat detected!** | Renata swapped for Filip (vPartner=0 for all remaining) |
-
-The replacement candidate must not have a partner history with any of the remaining 3 players. If no clean replacement exists (very tight player pool), the pair stays — the algorithm does its best but doesn't force suboptimal games.
-
-### Team splitting (stronger penalties)
-
-Same logic as queue mode but with **higher penalties** to avoid repeats across many pre-planned games:
-
-| Factor | Penalty | Queue mode comparison |
-|--------|---------|---------------------|
-| Partner repeat | +100 per time | Queue: +30 |
-| Opponent repeat | +30 per time beyond 1st | Queue: +15 |
-| Wish fulfilled | -100 | Same |
-
-**Why higher?** In queue mode, the coach sees one suggestion at a time and can customize. In shuffle mode, 20+ games are generated at once — stronger penalties prevent the algorithm from drifting into repetitive pairings.
+| Factor | Penalty |
+|--------|---------|
+| Partner repeat | +100 per time paired |
+| Opponent repeat | +30 per time beyond 1st |
+| Wish fulfilled | -100 |
 
 ### Virtual history updates
 
-After each generated game, the algorithm updates its virtual counters:
+After the winning candidate batch is committed, virtual history is updated:
 - Player's virtual game count +1
 - Partner history +1 for teammates
 - Opponent history +1 for opposing players
 
-So game #10 has full context of games #1–9, even though none have been played yet.
+So batch #3 has full context of batches #1–2, even though none have been played yet.
+
+### Why generate-and-select?
+
+The old algorithm was greedy game-by-game: pick the best 4 players for game #1, then game #2, etc. This works well when there's slack (e.g. 20+ players on 4 courts), but with tight configurations (15-17 players on 4 courts), early choices constrain later games and cause cascading repeats.
+
+Generate-and-select trades a bit of computation (50 candidates × ~8 games each = 400 split evaluations per batch — still trivial) for much better results: randomized candidates explore different player groupings, and holistic scoring picks the one with the fewest total repeats across the whole batch.
+
+### Batch constraint
+
+Games are generated in **batches** of `courtCount` (e.g. 4 courts = batches of 4 games). Within a batch, **each player appears at most once**. This models reality: one batch fills all courts, next batch fills them again after those games finish.
+
+**Example:** 12 players, 3 courts → batch of 3 games × 4 players = 12 slots → all 12 players play, no bench. Next batch: everyone available again.
+
+With 17 players on 4 courts: 16 play per batch, 1 benches. Bench rotates across batches via the fairness scoring.
 
 ---
 
@@ -159,11 +173,16 @@ So game #10 has full context of games #1–9, even though none have been played 
 | Queue position | +100/pos | — | Player selection |
 | Games above avg | +50/game | +50/game | Player selection |
 | Wish (selection) | -80 | -80 | Player selection |
+| Random tiebreaker | — | 0–10 | Candidate variety |
 | Partner repeat (split) | +30/time | +100/time | Team splitting |
 | Opponent repeat (split) | +15/time (>1) | +30/time (>1) | Team splitting |
 | Wish (split) | -100 | -100 | Team splitting |
-| Diversify: group overlap | 3+ overlap | 3+ overlap | Post-selection swap |
-| Diversify: partner pair | — | vPartner > 0 | Post-selection swap (shuffle only) |
+| Batch: partner repeat | — | (count+1)² × 100 | Holistic batch scoring |
+| Batch: opponent repeat | — | (count-1)² × 50 | Holistic batch scoring |
+| Batch: group regrouping | — | +500 | Holistic batch scoring |
+| Batch: intra-batch partner repeat | — | +400 | Holistic batch scoring |
+| Batch: sequential auto-assign failure | — | +400 per failure | Holistic batch scoring |
+| Batch: games spread > 2 | — | +40 per extra | Holistic batch scoring |
 
 ---
 
@@ -178,27 +197,31 @@ So game #10 has full context of games #1–9, even though none have been played 
 | All possible splits have partner repeats | Least-repeated split wins |
 | Wish already fulfilled | No bonus (wish is checked off after first fulfillment) |
 | Wish partner not available | Wish ignored for this round |
-| Same 4 players keep getting picked | Diversification swaps one out after each occurrence |
+| Tight player counts (15-17 on 4 courts) | Generate-and-select explores 50 candidates to minimize repeats |
 
 ---
 
 ## Quality criteria
 
-The algorithm is validated by running 10 shuffle-mode simulations (17 players, 4 courts, 10 rounds, 2 late arrivals) and checking these criteria. All must pass for every run.
+The algorithm is validated by running 10 shuffle-mode simulations (17 players, 4 courts, 10 rounds, 2 late arrivals) and checking these criteria. Thresholds are **per-match** (scale with total games played), since the new algorithm generates full-capacity schedules (~40 matches over 10 rounds).
 
 | Criterion | Threshold | Why |
 |-----------|-----------|-----|
-| **No partner pair repeats** | 0 repeated pairs | Two players should never be on the same team twice |
-| **No frequent opponents** | No pair facing each other 3+ times | Opponent variety keeps games interesting |
-| **No group regrouping** | No exact same 4 players in 2 games | Every game should feel like a new matchup |
+| **Partner pair repeats** | ≤ 15% of matches (e.g. 6 out of 40) | Some repeats are mathematically unavoidable with dense scheduling |
+| **Frequent opponents (3+)** | ≤ 60% of matches (e.g. 24 out of 40) | Opponent variety, but not as strict as partner repeats |
+| **Worst opponent pair** | < 6 times | No two players should face each other more than 5x |
+| **No group regrouping** | 0 exact same 4 players in 2 games | Every game should feel like a new matchup |
 | **Fair games distribution** | Max − Min ≤ 3 games | Everyone plays roughly the same number of games |
 | **Late player fairness** | Late player games ≥ avg − 2 | Arriving late shouldn't mean sitting out too much |
 
 Run `npm run simulation:validate` to check all criteria across 10 simulations.
 
-### Why these numbers?
+### Why per-match thresholds?
 
-- **Partner pairs:** With 17 players there are C(17,2) = 136 possible pairs. A 10-round session produces ~28 matches × 2 partner pairs = ~56 slots. That's only 41% of possible pairs — plenty of room to avoid repeats.
-- **Opponent threshold at 3:** With 4 players per game, each match creates 4 opponent pairs. At 28 matches = 112 opponent slots, facing someone twice is expected, but 3+ means the algorithm is clustering.
-- **Games spread ≤ 3:** Mathematically, 28 matches × 4 players ÷ 17 = 6.6 avg. A spread of 2-3 is expected (some players sit out one more round); more than 3 means unfair scheduling.
-- **Late fairness:** A player arriving 10 min late (missing ~1 round) should lose at most 1-2 games vs the average.
+With 17 players on 4 courts playing 10 rounds, the algorithm produces ~40 matches (16 players per round + rotation). This is **full capacity** — every round, every court is used. That generates ~80 partnership slots and ~160 opponent-pair slots.
+
+With C(17,2) = 136 possible pairs, the math works out to:
+- Partnerships: 80/136 = 59% of pairs used → some repeats likely in tight corners
+- Opponents: 160/136 = 1.18× per pair on average → 3x pairs are common, 4x rare, 5x+ very rare
+
+The thresholds are calibrated to catch actual algorithm failures (clustering) while accepting mathematically unavoidable repeats at dense scheduling.

@@ -142,7 +142,7 @@ Single global `App` object (created in `assets/js/i18n.js`) with modules:
 | `App.Courts`   | Start/finish/cancel games, pair stats, score tracking |
 | `App.Matches`  | Match history, filtering, undo last match          |
 | `App.Suggest`  | Auto-suggestion algorithm for next 2-4 players     |
-| `App.Shuffle`  | Shuffle mode: batch game generation & scheduling   |
+| `App.Shuffle`  | Shuffle mode: generate-and-select batch scheduling (50 candidates, holistic scoring) |
 | `App.Lock`     | Session lock/unlock, auto-lock timer               |
 | `App.Sync`     | Firebase Realtime Database sync                    |
 | `App.UI`       | All rendering, event binding, modals, toasts       |

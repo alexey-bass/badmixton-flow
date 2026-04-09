@@ -148,7 +148,7 @@ npm run simulation:validate                                           # run 10 s
 
 Queue simulation generates `simulation-report.html`, shuffle generates `simulation-shuffle-report.html`. Both support `--lang pl|en`. Open in browser and print to PDF.
 
-`simulation:validate` runs 10 shuffle-mode simulations and checks algorithm quality criteria (see [ALGO.md](ALGO.md)): no partner pair repeats, no frequent opponents, no group regrouping, fair games distribution, late player fairness. Included in `npm run validate`.
+`simulation:validate` runs 10 shuffle-mode simulations and checks algorithm quality criteria (see [ALGO.md](ALGO.md)) with per-match thresholds: partner repeats ≤ 15% of matches, frequent opponent pairs (3+) ≤ 60% of matches, no pair facing 6+ times, fair games distribution, late player fairness. Included in `npm run validate`.
 
 ## Tested On
 
