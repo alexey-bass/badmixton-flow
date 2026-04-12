@@ -1169,63 +1169,89 @@ describe('App.Shuffle', function() {
     });
   });
 
-  describe('SA quality — 17p/4c/10r', function() {
-    // The primary target configuration for offline SA. Partner repeats should
-    // be 0 in virtually all runs; max opponent pair ≤ 3.
-    it('should produce 0 partner repeats for 17 players × 4 courts × 10 rounds', function() {
-      App.Session.create('Quality', 'shuffle');
-      App.Session.initCourts([1, 2, 3, 4]);
-      for (var i = 0; i < 17; i++) {
-        var id = App.Players.add('P' + (i + 1));
-        App.Players.markPresent(id);
-      }
-      App.Shuffle.generate(40);
-      assert.strictEqual(App.state.schedule.length, 40);
+  describe('SA quality — real session configs', function() {
+    // Quality criteria across the player/court combinations we actually play.
+    // Each config plays 10 rounds. Hard bounds:
+    //   partner repeats = 0 (max ≤ 1)
+    //   group (same 4 players in one game) repeats = 0 (max ≤ 1)
+    //   solo (2v1) repeats = 0 (max ≤ 1 for configs that produce 2v1s)
+    //   opponent repeats minimized (max ≤ 3)
+    //   SA generation runtime < 5s
+    var rounds = 10;
+    var configs = [
+      { p: 15, c: 4, hasSolo: true },
+      { p: 16, c: 4, hasSolo: false },
+      { p: 17, c: 4, hasSolo: false },
+      { p: 19, c: 5, hasSolo: true },
+      { p: 20, c: 5, hasSolo: false },
+      { p: 21, c: 5, hasSolo: false },
+    ];
 
-      var partners = {};
-      var opponents = {};
-      App.state.schedule.forEach(function(e) {
-        [e.teamA, e.teamB].forEach(function(t) {
-          if (t.length === 2) {
-            var k = t.slice().sort().join('-');
-            partners[k] = (partners[k] || 0) + 1;
-          }
-        });
-        e.teamA.forEach(function(a) {
-          e.teamB.forEach(function(b) {
-            var k = [a, b].sort().join('-');
-            opponents[k] = (opponents[k] || 0) + 1;
+    configs.forEach(function(cfg) {
+      var label = cfg.p + 'p/' + cfg.c + 'c/' + rounds + 'r';
+      it('should meet quality criteria for ' + label, function() {
+        App.Session.create('Q-' + label, 'shuffle');
+        var courts = [];
+        for (var i = 1; i <= cfg.c; i++) courts.push(i);
+        App.Session.initCourts(courts);
+        var pids = [];
+        for (var i = 0; i < cfg.p; i++) {
+          var id = App.Players.add('P' + (i + 1));
+          App.Players.markPresent(id);
+          pids.push(id);
+        }
+        var total = cfg.c * rounds;
+        var t0 = Date.now();
+        App.Shuffle.generate(total);
+        var elapsed = Date.now() - t0;
+        assert.ok(elapsed < 5000, label + ': SA should finish under 5s, took ' + elapsed + 'ms');
+        assert.strictEqual(App.state.schedule.length, total);
+
+        var partners = {};
+        var opponents = {};
+        var groups = {};
+        var solo = {};
+        pids.forEach(function(pid) { solo[pid] = 0; });
+
+        App.state.schedule.forEach(function(e) {
+          var all = e.teamA.concat(e.teamB);
+          assert.strictEqual(new Set(all).size, all.length,
+            label + ': duplicate player within a game');
+
+          [e.teamA, e.teamB].forEach(function(t) {
+            if (t.length === 2) {
+              var k = t.slice().sort().join('-');
+              partners[k] = (partners[k] || 0) + 1;
+            }
           });
+          e.teamA.forEach(function(a) {
+            e.teamB.forEach(function(b) {
+              var k = [a, b].sort().join('-');
+              opponents[k] = (opponents[k] || 0) + 1;
+            });
+          });
+          if (all.length === 4) {
+            var gk = all.slice().sort().join('-');
+            groups[gk] = (groups[gk] || 0) + 1;
+          }
+          if (e.teamA.length === 1 && e.teamB.length === 2) solo[e.teamA[0]]++;
+          else if (e.teamB.length === 1 && e.teamA.length === 2) solo[e.teamB[0]]++;
         });
-      });
-      var maxPartner = Math.max.apply(null, Object.values(partners));
-      var maxOpponent = Math.max.apply(null, Object.values(opponents));
-      assert.ok(maxPartner <= 1, 'Partner pairs should never repeat in 17p/4c/10r, got max ' + maxPartner);
-      assert.ok(maxOpponent <= 3, 'Opponent pairs should face at most 3x, got max ' + maxOpponent);
-    });
 
-    // 15 players on 4 courts = 3 × 2v2 + 1 × 2v1 per round, i.e. exactly one
-    // solo slot per round. Over 10 rounds there are 10 solo slots across 15
-    // players — no one should carry that burden more than ~twice.
-    it('should spread 2v1 solo slots fairly for 15 players × 4 courts × 10 rounds', function() {
-      App.Session.create('SoloFair', 'shuffle');
-      App.Session.initCourts([1, 2, 3, 4]);
-      var pids = [];
-      for (var i = 0; i < 15; i++) {
-        var id = App.Players.add('P' + (i + 1));
-        App.Players.markPresent(id);
-        pids.push(id);
-      }
-      App.Shuffle.generate(40);
-      var solo = {};
-      pids.forEach(function(pid) { solo[pid] = 0; });
-      App.state.schedule.forEach(function(e) {
-        if (e.teamA.length === 1 && e.teamB.length === 2) solo[e.teamA[0]]++;
-        else if (e.teamB.length === 1 && e.teamA.length === 2) solo[e.teamB[0]]++;
+        var maxPartner = Object.values(partners).length ? Math.max.apply(null, Object.values(partners)) : 0;
+        var maxGroup = Object.values(groups).length ? Math.max.apply(null, Object.values(groups)) : 0;
+        var maxOpponent = Object.values(opponents).length ? Math.max.apply(null, Object.values(opponents)) : 0;
+        var maxSolo = Math.max.apply(null, Object.values(solo));
+
+        assert.ok(maxPartner <= 1, label + ': partner repeat max ' + maxPartner + ' (expected ≤ 1)');
+        assert.ok(maxGroup <= 1, label + ': same-4-players group repeat max ' + maxGroup + ' (expected ≤ 1)');
+        assert.ok(maxOpponent <= 3, label + ': opponent repeat max ' + maxOpponent + ' (expected ≤ 3)');
+        if (cfg.hasSolo) {
+          assert.ok(maxSolo <= 1, label + ': solo repeat max ' + maxSolo + ' (expected ≤ 1)');
+        } else {
+          assert.strictEqual(maxSolo, 0, label + ': expected no 2v1 games, got solo max ' + maxSolo);
+        }
       });
-      var vals = Object.values(solo);
-      var maxSolo = Math.max.apply(null, vals);
-      assert.ok(maxSolo <= 1, 'No player should be the 2v1 solo more than 1×, got max ' + maxSolo + ' (counts: ' + vals.join(',') + ')');
     });
   });
 });
