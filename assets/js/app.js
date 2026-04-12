@@ -5764,7 +5764,12 @@ App.UI = {
       var rowspan = Math.min(courtCount, schedule.length - idx);
       var isLastRound = idx + rowspan >= schedule.length;
       var isRoundEnd = courtCount > 1 && (idx + 1) % courtCount === 0 && idx < schedule.length - 1;
-      var rowClass = isRoundEnd ? ' class="round-end"' : '';
+      var classes = [];
+      if (isRoundEnd) classes.push('round-end');
+      // Alternating round tint — pairs rows visually into round-blocks so the
+      // eye can locate a round without counting dividers.
+      if (round % 2 === 1) classes.push('round-tint');
+      var rowClass = classes.length ? ' class="' + classes.join(' ') + '"' : '';
 
       // The round cell spans all games in the round, so its bottom edge is
       // the round divider — give it the same bold border as the data cells
@@ -5798,17 +5803,20 @@ App.UI = {
       '<title>' + App.t('printTitle') + '</title>' +
       '<style>' +
       '* { margin:0; padding:0; box-sizing:border-box; }' +
-      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size:12px; padding:15mm; color:#222; }' +
+      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size:12px; padding:15mm; color:#222; font-variant-numeric:tabular-nums; }' +
       'h1 { font-size:18px; margin-bottom:2px; }' +
       'h2 { font-size:14px; margin:12px 0 6px; }' +
       '.roster { margin-bottom:12px; line-height:1.6; }' +
       'table { width:100%; border-collapse:collapse; }' +
-      'th, td { border:1px solid #ccc; padding:4px 6px; font-size:12px; }' +
-      'th { background:#f5f5f5; font-weight:600; text-align:left; }' +
+      'th, td { border:1px solid #ccc; padding:5px 6px; font-size:12px; }' +
+      'th { background:#f5f5f5; font-weight:600; text-align:left; border-bottom:2px solid #666; }' +
       'td.fill { min-width:60px; }' +
-      'td.court-cell { text-align:center; width:40px; }' +
+      'td.court-cell { text-align:center; width:40px; font-weight:700; font-size:13px; font-variant-numeric:tabular-nums; }' +
       'tr { break-inside:avoid; }' +
       'tr.round-end td, td.round-cell { border-bottom:2px solid #666; }' +
+      // Alternating per-round background. Print-friendly gray — light enough
+      // to save ink, dark enough to read on white paper.
+      'tbody tr.round-tint td { background:#f5f5f5; }' +
       '.footer { margin-top:16px; font-size:10px; color:#999; }' +
       '@media print { body { padding:0; } }' +
       '@page { margin:15mm; size:A4 portrait; }' +
