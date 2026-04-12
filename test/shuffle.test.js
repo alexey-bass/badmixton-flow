@@ -1203,5 +1203,29 @@ describe('App.Shuffle', function() {
       assert.ok(maxPartner <= 1, 'Partner pairs should never repeat in 17p/4c/10r, got max ' + maxPartner);
       assert.ok(maxOpponent <= 3, 'Opponent pairs should face at most 3x, got max ' + maxOpponent);
     });
+
+    // 15 players on 4 courts = 3 × 2v2 + 1 × 2v1 per round, i.e. exactly one
+    // solo slot per round. Over 10 rounds there are 10 solo slots across 15
+    // players — no one should carry that burden more than ~twice.
+    it('should spread 2v1 solo slots fairly for 15 players × 4 courts × 10 rounds', function() {
+      App.Session.create('SoloFair', 'shuffle');
+      App.Session.initCourts([1, 2, 3, 4]);
+      var pids = [];
+      for (var i = 0; i < 15; i++) {
+        var id = App.Players.add('P' + (i + 1));
+        App.Players.markPresent(id);
+        pids.push(id);
+      }
+      App.Shuffle.generate(40);
+      var solo = {};
+      pids.forEach(function(pid) { solo[pid] = 0; });
+      App.state.schedule.forEach(function(e) {
+        if (e.teamA.length === 1 && e.teamB.length === 2) solo[e.teamA[0]]++;
+        else if (e.teamB.length === 1 && e.teamA.length === 2) solo[e.teamB[0]]++;
+      });
+      var vals = Object.values(solo);
+      var maxSolo = Math.max.apply(null, vals);
+      assert.ok(maxSolo <= 1, 'No player should be the 2v1 solo more than 1×, got max ' + maxSolo + ' (counts: ' + vals.join(',') + ')');
+    });
   });
 });

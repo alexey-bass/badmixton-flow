@@ -97,15 +97,21 @@ Rather than a weighted scalar penalty, SA compares states by a tuple of metrics,
 
 | Position | Component | Meaning |
 |---|---|---|
-| 1 | `maxPartnerRepeat` | Worst-case: max times any pair partnered |
-| 2 | `totalPartnerRepeats` | Sum over pairs of max(0, count − 1) |
-| 3 | `maxOpponentRepeat` | Worst-case: max times any pair faced each other |
-| 4 | `totalOpponentRepeats` | Sum over pairs of max(0, count − 1) |
+| 1 | `maxSoloCount` | Worst-case: max times any player was the solo side of a 2v1 (base + new) |
+| 2 | `totalSoloRepeats` | Sum over players of max(0, soloCount − 1) |
+| 3 | `maxPartnerRepeat` | Worst-case: max times any pair partnered |
+| 4 | `totalPartnerRepeats` | Sum over pairs of max(0, count − 1) |
 | 5 | `groupRepeats` | Games with the same 4 players as a prior game (including finished matches) |
-| 6 | `gamesPlayedSpread` | max − min total games played per player (base + new) |
-| 7 | `maxConsecutiveBenches` | Longest run of bench rounds for any player |
-| 8 | `autoAssignStuck` | # (round, first-finisher) scenarios with no assignable next-round game |
-| 9 | `unfulfilledWishes` | Players whose wished partner never got on their team |
+| 6 | `maxOpponentRepeat` | Worst-case: max times any pair faced each other |
+| 7 | `totalOpponentRepeats` | Sum over pairs of max(0, count − 1) |
+| 8 | `gamesPlayedSpread` | max − min total games played per player (base + new) |
+| 9 | `maxConsecutiveBenches` | Longest run of bench rounds for any player |
+| 10 | `autoAssignStuck` | # (round, first-finisher) scenarios with no assignable next-round game |
+| 11 | `unfulfilledWishes` | Players whose wished partner never got on their team |
+
+`maxSoloCount` / `totalSoloRepeats` lead the tuple because at tight configurations a 2v1 recurs every round — e.g. 15 players on 4 courts = 3×2v2 + 1×2v1, one solo slot per round. A single player stuck solo 2×/10 games is far more visible than a partner repeat among 70 partnerships, so solo fairness outweighs partner/opponent repeats. Configurations without 2v1 games (e.g. 16/17p × 4c) have `maxSoloCount = 0` always, so this reordering is a no-op for them. See alexey-bass/badmixton-flow#42.
+
+`groupRepeats` ranks above opponent repeats: the same 4 players on one court again is very noticeable ("we played this already"), while a single opponent pair meeting across the net again barely registers if the partners keep changing. Trading one extra opponent-pair event for avoiding a group repeat is a better UX.
 
 Base history from committed/finished games is folded in: SA's `partnerCount`, `opponentCount`, and `baseGamesPlayed` start from real stats, so later calls to `generate()` carry prior history forward and avoid re-doing old pairings.
 

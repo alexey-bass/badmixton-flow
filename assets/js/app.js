@@ -1378,6 +1378,9 @@ App.Shuffle = {
     // Starting games-played (real + pre-scheduled) so SA balances globally,
     // not just within this generate() call. Critical for late arrivals.
     state.baseGamesPlayed = hist.vGames;
+    // Starting solo-count (real + pre-scheduled) so SA distributes the 1-vs-2
+    // disadvantage fairly across everyone, including across generate() calls.
+    state.baseSolo = hist.vSolo || {};
 
     var iterations = Math.max(2000, Math.min(20000, gamesPerRound * rounds * 400));
     this._runSA(state, rng, iterations);
@@ -1414,8 +1417,10 @@ App.Shuffle = {
     var vGames = {};
     var vPartner = {};
     var vOpponent = {};
+    var vSolo = {};
     present.forEach(function(p) {
       vGames[p.id] = p.gamesPlayed;
+      vSolo[p.id] = 0;
       vPartner[p.id] = {};
       Object.keys(p.partnerHistory || {}).forEach(function(k) {
         vPartner[p.id][k] = p.partnerHistory[k];
@@ -1424,6 +1429,16 @@ App.Shuffle = {
       Object.keys(p.opponentHistory || {}).forEach(function(k) {
         vOpponent[p.id][k] = p.opponentHistory[k];
       });
+    });
+
+    // Count past solo appearances (1 player vs 2 opponents) from finished
+    // matches so base history flows into SA's soloCount objective.
+    App.Matches.getFinished().forEach(function(m) {
+      if (m.teamA.length === 1 && m.teamB.length === 2 && vSolo[m.teamA[0]] !== undefined) {
+        vSolo[m.teamA[0]]++;
+      } else if (m.teamB.length === 1 && m.teamA.length === 2 && vSolo[m.teamB[0]] !== undefined) {
+        vSolo[m.teamB[0]]++;
+      }
     });
 
     App.state.schedule.forEach(function(entry) {
@@ -1439,6 +1454,11 @@ App.Shuffle = {
           if (vPartner[b2]) vPartner[b2][a] = (vPartner[b2][a] || 0) + 1;
         }
       });
+      if (entry.teamA.length === 1 && entry.teamB.length === 2 && vSolo[entry.teamA[0]] !== undefined) {
+        vSolo[entry.teamA[0]]++;
+      } else if (entry.teamB.length === 1 && entry.teamA.length === 2 && vSolo[entry.teamB[0]] !== undefined) {
+        vSolo[entry.teamB[0]]++;
+      }
       entry.teamA.forEach(function(pa) {
         entry.teamB.forEach(function(pb) {
           if (vOpponent[pa]) vOpponent[pa][pb] = (vOpponent[pa][pb] || 0) + 1;
@@ -1447,7 +1467,7 @@ App.Shuffle = {
       });
     });
 
-    return { vGames: vGames, vPartner: vPartner, vOpponent: vOpponent };
+    return { vGames: vGames, vPartner: vPartner, vOpponent: vOpponent, vSolo: vSolo };
   },
 
   // Decide how many games fit per round and each game's size (player count).
@@ -1786,6 +1806,28 @@ App.Shuffle = {
       }
     }
 
+    // Solo (1-vs-2) fairness — in 2v1 games one player plays alone against
+    // two. With tight configs (e.g. 15 players on 4 courts = 3×2v2 + 1×2v1
+    // per round) there's a solo slot every round and it MUST be spread
+    // evenly, otherwise the same few players keep getting the short end.
+    var maxSolo = 0, totalSoloRepeats = 0;
+    var baseSolo = state.baseSolo || {};
+    var soloCount = {};
+    for (var si = 0; si < ids.length; si++) soloCount[ids[si]] = baseSolo[ids[si]] || 0;
+    for (var sgi = 0; sgi < state.games.length; sgi++) {
+      var sgm = state.games[sgi];
+      var aLen = 0, bLen = 0, aSolo = null, bSolo = null;
+      for (var sk = 0; sk < sgm.teamA.length; sk++) if (sgm.teamA[sk] != null) { aLen++; aSolo = sgm.teamA[sk]; }
+      for (var sk2 = 0; sk2 < sgm.teamB.length; sk2++) if (sgm.teamB[sk2] != null) { bLen++; bSolo = sgm.teamB[sk2]; }
+      if (aLen === 1 && bLen === 2 && aSolo != null) soloCount[aSolo]++;
+      else if (bLen === 1 && aLen === 2 && bSolo != null) soloCount[bSolo]++;
+    }
+    for (var spi = 0; spi < ids.length; spi++) {
+      var sc = soloCount[ids[spi]];
+      if (sc > maxSolo) maxSolo = sc;
+      if (sc > 1) totalSoloRepeats += sc - 1;
+    }
+
     // Group regrouping — same 4 players play together again (possibly with a
     // different team split). Penalize against committed history and within
     // the current schedule. This is bad UX even when partnerships don't repeat.
@@ -1857,7 +1899,16 @@ App.Shuffle = {
       }
     }
 
-    return [maxPartner, totalPartnerRepeats, maxOpp, totalOppRepeats, groupRepeats, spread, maxConsec, stuck, unfulfilled];
+    // Solo fairness leads the tuple. In tight configs (e.g. 15p/4c = one
+    // 2v1 per round) a player stuck solo 2×/10 games is far more visible
+    // than a partner repeat among 70 partnerships, so a single solo repeat
+    // outweighs even multiple partner repeats.
+    //
+    // Group repeats (same 4 players in a game again) rank above opponent
+    // repeats — "we're all on this court again" is very noticeable, while
+    // "that same person is across the net" barely registers if the partners
+    // keep changing.
+    return [maxSolo, totalSoloRepeats, maxPartner, totalPartnerRepeats, groupRepeats, maxOpp, totalOppRepeats, spread, maxConsec, stuck, unfulfilled];
   },
 
   _lexCmp: function(a, b) {
