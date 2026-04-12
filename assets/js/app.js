@@ -5762,11 +5762,16 @@ App.UI = {
       var round = Math.floor(idx / courtCount);
       var isFirstInRound = idx % courtCount === 0;
       var rowspan = Math.min(courtCount, schedule.length - idx);
+      var isLastRound = idx + rowspan >= schedule.length;
       var isRoundEnd = courtCount > 1 && (idx + 1) % courtCount === 0 && idx < schedule.length - 1;
       var rowClass = isRoundEnd ? ' class="round-end"' : '';
 
+      // The round cell spans all games in the round, so its bottom edge is
+      // the round divider — give it the same bold border as the data cells
+      // (except on the final round, which has the normal table-end border).
+      var roundCellClass = !isLastRound ? ' class="round-cell"' : '';
       var roundCell = isFirstInRound
-        ? '<td style="text-align:center; vertical-align:top" rowspan="' + rowspan + '">' + (round + 1) + '</td>'
+        ? '<td' + roundCellClass + ' style="text-align:center; vertical-align:top" rowspan="' + rowspan + '">' + (round + 1) + '</td>'
         : '';
 
       var benchCell = '';
@@ -5775,14 +5780,15 @@ App.UI = {
           var p = state.players[pid];
           return p ? ('#' + p.number + '\u00a0' + pname(p)) : '';
         }).filter(Boolean).join(', ');
-        benchCell = '<td style="vertical-align:top; font-size:11px" rowspan="' + rowspan + '">' + benchNames + '</td>';
+        var benchCellClass = !isLastRound ? ' class="round-cell"' : '';
+        benchCell = '<td' + benchCellClass + ' style="vertical-align:top; font-size:11px" rowspan="' + rowspan + '">' + benchNames + '</td>';
       }
 
       gameRows += '<tr' + rowClass + '>' +
         roundCell +
+        '<td class="court-cell">' + courtCell + '</td>' +
         '<td>' + teamANames + '</td>' +
         '<td>' + teamBNames + '</td>' +
-        '<td class="fill">' + courtCell + '</td>' +
         '<td class="fill">' + scoreCell + '</td>' +
         benchCell +
         '</tr>';
@@ -5800,8 +5806,9 @@ App.UI = {
       'th, td { border:1px solid #ccc; padding:4px 6px; font-size:12px; }' +
       'th { background:#f5f5f5; font-weight:600; text-align:left; }' +
       'td.fill { min-width:60px; }' +
+      'td.court-cell { text-align:center; width:40px; }' +
       'tr { break-inside:avoid; }' +
-      'tr.round-end td { border-bottom:2px solid #666; }' +
+      'tr.round-end td, td.round-cell { border-bottom:2px solid #666; }' +
       '.footer { margin-top:16px; font-size:10px; color:#999; }' +
       '@media print { body { padding:0; } }' +
       '@page { margin:15mm; size:A4 portrait; }' +
@@ -5811,9 +5818,9 @@ App.UI = {
       '<div class="roster">' + rosterItems.join(', ') + '</div>' +
       '<table><thead><tr>' +
       '<th style="width:30px">#</th>' +
+      '<th style="width:40px">' + App.t('printCourt') + '</th>' +
       '<th>' + App.t('printTeam') + ' A</th>' +
       '<th>' + App.t('printTeam') + ' B</th>' +
-      '<th>' + App.t('printCourt') + '</th>' +
       '<th>' + App.t('printScore') + '</th>' +
       (hasBench ? '<th>' + App.t('printBench') + '</th>' : '') +
       '</tr></thead><tbody>' +
