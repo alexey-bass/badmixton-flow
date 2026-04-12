@@ -89,7 +89,7 @@ describe('App.UI.printSchedule', function() {
     assert.ok(trCount >= 2, 'should have at least 2 game rows');
   });
 
-  it('should have empty cells for pending games', function() {
+  it('should leave score cell empty for pending games', function() {
     createShuffleSession(6);
     App.Shuffle.generate(2);
 
@@ -103,8 +103,57 @@ describe('App.UI.printSchedule', function() {
     App.UI.printSchedule();
     window.open = origOpen;
 
-    // Pending games should have empty fill cells for court/score/winner
-    assert.ok(html._html.includes('<td class="fill"></td>'), 'should have empty fill cells for pending games');
+    // Pending games pre-fill the court column (round-robin) but leave score blank
+    assert.ok(html._html.includes('<td class="fill"></td>'), 'should have empty score cell for pending games');
+  });
+
+  it('should pre-fill court numbers round-robin for pending games', function() {
+    createShuffleSession(8, [1, 2]);
+    App.Shuffle.generate(4); // 2 rounds × 2 courts
+
+    var html = '';
+    var origOpen = window.open;
+    window.open = function() {
+      var doc = { _html: '', write: function(h) { this._html += h; }, close: function() {} };
+      html = doc;
+      return { document: doc, focus: function() {}, print: function() {} };
+    };
+    App.UI.printSchedule();
+    window.open = origOpen;
+
+    // With 2 courts × 2 rounds, courts should cycle 1,2,1,2 across the four games.
+    // Look for the sequence of court fill cells in the HTML.
+    var courtCells = html._html.match(/<td class="fill">(\d*)<\/td>/g) || [];
+    // Every game row has two fill cells (court + score); court is the first of each pair.
+    var courts = [];
+    for (var i = 0; i < courtCells.length; i += 2) {
+      var m = courtCells[i].match(/>(\d*)</);
+      courts.push(m ? m[1] : '');
+    }
+    assert.deepStrictEqual(courts, ['1', '2', '1', '2'], 'courts should cycle round-robin by schedule index');
+  });
+
+  it('should honour custom court display numbers when pre-filling', function() {
+    createShuffleSession(8, [3, 7]);
+    App.Shuffle.generate(2);
+
+    var html = '';
+    var origOpen = window.open;
+    window.open = function() {
+      var doc = { _html: '', write: function(h) { this._html += h; }, close: function() {} };
+      html = doc;
+      return { document: doc, focus: function() {}, print: function() {} };
+    };
+    App.UI.printSchedule();
+    window.open = origOpen;
+
+    var courtCells = html._html.match(/<td class="fill">(\d*)<\/td>/g) || [];
+    var courts = [];
+    for (var i = 0; i < courtCells.length; i += 2) {
+      var m = courtCells[i].match(/>(\d*)</);
+      courts.push(m ? m[1] : '');
+    }
+    assert.deepStrictEqual(courts, ['3', '7'], 'should use courts\' display numbers in order');
   });
 
   it('should pre-fill data for finished games', function() {

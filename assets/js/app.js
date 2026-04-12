@@ -5712,7 +5712,10 @@ App.UI = {
     });
 
     // Game rows — group by court count (round dividers)
-    var courtCount = Object.values(state.courts).filter(function(c) { return c.active; }).length || 1;
+    var activeCourts = Object.values(state.courts)
+      .filter(function(c) { return c.active; })
+      .sort(function(a, b) { return a.displayNumber - b.displayNumber; });
+    var courtCount = activeCourts.length || 1;
     var presentIds = presentPlayers.map(function(p) { return p.id; });
     var maxPerRound = courtCount * 4; // max players on courts (2v2)
     var hasBench = presentIds.length > maxPerRound;
@@ -5743,7 +5746,11 @@ App.UI = {
       }).join(' + ');
 
       var match = entry.matchId ? state.matches[entry.matchId] : null;
-      var courtCell = '';
+      // Virtually assign courts round-robin by schedule position so players
+      // can read their court off the printed schedule even before games run.
+      // Finished matches override with the actual court the game played on.
+      var virtualCourt = activeCourts[idx % courtCount];
+      var courtCell = virtualCourt ? esc(String(virtualCourt.displayNumber)) : '';
       var scoreCell = '';
       if (match && match.status === 'finished') {
         if (match.courtId && state.courts[match.courtId]) {
