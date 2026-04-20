@@ -22,7 +22,7 @@ Web app for managing player queues and court assignments during amateur badminto
 - **Drag-and-drop** — reorder queue manually (mouse + touch)
 - **Two UI modes** — Board (player-facing: courts, queue, results) and Management (admin: full control)
 - **Screen wake lock** — keeps the tablet display on during sessions (Screen Wake Lock API)
-- **Offline-first PWA** — service worker caches the app for instant loads and offline use, installable on mobile
+- **Installable PWA** — manifest + icons for "Add to Home Screen"; service-worker offline cache is opt-in (see Service Worker below)
 - **Custom session name** — optional name shown in header bar, set on create or click to edit
 - **Session lock** — manual or timed lock disables all actions, optional queue clear on lock, red header indicator, synced across devices
 - **Multi-device sync** — Firebase Realtime Database, shareable session links with auto-join
@@ -69,7 +69,7 @@ assets/js/app.js                — Application logic
 assets/js/i18n.js               — Translations (Polish + English) and i18n engine
 assets/img/favicon-*.png        — Shuttlecock favicons (16px, 96px, 192px, 512px)
 manifest.json                   — PWA manifest (name, icons, theme)
-service-worker.js               — Offline-first cache for app shell
+service-worker.js               — Offline cache for app shell (opt-in, off by default)
 hooks/pre-commit                — Auto-stamps version, cache-bust params, SW version
 package.json                    — npm start script for local dev server
 CLAUDE.md                       — AI assistant context (architecture, data model)
@@ -124,7 +124,7 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 ## Tech Stack
 
 - Pure HTML / CSS / JavaScript — no frameworks, no build tools
-- PWA with service worker — offline-first, installable
+- Installable PWA with opt-in service worker (off by default; enable with `localStorage.setItem('badminton_sw', '1')`)
 - Firebase Realtime Database v10.12.0 (compat SDK, loaded via CDN)
 - `localStorage` for persistence
 - Google Analytics (gtag.js)

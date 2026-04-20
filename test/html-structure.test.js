@@ -137,8 +137,10 @@ describe('PWA meta tags', function() {
     assert.ok(html.match(/<link rel="apple-touch-icon" href="[^"]+"/));
   });
 
-  it('should have service worker registration script', function() {
-    assert.ok(html.includes("serviceWorker.register"));
+  it('should have service worker kill-switch (off by default, opt-in via localStorage)', function() {
+    assert.ok(html.includes("badminton_sw"), 'should gate SW registration on localStorage flag');
+    assert.ok(html.includes("serviceWorker.register"), 'should still register SW when opted in');
+    assert.ok(html.includes("getRegistrations"), 'should unregister any existing SW when opted out');
   });
 });
 

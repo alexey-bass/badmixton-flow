@@ -9,7 +9,7 @@ Local web app for managing player queue and court assignments during amateur bad
 ## Tech Stack
 
 - Pure HTML / CSS / JavaScript — no frameworks, no build tools, no npm
-- PWA with service worker — offline-first, installable on mobile
+- PWA shell with opt-in service worker (off by default — see Service Worker section)
 - `localStorage` for data persistence (survives refresh)
 - Firebase Realtime Database v10.12.0 (compat SDK) for optional multi-device sync (CDN script tags)
 - Google Analytics (gtag.js)
@@ -36,10 +36,11 @@ scripts/                        — Screenshots (Playwright), simulation, and va
 **Load order:** `FIREBASE_CONFIG` (inline in head) → Firebase SDK (CDN, defer) → `assets/js/i18n.js` (defer) → `assets/js/app.js` (defer) → service worker registration
 
 ### Service Worker
-- Caches app shell (HTML, CSS, JS, icons, manifest) for offline use
-- Strategy: stale-while-revalidate (serve from cache, update in background)
-- `CACHE_VERSION` in `service-worker.js` is auto-bumped by pre-commit hook when app files change
-- External resources (Firebase CDN, Analytics) are network-only — not cached
+- **OFF by default** — stale-cache pain during active development outweighs the offline-mode benefit. When not opted in, [index.html](index.html) actively unregisters any previously-installed SW on load.
+- Opt in per-device from the browser console: `localStorage.setItem('badminton_sw', '1')` then reload.
+- Opt out: `localStorage.removeItem('badminton_sw')` then reload twice (first reload unregisters the active SW, second fetches fresh assets from network). A hard reload (Cmd+Shift+R) on the first visit is cleaner.
+- When enabled: caches app shell (HTML, CSS, JS, icons, manifest) with stale-while-revalidate strategy. `CACHE_VERSION` in `service-worker.js` is auto-bumped by the pre-commit hook when app files change.
+- External resources (Firebase CDN, Analytics) are network-only — not cached.
 
 ## How to Run
 
