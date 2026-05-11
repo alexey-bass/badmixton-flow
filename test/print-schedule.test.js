@@ -49,7 +49,7 @@ describe('App.UI.printSchedule', function() {
     assert.ok(html._html.includes('Thursday training'), 'should contain session name');
   });
 
-  it('should contain player roster', function() {
+  it('should contain all player names', function() {
     var ids = createShuffleSession(4);
     App.Shuffle.generate(1);
 
@@ -63,7 +63,6 @@ describe('App.UI.printSchedule', function() {
     App.UI.printSchedule();
     window.open = origOpen;
 
-    // Should contain all player names
     for (var i = 0; i < ids.length; i++) {
       var p = App.state.players[ids[i]];
       assert.ok(html._html.includes(p.name), 'should contain player ' + p.name);
@@ -220,7 +219,6 @@ describe('App.UI.printSchedule', function() {
     window.open = origOpen;
 
     assert.ok(html._html.includes('Game schedule'), 'should have English title');
-    assert.ok(html._html.includes('Player roster'), 'should have English roster heading');
     assert.ok(html._html.includes('Score'), 'should have Score header');
     assert.ok(html._html.includes('Team A'), 'should have Team A header');
     // English court prefix: C

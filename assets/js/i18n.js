@@ -371,7 +371,10 @@ App.i18n = {
       // Print schedule
       printSchedule: 'Drukuj',
       printTitle: 'Harmonogram gier',
-      printPlayerRoster: 'Lista graczy',
+      printForPrefix: 'dla',
+      printPlayersOne: ' gracza',
+      printPlayersFew: ' graczy',
+      printPlayersMany: ' graczy',
       printTeam: 'Zespół',
       printBench: 'Pauza',
       printCourt: 'Kort',
@@ -747,7 +750,10 @@ App.i18n = {
       // Print schedule
       printSchedule: 'Print',
       printTitle: 'Game schedule',
-      printPlayerRoster: 'Player roster',
+      printForPrefix: 'for',
+      printPlayersOne: ' player',
+      printPlayersFew: ' players',
+      printPlayersMany: ' players',
       printTeam: 'Team',
       printBench: 'Bench',
       printCourt: 'Court',

@@ -5846,14 +5846,9 @@ App.UI = {
     var pname = this._pname.bind(this);
     var sessionName = state.name ? esc(state.name) : '';
 
-    // Player roster
     var presentPlayers = Object.values(state.players)
       .filter(function(p) { return p.present; })
       .sort(function(a, b) { return a.number - b.number; });
-    var rosterItems = presentPlayers.map(function(p, i) {
-      var name = '#' + p.number + '\u00a0' + pname(p);
-      return i % 2 === 0 ? '<b>' + name + '</b>' : name;
-    });
 
     // Game rows — group by court count (round dividers)
     var activeCourts = Object.values(state.courts)
@@ -5951,9 +5946,8 @@ App.UI = {
       '* { margin:0; padding:0; box-sizing:border-box; }' +
       'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size:12px; padding:15mm; color:#222; font-variant-numeric:tabular-nums; }' +
       'h1 { font-size:18px; margin-bottom:2px; }' +
-      'h2 { font-size:14px; margin:12px 0 6px; }' +
-      '.roster { margin-bottom:12px; line-height:1.6; }' +
-      'table { width:100%; border-collapse:collapse; }' +
+      'h1 .subtitle { font-weight:400; }' +
+      'table { width:100%; border-collapse:collapse; margin-top:8px; }' +
       'th, td { border:1px solid #ccc; padding:5px 6px; font-size:12px; }' +
       'th { background:#f5f5f5; font-weight:600; text-align:left; border-bottom:2px solid #666; }' +
       'td.fill { min-width:60px; }' +
@@ -5967,9 +5961,14 @@ App.UI = {
       '@media print { body { padding:0; } }' +
       '@page { margin:15mm; size:A4 portrait; }' +
       '</style></head><body>' +
-      '<h1>' + App.t('printTitle') + (sessionName ? ' — ' + sessionName : '') + '</h1>' +
-      '<h2>' + App.t('printPlayerRoster') + '</h2>' +
-      '<div class="roster">' + rosterItems.join(', ') + '</div>' +
+      '<h1>' + App.t('printTitle') +
+        ' <span class="subtitle">' + App.t('printForPrefix') + ' ' + App.i18n.plural(presentPlayers.length, {
+          one: App.t('printPlayersOne'),
+          few: App.t('printPlayersFew'),
+          many: App.t('printPlayersMany'),
+          other: App.t('printPlayersMany')
+        }) + '</span>' +
+        (sessionName ? ' — ' + sessionName : '') + '</h1>' +
       '<table><thead><tr>' +
       '<th style="width:36px; text-align:center">#</th>' +
       '<th style="width:48px">' + App.t('printCourt') + '</th>' +
