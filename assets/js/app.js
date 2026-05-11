@@ -5981,7 +5981,7 @@ App.UI = {
       gameRows +
       '</tbody></table>' +
       '<div class="footer">' + App.t('printTitle') + ' — ' + new Date().toLocaleString() +
-      '<br>Badmixton Flow &copy; ' + new Date().getFullYear() + ' — github.com/alexey-bass/badmixton-flow</div>' +
+      '<br>Badmixton Flow &copy; ' + new Date().getFullYear() + ' — github.com/alexey-bass/badmixton-flow — ' + App.VERSION + '</div>' +
       '</body></html>';
 
     var w = window.open('', '_blank');
