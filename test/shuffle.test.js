@@ -167,8 +167,8 @@ describe('App.Shuffle', function() {
       assert.strictEqual(App.state.schedule.length, 4);
 
       App.Shuffle.reshuffle();
-      // Should have new entries (courtCount * 2 = 4)
-      assert.strictEqual(App.state.schedule.length, 4);
+      // Should have new entries (courtCount = 2)
+      assert.strictEqual(App.state.schedule.length, 2);
       // All should be pending
       assert.ok(App.state.schedule.every(function(e) { return e.status === 'pending'; }));
     });

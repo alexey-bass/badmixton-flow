@@ -2186,7 +2186,7 @@ App.Shuffle = {
     });
     // Generate new batch
     var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-    return this.generate(courtCount * 2);
+    return this.generate(courtCount);
   },
 
   // Assign first eligible pending entry to this court (status → ready)
@@ -3604,7 +3604,8 @@ App.UI = {
     // Action buttons
     var hasPending = stats.pending + stats.ready > 0;
     var html = '<div class="btn-row" style="margin-bottom:12px;">';
-    html += '<button class="btn btn-primary btn-sm" data-action="schedule-generate">' + (schedule.length === 0 ? App.t('shuffleGenerate') : App.t('shuffleContinue')) + '</button>';
+    html += '<button class="btn btn-primary btn-sm" data-action="schedule-generate" data-rounds="1">' + App.t('shuffleAdd1Round') + '</button>';
+    html += '<button class="btn btn-primary btn-sm" data-action="schedule-generate" data-rounds="5">' + App.t('shuffleAdd5Rounds') + '</button>';
     html += '<button class="btn btn-success btn-sm" data-action="schedule-create-game">+ ' + App.t('shuffleCreateGame') + '</button>';
     if (hasPending) {
       html += '<button class="btn btn-warning btn-sm" data-action="schedule-reshuffle">' + App.t('shuffleReshuffle') + '</button>';
@@ -3677,9 +3678,9 @@ App.UI = {
       switch (btn.dataset.action) {
         case 'schedule-generate':
           var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-          var isInitial = App.state.schedule.length === 0;
-          App.Shuffle.generate(isInitial ? courtCount * 2 : courtCount);
-          App.Analytics.track('shuffle_generate', { initial: isInitial, game_count: App.Shuffle.getPending().length });
+          var rounds = parseInt(btn.dataset.rounds, 10) || 1;
+          App.Shuffle.generate(courtCount * rounds);
+          App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
           break;
@@ -4506,10 +4507,10 @@ App.UI = {
       }
 
       // Action buttons
-      var isInitial = App.state.schedule.length === 0;
       var hasPendingBoard = upcoming.length > 0 || App.state.schedule.some(function(e) { return e.status === 'ready'; });
       qhtml += '<div style="text-align:center; padding:8px 0; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">';
-      qhtml += '<button class="btn btn-primary btn-sm" data-action="board-continue-shuffle">' + (isInitial ? App.t('shuffleGenerate') : App.t('shuffleContinue')) + '</button>';
+      qhtml += '<button class="btn btn-primary btn-sm" data-action="board-continue-shuffle" data-rounds="1">' + App.t('shuffleAdd1Round') + '</button>';
+      qhtml += '<button class="btn btn-primary btn-sm" data-action="board-continue-shuffle" data-rounds="5">' + App.t('shuffleAdd5Rounds') + '</button>';
       if (hasPendingBoard) {
         qhtml += '<button class="btn btn-warning btn-sm" data-action="board-reshuffle">' + App.t('shuffleReshuffle') + '</button>';
       }
@@ -4609,9 +4610,9 @@ App.UI = {
       switch (btn.dataset.action) {
         case 'board-continue-shuffle':
           var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-          var isInitial = App.state.schedule.length === 0;
-          App.Shuffle.generate(isInitial ? courtCount * 2 : courtCount);
-          App.Analytics.track('shuffle_generate', { initial: isInitial, game_count: App.Shuffle.getPending().length });
+          var rounds = parseInt(btn.dataset.rounds, 10) || 1;
+          App.Shuffle.generate(courtCount * rounds);
+          App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
           break;
