@@ -71,7 +71,6 @@ npm run validate   # runs syntax check + tests + simulation quality check + ligh
 ### Player & Court Display:
 - `App.UI._pname(player)` returns escaped player name (use instead of `App.UI._esc(player.name)` for consistency)
 - Exception: HTML input `value` attributes use `_esc()` (HTML tags don't render in inputs)
-- Court names show finished games count as superscript (e.g. `Kort 1<sup>3</sup>` = 3 games finished on court 1)
 - Players tab shows bench/pause count next to games played in shuffle mode (only if > 0), computed from schedule via `App.Shuffle.getBenchCounts()`
 - Finish modal buttons use team background colors (blue #dbeafe for team A, yellow #fef3c7 for team B)
 

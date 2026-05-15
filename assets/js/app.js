@@ -984,15 +984,6 @@ App.Courts = {
     var court = App.state.courts[courtId];
     if (!court || !court.gameStartTime) return 0;
     return Date.now() - court.gameStartTime;
-  },
-
-  // Count finished games on this court
-  getGameNumber: function(courtId) {
-    var count = 0;
-    Object.values(App.state.matches).forEach(function(m) {
-      if (m.courtId === courtId && m.status === 'finished') count++;
-    });
-    return count;
   }
 };
 
@@ -2949,9 +2940,6 @@ App.UI = {
 
     document.getElementById('statsGrid').innerHTML = statsHtml;
 
-    // Court utilization
-    this._renderCourtUtilization();
-
     // Update court numbers in input
     var courtNums = Object.values(App.state.courts).map(function(c) { return c.displayNumber; });
     document.getElementById('courtNumbers').value = courtNums.join(',');
@@ -2977,85 +2965,6 @@ App.UI = {
     } else {
       status.hidden = true;
     }
-  },
-
-  _renderCourtUtilization: function() {
-    var container = document.getElementById('courtUtilization');
-    if (!container) return;
-
-    var finishedMatches = App.Matches.getFinished();
-    var activeCourts = Object.values(App.state.courts).filter(function(c) { return c.active; });
-    var now = Date.now();
-
-    if (finishedMatches.length === 0 && !activeCourts.some(function(c) { return c.occupied; })) {
-      container.innerHTML = '<h3>' + App.t('courtUtilization') + '</h3><div class="util-no-data">' + App.t('utilNoData') + '</div>';
-      container.hidden = false;
-      return;
-    }
-
-    // Find session start: earliest match startTime
-    var sessionStart = Infinity;
-    Object.values(App.state.matches).forEach(function(m) {
-      if (m.startTime && m.startTime < sessionStart) sessionStart = m.startTime;
-    });
-    if (sessionStart === Infinity) sessionStart = now;
-    var sessionDuration = now - sessionStart;
-    if (sessionDuration < 1000) sessionDuration = 1000; // avoid division by zero
-
-    // Calculate per-court play time
-    var courtPlayTime = {};
-    activeCourts.forEach(function(c) { courtPlayTime[c.id] = 0; });
-
-    // Add finished matches
-    var totalGameDuration = 0;
-    var gameCount = 0;
-    finishedMatches.forEach(function(m) {
-      if (m.startTime && m.endTime && courtPlayTime[m.courtId] !== undefined) {
-        var duration = m.endTime - m.startTime;
-        courtPlayTime[m.courtId] += duration;
-        totalGameDuration += duration;
-        gameCount++;
-      }
-    });
-
-    // Add currently running games
-    activeCourts.forEach(function(c) {
-      if (c.occupied && c.gameStartTime) {
-        courtPlayTime[c.id] += now - c.gameStartTime;
-      }
-    });
-
-    // Build HTML
-    var html = '<h3>' + App.t('courtUtilization') + '</h3>';
-
-    // Per-court bars
-    var totalPct = 0;
-    activeCourts.forEach(function(c) {
-      var pct = Math.min(100, Math.round(100 * courtPlayTime[c.id] / sessionDuration));
-      totalPct += pct;
-      var level = pct >= 70 ? 'util-high' : pct >= 40 ? 'util-mid' : 'util-low';
-      html += '<div class="util-row">';
-      html += '<span class="util-label">' + App.t('utilCourt') + ' ' + c.displayNumber + '</span>';
-      html += '<div class="util-bar-track"><div class="util-bar-fill ' + level + '" style="width:' + pct + '%"></div></div>';
-      html += '<span class="util-pct">' + pct + '%</span>';
-      html += '</div>';
-    });
-
-    // Summary row
-    var overallPct = activeCourts.length > 0 ? Math.round(totalPct / activeCourts.length) : 0;
-    var avgGameMin = gameCount > 0 ? Math.round(totalGameDuration / gameCount / 60000) : 0;
-    var sessionMin = Math.round(sessionDuration / 60000);
-
-    html += '<div class="util-summary">';
-    html += '<span class="util-summary-item"><strong>' + overallPct + '%</strong> ' + App.t('utilOverall') + '</span>';
-    if (gameCount > 0) {
-      html += '<span class="util-summary-item"><strong>' + avgGameMin + ' min</strong> ' + App.t('utilAvgGame') + '</span>';
-    }
-    html += '<span class="util-summary-item"><strong>' + sessionMin + ' min</strong> ' + App.t('utilSession') + '</span>';
-    html += '</div>';
-
-    container.innerHTML = html;
-    container.hidden = false;
   },
 
   // --- Players ---
@@ -3798,8 +3707,7 @@ App.UI = {
 
       html += '<div class="court-card ' + (isOccupied ? 'occupied' : 'free') + '" data-court-id="' + court.id + '">';
       html += '<div class="court-header">';
-      var finishedOnCourt = App.Courts.getGameNumber(court.id);
-      html += '<h2>' + App.t('court') + court.displayNumber + (finishedOnCourt ? '<sup>' + finishedOnCourt + '</sup>' : '') + '</h2>';
+      html += '<h2>' + App.t('court') + court.displayNumber + '</h2>';
 
       if (isOccupied) {
         html += '<span class="court-timer" data-start="' + court.gameStartTime + '">' +
@@ -4295,10 +4203,9 @@ App.UI = {
       }
 
       var cardClass = isOccupied ? 'occupied' : (readyEntry ? 'ready' : 'free');
-      var finishedOnCourt = App.Courts.getGameNumber(court.id);
       html += '<div class="board-court-card ' + cardClass + '" data-court-id="' + court.id + '">';
       html += '<div class="board-court-header">';
-      html += '<h2>' + App.t('court') + court.displayNumber + (finishedOnCourt ? '<sup>' + finishedOnCourt + '</sup>' : '') + '</h2>';
+      html += '<h2>' + App.t('court') + court.displayNumber + '</h2>';
       if (isOccupied) {
         html += '<span class="board-court-timer" data-start="' + court.gameStartTime + '">' +
           App.Utils.formatTime(Date.now() - court.gameStartTime) + '</span>';
