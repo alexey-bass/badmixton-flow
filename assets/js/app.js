@@ -2747,6 +2747,12 @@ App.UI = {
       html += '<p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">' + App.t('confirmNewSession') + '</p>';
       html += '<label style="font-size:13px; color:var(--text-secondary);">' + App.t('sessionNameLabel') + '</label>';
       html += '<input type="text" id="sessionNameInput" placeholder="' + App.t('sessionNamePlaceholder') + '" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; margin:6px 0 12px;">';
+      html += '<label style="font-size:13px; color:var(--text-secondary);">' + App.t('numberOfCourts') + '</label>';
+      html += '<select id="sessionCourtCount" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; margin:6px 0 12px;">';
+      for (var cc = 1; cc <= 10; cc++) {
+        html += '<option value="' + cc + '"' + (cc === 4 ? ' selected' : '') + '>' + cc + '</option>';
+      }
+      html += '</select>';
       html += '<label style="font-size:13px; color:var(--text-secondary);">' + App.t('sessionMode') + '</label>';
       html += '<div style="display:flex; gap:8px; margin:6px 0 16px;">';
       html += '<label style="flex:1; display:flex; flex-direction:column; gap:4px; padding:10px 12px; border:2px solid var(--border); border-radius:var(--radius-sm); cursor:pointer;" id="modeQueueLabel">';
@@ -2780,11 +2786,16 @@ App.UI = {
         var name = document.getElementById('sessionNameInput').value.trim();
         var modeEl = document.querySelector('input[name="sessionMode"]:checked');
         var mode = modeEl ? modeEl.value : 'queue';
+        var courtCountEl = document.getElementById('sessionCourtCount');
+        var courtCount = courtCountEl ? parseInt(courtCountEl.value, 10) : 4;
+        if (isNaN(courtCount) || courtCount < 1 || courtCount > 10) courtCount = 4;
+        var courtNumbers = [];
+        for (var ci = 1; ci <= courtCount; ci++) courtNumbers.push(ci);
         App.Session.create(name, mode);
-        App.Session.initCourts([1, 2, 3, 4]);
+        App.Session.initCourts(courtNumbers);
         App.Utils.updateUrlSession(App.state.sessionId);
         App.Sync.autoConnect(App.state.sessionId);
-        App.Analytics.track('session_create', { court_count: 4, mode: mode });
+        App.Analytics.track('session_create', { court_count: courtCount, mode: mode });
         App.UI.hideModal();
         App.UI.renderAll();
         App.UI.showToast(App.t('newSessionCreated'));
@@ -2848,7 +2859,7 @@ App.UI = {
         App.UI.showToast(App.t('enterCourtNumbers'));
         return;
       }
-      if (numbers.length > 5) {
+      if (numbers.length > 10) {
         App.UI.showToast(App.t('maxCourts'));
         return;
       }

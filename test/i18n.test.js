@@ -37,6 +37,14 @@ describe('App.i18n', function() {
     });
   });
 
+  describe('numberOfCourts key (#60)', function() {
+    it('should be translated in both languages', function() {
+      assert.strictEqual(App.t('numberOfCourts'), 'Liczba kortów');
+      App.i18n.currentLang = 'en';
+      assert.strictEqual(App.t('numberOfCourts'), 'Number of courts');
+    });
+  });
+
   describe('App.t shortcut', function() {
     it('should work the same as App.i18n.t', function() {
       assert.strictEqual(App.t('tabBoard'), App.i18n.t('tabBoard'));

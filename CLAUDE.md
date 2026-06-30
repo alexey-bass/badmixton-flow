@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Local web app for managing player queue and court assignments during amateur badminton 2x2 sessions. Designed for a coach/admin running sessions with 4-20 players on 1-5 courts.
+Local web app for managing player queue and court assignments during amateur badminton 2x2 sessions. Designed for a coach/admin running sessions with 4-40 players on 1-10 courts.
 
 **Primary device:** 12" tablet placed courtside, also works on phones and desktops.
 
@@ -174,7 +174,7 @@ When adding a player whose name already exists (case-insensitive), an emoji pick
 
 ### Session Modes
 
-Two modes, chosen at session creation:
+Two modes, chosen at session creation. The new-session modal also has a **"Number of courts"** field (1–10, default 4) next to name and mode, so the coach picks court count upfront instead of forgetting and leaving players benched (e.g. 21 players on 4 courts = 5 bench/round, but on 5 courts = 1 bench/round). It maps to `initCourts([1..N])`; courts remain editable later on the Courts tab.
 
 - **Queue mode** (default): Players join a waiting queue, coach suggests/selects players per court, finished players return to queue end. Traditional flow.
 - **Shuffle mode**: Coach generates a batch of games upfront via smart algorithm. Games auto-assign to free courts in strict schedule order — if the next pending game has players busy on other courts, the court waits rather than skipping ahead. Board tab shows courts full-width (no sidebar), with upcoming games and bench displayed below in a round-based layout: games are grouped into rounds (courtCount consecutive games), each round's game cards align to the court grid columns, bench ("Pauza") players are shown centered per round, and rounds are separated by divider lines. Bench is computed per-round from the original schedule, staying stable even when games from the next round are assigned early to a freed court. Free courts preview the next pending game (no duplicates across courts) and show "Waiting for schedule..." text. Upcoming game cards use the same blue (#dbeafe) / yellow (#fef3c7) team background colors as court cards. Schedule tab replaces Queue tab. "Create game" button lets coach manually pick 2-4 players and add a custom game to the schedule. Pending games can be edited: swap players between teams/bench, or remove players from a team (click to select, click again to remove) to convert 2v2 → 2v1 → 1v1. "Print" button generates an A4-friendly page with player roster, game table grouped by rounds, bench column (when players > courts can fit), court column pre-filled round-robin by schedule index (so players can see which court they're on), and empty Score column for handwriting. Works when session is locked.

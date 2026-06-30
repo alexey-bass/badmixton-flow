@@ -1,18 +1,18 @@
 # Badmixton Flow — Badminton 2v2, 2v1 & 1v1 Manager
 
-Web app for managing player queues and court assignments during amateur badminton doubles sessions. Designed for a coach or admin running sessions with 4–20 players on 1–5 courts.
+Web app for managing player queues and court assignments during amateur badminton doubles sessions. Designed for a coach or admin running sessions with 4–40 players on 1–10 courts.
 
 **Primary device:** 12" tablet placed courtside. Also works on phones and desktops.
 
 ## Features
 
 - **Player management** — add, remove, remove all, rename (with emoji support), renumber, mark present/absent, multiple partner wishes, emoji disambiguation for duplicate names
-- **Two session modes** — Queue mode (classic living queue) or Shuffle mode (batch-generate games, manual game creation, editable schedule with player removal, strict-order auto-assign to courts, round-based upcoming games with bench and motivational phrases on free courts)
+- **Two session modes** — Queue mode (classic living queue) or Shuffle mode (batch-generate games, manual game creation, editable schedule with player removal, strict-order auto-assign to courts, round-based upcoming games with bench and motivational phrases on free courts). Court count (1–10) is chosen when creating the session, so latecomers aren't left benched by a forgotten court.
 - **Print schedule** — A4-friendly printout with player roster, game table grouped by rounds, bench/pause column, and empty columns for handwriting court assignments and scores; works when session is locked
 - **Living queue** — automatic arrival numbering, games played counter, live wait timer, auto-requeue after each game
 - **Flexible game formats** — 2v2 (default), 2v1, and 1v1 when not enough players for full doubles
 - **Smart suggestions** — algorithm picks next 2–4 players based on queue position, games balance, and wishes
-- **Court management** — 1–5 configurable courts, quick winner declaration or score entry on finish, cancel button for accidental starts
+- **Court management** — 1–10 configurable courts, quick winner declaration or score entry on finish, cancel button for accidental starts
 - **Team splitting** — minimizes pair/opponent repeats, respects wish pairings, custom swap option with bench
 - **Score tracking** — declare winner with one tap or enter exact score, win/loss and points per player
 - **Results leaderboard** — ranked by wins, win rate, and point differential; click any player for detailed stats; configurable visibility and limit (full/top 3/5/10)

@@ -307,7 +307,7 @@ App.i18n = {
 
       // Courts settings
       enterCourtNumbers: 'Wprowadź numery kortów',
-      maxCourts: 'Maksymalnie 5 kortów',
+      maxCourts: 'Maksymalnie 10 kortów',
       courtsUpdated: 'Korty zaktualizowane: ',
 
       // Sync messages
@@ -340,6 +340,7 @@ App.i18n = {
 
       // Shuffle mode
       sessionMode: 'Tryb sesji',
+      numberOfCourts: 'Liczba kortów',
       modeQueue: 'Kolejka',
       modeQueueDesc: 'Gracze czekają w kolejce. Trener wybiera skład na każdy kort.',
       modeShuffle: 'Losowanie',
@@ -678,7 +679,7 @@ App.i18n = {
 
       // Courts settings
       enterCourtNumbers: 'Enter court numbers',
-      maxCourts: 'Maximum 5 courts',
+      maxCourts: 'Maximum 10 courts',
       courtsUpdated: 'Courts updated: ',
 
       // Sync messages
@@ -711,6 +712,7 @@ App.i18n = {
 
       // Shuffle mode
       sessionMode: 'Session mode',
+      numberOfCourts: 'Number of courts',
       modeQueue: 'Queue',
       modeQueueDesc: 'Players wait in line. Coach picks teams per court.',
       modeShuffle: 'Shuffle',
