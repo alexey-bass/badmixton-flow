@@ -240,6 +240,13 @@ Header layout (left to right): title + session name, lock indicator (🔒) | lan
 - UI mode (admin/player) saved in `localStorage` (`badminton_mode`), restored on refresh
 - Switcher in header with flag buttons
 
+### View-only Mode (#108)
+- Per-device flag `badminton_viewonly` in `localStorage` (like zoom, never synced), set by the "View only on this device" checkbox on the Session tab or by opening the app with `?view=1` (which also forces player mode). The Session tab share-link block shows a second "TV link" input with `&view=1` appended (`App.UI._buildViewUrl`).
+- `App.Lock.isViewOnly()` is true when the flag is set and the UI is in player mode (`badminton_mode !== 'admin'`), or always when `state.isAdmin === false` (a device that joined someone else's session never pushes, so its UI is read-only). Admin mode is behind the password, so switching to it lifts the local flag.
+- `App.Lock.isReadOnly()` = locked OR view-only. All mutation guards in `App.UI` handlers use `isReadOnly()`; only the zoom button keeps `isLocked()` (zoom is a device setting).
+- `App.UI._applyViewOnly()` (called from `renderAll` and from the mode toggle) sets `body.view-only`, shows the 👁 header indicator and syncs the checkbox. CSS reuses the `session-locked` button rules for `body.view-only` and additionally hides `.board-court-actions`, `.add-player-form`, `.emoji-picker` and `#btnUndoLastMatch`.
+- Ticking the checkbox switches to player mode and shows the Board; the header stays normal (no red lock bar) because the session itself is not locked.
+
 ### Session Lock
 - Manual lock/unlock button on Session tab — disables all mutation actions (add/remove players, start/finish games, queue reorder, drag-and-drop)
 - Optional auto-lock time picker ("Auto-lock at") — session locks automatically when the specified time is reached

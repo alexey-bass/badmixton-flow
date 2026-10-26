@@ -109,6 +109,7 @@ When finishing a game, a modal lets you declare the winner by tapping the winnin
 
 - **Board mode** (toggle via gear icon) — clean view for players: courts with teams + timer, results leaderboard. Queue mode shows a queue sidebar; shuffle mode shows full-width courts with round-based upcoming games and bench below, team colors on game cards, and motivational phrases on free courts
 - **Management mode** — full admin control: all tabs, player management, manual selection, settings, sync, debug
+- **View-only** (per device) — for a TV or a shared touch tablet: tick "View only on this device" on the Session tab, or open the session with `?view=1` (the Session tab offers a ready "TV link"). Finish/cancel buttons and the add-player form disappear, every other action is disabled, and an 👁 icon shows in the header. It never affects other devices; gear + password lifts it. Devices that joined someone else's session are always view-only, because their changes never sync anyway.
 
 ### Multi-Device Sync
 

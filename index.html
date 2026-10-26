@@ -38,6 +38,7 @@
     <div class="topbar-left">
       <h1>Badmixton Flow<span id="sessionNameHeader" class="session-name-header"></span></h1>
       <span class="lock-indicator" id="lockIndicator" hidden>&#x1F512;</span>
+      <span class="view-indicator" id="viewOnlyIndicator" data-i18n-title="viewOnlyTooltip" title="Tylko podgląd" hidden>&#x1F441;</span>
     </div>
     <div class="topbar-right">
       <div class="lang-switcher" id="langSwitcher">
@@ -141,6 +142,11 @@
                 <input type="text" id="syncShareUrl" readonly>
                 <button class="btn btn-secondary btn-sm" id="btnCopyLink" data-i18n="copyLink"></button>
               </div>
+              <label for="syncViewUrl" data-i18n="viewLink">Link dla TV (tylko podgląd)</label>
+              <div class="share-link-row">
+                <input type="text" id="syncViewUrl" readonly>
+                <button class="btn btn-secondary btn-sm" id="btnCopyViewLink" data-i18n="copyLink"></button>
+              </div>
             </div>
           </div>
         </div>
@@ -164,6 +170,17 @@
           <div class="btn-row">
             <button class="btn btn-danger" id="btnLockSession" data-i18n="lockSession">Zablokuj sesję</button>
             <button class="btn btn-success" id="btnUnlockSession" data-i18n="unlockSession" hidden>Odblokuj sesję</button>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <h2 data-i18n="viewOnlyTitle">Tylko podgląd</h2>
+          <p class="section-desc" data-i18n="viewOnlyDesc">Dla telewizora lub wspólnego tabletu: ukrywa przyciski zmian na tym urządzeniu.</p>
+          <div class="form-row">
+            <label class="checkbox-row">
+              <input type="checkbox" id="viewOnlyDevice">
+              <span data-i18n="viewOnlyDeviceLabel">Tylko podgląd na tym urządzeniu</span>
+            </label>
           </div>
         </div>
       </div>
