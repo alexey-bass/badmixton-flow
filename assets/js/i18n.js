@@ -177,6 +177,8 @@ App.i18n = {
       debugLastSync: 'Ostatnia synchronizacja',
       debugStorageKeys: 'Klucze',
       debugStorageSize: 'Rozmiar',
+      debugLastSaveError: 'Ostatni błąd zapisu',
+      saveFailed: 'Nie udało się zapisać lokalnie — pamięć przeglądarki jest pełna. Zmiany mogą zniknąć po odświeżeniu.',
       debugCurrentState: 'Aktualny stan (JSON)',
 
       // Actions
@@ -553,6 +555,8 @@ App.i18n = {
       debugLastSync: 'Last synced',
       debugStorageKeys: 'Keys',
       debugStorageSize: 'Size',
+      debugLastSaveError: 'Last save error',
+      saveFailed: 'Could not save locally — browser storage is full. Changes may be lost on refresh.',
       debugCurrentState: 'Current state (JSON)',
 
       // Actions

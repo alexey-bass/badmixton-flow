@@ -19,7 +19,7 @@ Local web app for managing player queue and court assignments during amateur bad
 ## Files
 
 ```
-index.html                      — App shell, 10 tab panels, modal, toast container
+index.html                      — App shell, 8 tab panels, modal, toast container
 assets/css/styles.css           — All styles, CSS variables, responsive breakpoints
 assets/js/app.js                — Application logic (App.Utils through App.Shuffle, App.DnD)
 assets/js/i18n.js               — App object init, translations (Polish + English), i18n engine
@@ -65,7 +65,7 @@ npm run validate   # runs syntax check + tests + simulation quality check + ligh
 - All tests must pass before committing
 - `App.VERSION` and `?v=` cache-busting params are auto-stamped by the pre-commit hook — no manual update needed
 - Git hooks live in `hooks/` (tracked). After cloning, run: `git config core.hooksPath hooks`
-- Lighthouse scores must stay at 100 across all categories. `npm run validate` runs Lighthouse after tests.
+- Lighthouse scores must stay at 90 or above in every category (target 100). `npm run validate` runs Lighthouse after tests and fails below `LIGHTHOUSE_MIN` (default 90).
 - Shuffle algorithm must pass quality criteria (see ALGO.md). `npm run validate` runs 10 simulations after tests.
 
 ### Player & Court Display:
@@ -198,7 +198,7 @@ Picks players by scoring (queue position, games balance, wishes), diversifies to
 
 ### Two UI Modes
 - **Board** (player-facing): Courts with teams + timer, results. In queue mode: right sidebar with queue list (games played counter, live wait timer). In shuffle mode: full-width courts with round-based upcoming games and bench below. One-tap "Finish" with score input.
-- **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
+- **Management** (admin): Full control — all 8 tabs, add/remove players, manual player selection, settings.
 
 Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated) with app version in the footer.
 

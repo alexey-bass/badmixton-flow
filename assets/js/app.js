@@ -97,22 +97,49 @@ App.Storage = {
     return App.state ? App.state.date : App.Utils.getISODate(new Date());
   },
 
+  // Set when the last local save failed (shown on the Debug tab); null after
+  // a successful save. The toast is shown once per failure streak (#99).
+  lastSaveError: null,
+  _saveErrorToasted: false,
+
   save: function() {
     if (!App.state) return;
     App.state.lastModified = Date.now();
     var suffix = this._keySuffix();
     var key = this.SESSION_PREFIX + suffix;
-    try {
+    var self = this;
+    var write = function() {
       localStorage.setItem(key, JSON.stringify(App.state));
-      localStorage.setItem(this.LAST_KEY, suffix);
+      localStorage.setItem(self.LAST_KEY, suffix);
       // Update session index
-      var index = this.getIndex();
+      var index = self.getIndex();
       if (index.indexOf(suffix) === -1) {
         index.unshift(suffix);
-        localStorage.setItem(this.INDEX_KEY, JSON.stringify(index));
+        localStorage.setItem(self.INDEX_KEY, JSON.stringify(index));
       }
+    };
+    try {
+      write();
+      this.lastSaveError = null;
+      this._saveErrorToasted = false;
+      return;
     } catch (e) {
       console.error('Save error:', e);
+    }
+    // Storage is probably full: evict old sessions and try once more
+    try {
+      this.pruneOldSessions(7);
+      write();
+      this.lastSaveError = null;
+      this._saveErrorToasted = false;
+      return;
+    } catch (e2) {
+      console.error('Save retry error:', e2);
+      this.lastSaveError = { time: Date.now(), message: String((e2 && e2.message) || e2) };
+      if (!this._saveErrorToasted && App.UI && typeof App.UI.showToast === 'function') {
+        this._saveErrorToasted = true;
+        App.UI.showToast(App.t('saveFailed'));
+      }
     }
   },
 
@@ -5545,8 +5572,12 @@ App.UI = {
 
     var storageHtml = '<table class="debug-table">' +
       '<tr><td>' + App.t('debugStorageKeys') + '</td><td><strong>' + keys.length + '</strong></td></tr>' +
-      '<tr><td>' + App.t('debugStorageSize') + '</td><td><strong>' + this._formatBytes(totalSize) + '</strong></td></tr>' +
-      '</table>';
+      '<tr><td>' + App.t('debugStorageSize') + '</td><td><strong>' + this._formatBytes(totalSize) + '</strong></td></tr>';
+    if (App.Storage.lastSaveError) {
+      storageHtml += '<tr><td>' + App.t('debugLastSaveError') + '</td><td><strong style="color:var(--danger)">' +
+        App.UI._esc(App.Utils.formatTimestamp(App.Storage.lastSaveError.time) + ' — ' + App.Storage.lastSaveError.message) + '</strong></td></tr>';
+    }
+    storageHtml += '</table>';
     storageHtml += '<table class="debug-table debug-table-keys">';
     storageHtml += '<tr><th>Key</th><th>Size</th></tr>';
     keys.forEach(function(k) {

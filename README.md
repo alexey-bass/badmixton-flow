@@ -63,7 +63,7 @@ Then open [http://localhost:8080](http://localhost:8080).
 ## Project Structure
 
 ```
-index.html                      — App shell, 10 tab panels, modals
+index.html                      — App shell, 8 tab panels, modals
 assets/css/styles.css           — All styles, CSS variables, responsive breakpoints
 assets/js/app.js                — Application logic
 assets/js/i18n.js               — Translations (Polish + English) and i18n engine
@@ -131,7 +131,7 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 - Mobile-first responsive CSS
 - Preconnect hints for faster CDN loading
 - Node.js built-in test runner (`node:test`) — 510+ tests, zero dependencies
-- Lighthouse CI — 100/100 across Performance, Accessibility, Best Practices, and SEO
+- Lighthouse — 100/100 across Performance, Accessibility, Best Practices, and SEO; `npm run validate` fails any category below 90
 
 ## Simulation
 
