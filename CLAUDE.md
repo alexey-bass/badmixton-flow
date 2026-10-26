@@ -19,7 +19,7 @@ Local web app for managing player queue and court assignments during amateur bad
 ## Files
 
 ```
-index.html                      — App shell, 10 tab panels, modal, toast container
+index.html                      — App shell, 8 tab panels, modal, toast container
 assets/css/styles.css           — All styles, CSS variables, responsive breakpoints
 assets/js/app.js                — Application logic (App.Utils through App.Shuffle, App.DnD)
 assets/js/i18n.js               — App object init, translations (Polish + English), i18n engine
@@ -198,7 +198,7 @@ Picks players by scoring (queue position, games balance, wishes), diversifies to
 
 ### Two UI Modes
 - **Board** (player-facing): Courts with teams + timer, results. In queue mode: right sidebar with queue list (games played counter, live wait timer). In shuffle mode: full-width courts with round-based upcoming games and bench below. One-tap "Finish" with score input.
-- **Management** (admin): Full control — all 10 tabs, add/remove players, manual player selection, settings.
+- **Management** (admin): Full control — all 8 tabs, add/remove players, manual player selection, settings.
 
 Toggle between modes with the gear icon in the header. Help button (`?`) in header shows quick instructions modal (translated) with app version in the footer.
 

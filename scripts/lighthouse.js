@@ -13,6 +13,16 @@ var fs = require('fs');
 
 var BASE_URL = 'http://localhost:8091';
 var REPORT_DIR = path.join(__dirname, '..', 'reports');
+// Every category must reach this score or the run fails (#95).
+// Override for local experiments: LIGHTHOUSE_MIN=90 npm run lighthouse
+var MIN_SCORE = parseInt(process.env.LIGHTHOUSE_MIN || '100', 10);
+
+// Returns the categories (title + rounded score) that fall below the minimum.
+function checkScores(categories, min) {
+  return Object.keys(categories).map(function(key) {
+    return { key: key, title: categories[key].title, score: Math.round(categories[key].score * 100) };
+  }).filter(function(c) { return c.score < min; });
+}
 
 async function main() {
   // Ensure reports directory exists
@@ -64,10 +74,19 @@ async function main() {
       });
       console.log('\nFull report: ' + path.join(REPORT_DIR, 'lighthouse.report.html'));
 
+      var below = checkScores(categories, MIN_SCORE);
+      if (below.length > 0) {
+        console.error('\n✗ Below ' + MIN_SCORE + ': ' + below.map(function(c) { return c.title + ' ' + c.score; }).join(', '));
+        exitCode = 1;
+      } else {
+        console.log('\n✓ All categories at ' + MIN_SCORE + '+');
+      }
+
       // Clean up JSON (keep only HTML)
       fs.unlinkSync(jsonPath);
     } else {
-      console.log(lhResult);
+      console.error('No Lighthouse JSON report produced:\n' + lhResult);
+      exitCode = 1;
     }
 
   } catch (err) {
@@ -79,4 +98,8 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = { checkScores: checkScores };

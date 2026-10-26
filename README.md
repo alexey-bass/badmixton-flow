@@ -63,7 +63,7 @@ Then open [http://localhost:8080](http://localhost:8080).
 ## Project Structure
 
 ```
-index.html                      — App shell, 10 tab panels, modals
+index.html                      — App shell, 8 tab panels, modals
 assets/css/styles.css           — All styles, CSS variables, responsive breakpoints
 assets/js/app.js                — Application logic
 assets/js/i18n.js               — Translations (Polish + English) and i18n engine
