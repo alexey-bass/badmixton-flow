@@ -14,15 +14,7 @@
     "lighthouse": "node scripts/lighthouse.js"
   },
   "devDependencies": {
-    "@lhci/cli": "^0.15.1",
+    "lighthouse": "^13.5.0",
     "playwright": "^1.58.2"
-  },
-  "overrides": {
-    "tmp": "^0.2.6",
-    "qs": "^6.15.2",
-    "uuid": "^11.1.1",
-    "lodash": "^4.18.1",
-    "lodash-es": "^4.18.1",
-    "basic-ftp": "^5.3.0"
   }
 }
