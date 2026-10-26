@@ -167,8 +167,8 @@ describe('App.Shuffle', function() {
       assert.strictEqual(App.state.schedule.length, 4);
 
       App.Shuffle.reshuffle();
-      // Should have new entries (courtCount = 2)
-      assert.strictEqual(App.state.schedule.length, 2);
+      // Regenerates as many rounds as it removed (2 rounds × 2 games), see #76
+      assert.strictEqual(App.state.schedule.length, 4);
       // All should be pending
       assert.ok(App.state.schedule.every(function(e) { return e.status === 'pending'; }));
     });

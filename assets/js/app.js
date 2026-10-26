@@ -571,6 +571,8 @@ App.Players = {
       App.UI.showToast(App.t('cantDeletePlaying'));
       return false;
     }
+    // Take the player out of pending/ready games first (downgrade or drop) (#69)
+    if (App.Shuffle.isShuffleMode()) App.Shuffle.handlePlayerAbsent(playerId);
     delete App.state.players[playerId];
     // Remove wishes targeting this player
     Object.values(App.state.players).forEach(function(p) {
@@ -588,9 +590,11 @@ App.Players = {
   removeAll: function() {
     var ids = Object.keys(App.state.players);
     var removed = 0;
+    var shuffle = App.Shuffle.isShuffleMode();
     ids.forEach(function(id) {
       if (!App.Players.isOnCourt(id)) {
         App.Queue.remove(id);
+        if (shuffle) App.Shuffle.handlePlayerAbsent(id);
         delete App.state.players[id];
         removed++;
       }
@@ -817,6 +821,14 @@ App.Courts = {
     if (unique.size !== allPlayers.length || allPlayers.length < 2) {
       App.UI.showToast(App.t('playersDuplicate'));
       return null;
+    }
+    // Every id must be a real player (a deleted player can linger in synced
+    // or hand-edited schedule data) (#69)
+    for (var u = 0; u < allPlayers.length; u++) {
+      if (!App.state.players[allPlayers[u]]) {
+        App.UI.showToast(App.t('playerUnknown'));
+        return null;
+      }
     }
 
     // Check none of them are already on court
@@ -1288,9 +1300,12 @@ App.Suggest = {
     var gameSize = Math.min(4, candidates.length);
     var selected = scored.slice(0, gameSize);
 
-    // Try to include wished partner (only when picking 4)
+    // Try to include one wished partner (only when picking 4). The partner
+    // replaces the lowest-ranked selected player other than the wisher, and
+    // only one wish is honoured per suggestion (#81)
     if (gameSize === 4) {
-      for (var i = 0; i < selected.length; i++) {
+      var pulled = false;
+      for (var i = 0; i < selected.length && !pulled; i++) {
         var sel = selected[i];
         if (!Array.isArray(sel.player.wishedPartners)) continue;
         var unfulfilled = sel.player.wishedPartners.filter(function(wid) {
@@ -1304,8 +1319,13 @@ App.Suggest = {
               return s.player.id === wishId && selected.indexOf(s) === -1;
             });
             if (wishCandidate && wishCandidate.queueIndex < candidates.length * 0.75) {
-              selected[3] = wishCandidate;
+              var dropIdx = -1;
+              for (var d = selected.length - 1; d >= 0; d--) {
+                if (selected[d] !== sel) { dropIdx = d; break; }
+              }
+              selected[dropIdx] = wishCandidate;
               selected.sort(function(a, b) { return a.score - b.score; });
+              pulled = true;
               break;
             }
           }
@@ -1529,7 +1549,7 @@ App.Shuffle = {
   // Builds a randomized round-based seed schedule, then runs stochastic
   // hill-climbing with lexicographic objective to minimize partner/opponent
   // repeats, bench spread, and max consecutive benches. See ALGO.md.
-  generate: function(count) {
+  generate: function(count, salt) {
     var present = App.Players.getPresent();
     if (present.length < 2) {
       App.UI.showToast(App.t('noPlayersForShuffle'));
@@ -1559,7 +1579,7 @@ App.Shuffle = {
     });
 
     // Deterministic RNG: same inputs → same schedule (tests & reproducibility).
-    var seedVal = this._computeSeed(count, present);
+    var seedVal = this._computeSeed(count, present, salt);
     var rng = this._seededRandom(seedVal);
 
     // Build randomized round-based seed schedule, then optimize via SA.
@@ -1709,7 +1729,7 @@ App.Shuffle = {
 
   // Stable integer hash of generation inputs — same inputs produce same seed,
   // so tests and debug sessions are reproducible.
-  _computeSeed: function(count, present) {
+  _computeSeed: function(count, present, salt) {
     var h = 2166136261 >>> 0;
     function mix(str) {
       for (var i = 0; i < str.length; i++) {
@@ -1721,6 +1741,7 @@ App.Shuffle = {
     var ids = present.map(function(p) { return p.id; }).slice().sort();
     ids.forEach(function(id) { mix('|' + id); });
     mix('|s' + (App.state && App.state.schedule ? App.state.schedule.length : 0));
+    if (salt) mix('|x' + salt); // reshuffle: same inputs must give a new schedule (#76)
     return h;
   },
 
@@ -2289,10 +2310,10 @@ App.Shuffle = {
   // courtCount * N games: when players < 4 * courts a round has fewer games
   // than courts, and a plain game count would truncate the last round and
   // leave later batches misaligned with round boundaries (#82).
-  generateRounds: function(rounds) {
+  generateRounds: function(rounds, salt) {
     var gpr = this.gamesPerRound();
     if (gpr === 0) return 0;
-    return this.generate(gpr * Math.max(1, rounds | 0));
+    return this.generate(gpr * Math.max(1, rounds | 0), salt);
   },
 
   // Generate one more round
@@ -2300,9 +2321,12 @@ App.Shuffle = {
     return this.generateRounds(1);
   },
 
-  // Regenerate all pending/ready entries
+  // Regenerate all pending/ready entries: same number of rounds, new draw
   reshuffle: function() {
-    // Remove all pending and ready entries
+    var self = this;
+    var removed = App.state.schedule.filter(function(e) {
+      return e.status === 'pending' || e.status === 'ready';
+    });
     App.state.schedule = App.state.schedule.filter(function(e) {
       return e.status !== 'pending' && e.status !== 'ready';
     });
@@ -2312,13 +2336,22 @@ App.Shuffle = {
         delete c._scheduleId;
       }
     });
-    // Generate one new round
-    return this.generateRounds(1);
+    // Regenerate as many rounds as were removed, with a fresh seed (#76)
+    var rounds = {};
+    removed.forEach(function(e) { rounds[self._roundOf(e)] = true; });
+    return this.generateRounds(Math.max(1, Object.keys(rounds).length), Date.now());
   },
 
-  // Assign first eligible pending entry to this court (status → ready)
-  // Skips games where any player is already in a ready or playing entry
+  _roundOf: function(e) {
+    return typeof e.round === 'number' ? e.round : 0;
+  },
+
+  // Assign the next playable pending game to this court (status → ready).
+  // Never skips a round: only games of the earliest round that still has
+  // pending games are considered. A game whose players are busy is picked up
+  // as soon as they are free instead of being starved by later rounds (#68).
   assignNextToCourt: function(courtId) {
+    var self = this;
     var court = App.state.courts[courtId];
     if (!court || court.occupied) return null;
 
@@ -2331,9 +2364,12 @@ App.Shuffle = {
     });
 
     var pending = App.state.schedule.filter(function(e) { return e.status === 'pending'; });
-    // Find first pending game where all players are free
+    if (pending.length === 0) return null;
+    var minRound = pending.reduce(function(m, e) { return Math.min(m, self._roundOf(e)); }, Infinity);
+    // First game of the current round whose players are all free
     var entry = null;
     for (var i = 0; i < pending.length; i++) {
+      if (self._roundOf(pending[i]) !== minRound) continue;
       var all = pending[i].teamA.concat(pending[i].teamB);
       var allFree = all.every(function(pid) { return !busyPids[pid]; });
       if (allFree) {
@@ -2346,6 +2382,22 @@ App.Shuffle = {
     entry.status = 'ready';
     entry.courtId = courtId;
     return entry;
+  },
+
+  // Start a pending game on a free court right now (coach's choice). The
+  // entry is marked ready only for the duration of the start, so a refused
+  // start (players busy elsewhere) leaves it pending instead of stuck ready.
+  startPendingOnCourt: function(scheduleId, courtId) {
+    var entry = App.state.schedule.find(function(e) { return e.id === scheduleId; });
+    if (!entry || entry.status !== 'pending') return null;
+    entry.status = 'ready';
+    entry.courtId = courtId;
+    var matchId = App.Courts.startGame(courtId, entry.teamA, entry.teamB);
+    if (!matchId) {
+      entry.status = 'pending';
+      entry.courtId = null;
+    }
+    return matchId;
   },
 
   // Assign pending games to all free courts
@@ -4759,13 +4811,8 @@ App.UI = {
           }
           break;
         case 'board-start-pending':
-          // Start a pending game directly — assign to court first
-          var pendingId = btn.dataset.schedule;
-          var pendingEntry = App.state.schedule.find(function(e) { return e.id === pendingId; });
-          if (pendingEntry && pendingEntry.status === 'pending') {
-            pendingEntry.status = 'ready';
-            pendingEntry.courtId = courtId;
-            App.Courts.startGame(courtId, pendingEntry.teamA, pendingEntry.teamB);
+          // Start a pending game directly on this court
+          if (App.Shuffle.startPendingOnCourt(btn.dataset.schedule, courtId)) {
             App.UI.renderAll();
           }
           break;
