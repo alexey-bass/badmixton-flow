@@ -1,6 +1,6 @@
 /**
  * Run Lighthouse audit on the app.
- * Uses @lhci/cli with a local server.
+ * Runs the lighthouse CLI against a local server.
  *
  * Usage: npm run lighthouse
  *
@@ -31,26 +31,9 @@ async function main() {
 
   var exitCode = 0;
   try {
-    var reportPath = path.join(REPORT_DIR, 'lighthouse.html');
 
     console.log('Running Lighthouse audit on ' + BASE_URL + '...\n');
 
-    var result = execSync(
-      'npx lhci collect' +
-      ' --url=' + BASE_URL +
-      ' --settings.output=html' +
-      ' --settings.outputPath=' + reportPath +
-      ' --settings.chromeFlags="--headless --no-sandbox"' +
-      ' --settings.onlyCategories="performance,accessibility,best-practices,seo,pwa"' +
-      ' 2>&1 || true',
-      {
-        cwd: path.join(__dirname, '..'),
-        encoding: 'utf-8',
-        timeout: 120000
-      }
-    );
-
-    // lhci collect puts reports in .lighthouseci/, let's also run directly
     var lhResult = execSync(
       'npx lighthouse ' + BASE_URL +
       ' --output=html --output=json' +
@@ -85,12 +68,6 @@ async function main() {
       fs.unlinkSync(jsonPath);
     } else {
       console.log(lhResult);
-    }
-
-    // Clean up .lighthouseci if created
-    var lhciDir = path.join(__dirname, '..', '.lighthouseci');
-    if (fs.existsSync(lhciDir)) {
-      fs.rmSync(lhciDir, { recursive: true });
     }
 
   } catch (err) {
