@@ -63,6 +63,14 @@ App.i18n = {
       sessionAutoLocked: 'Sesja zablokowana automatycznie',
       clearQueueOnLockLabel: 'Wyczyść kolejkę przy blokadzie',
 
+      // View-only (#108)
+      viewOnlyTitle: 'Tylko podgląd',
+      viewOnlyDesc: 'Dla telewizora lub wspólnego tabletu: ukrywa przyciski zmian na tym urządzeniu. Nie wpływa na inne urządzenia. Tryb zarządzania (⚙ + hasło) wyłącza go.',
+      viewOnlyDeviceLabel: 'Tylko podgląd na tym urządzeniu',
+      viewOnlyEnabled: 'Tylko podgląd włączony na tym urządzeniu',
+      viewOnlyTooltip: 'Tylko podgląd',
+      viewLink: 'Link dla TV (tylko podgląd)',
+
       // Sync
       syncFirebase: 'Synchronizacja Firebase',
       syncDesc: 'Sesja synchronizuje się automatycznie. Udostępnij link — każdy kto go ma, może dołączyć i zobaczyć dane.',
@@ -443,6 +451,14 @@ App.i18n = {
       sessionUnlocked: 'Session unlocked',
       sessionAutoLocked: 'Session auto-locked',
       clearQueueOnLockLabel: 'Clear queue on lock',
+
+      // View-only (#108)
+      viewOnlyTitle: 'View only',
+      viewOnlyDesc: 'For a TV or a shared tablet: hides every button that changes the session on this device. Other devices are not affected. Management mode (⚙ + password) lifts it.',
+      viewOnlyDeviceLabel: 'View only on this device',
+      viewOnlyEnabled: 'View-only enabled on this device',
+      viewOnlyTooltip: 'View only',
+      viewLink: 'TV link (view only)',
 
       // Sync
       syncFirebase: 'Firebase Sync',

@@ -150,7 +150,8 @@ body.session-locked .topbar {
   background: #b91c1c;
 }
 
-.lock-indicator {
+.lock-indicator,
+.view-indicator {
   font-size: 20px;
   line-height: 1;
 }
@@ -159,7 +160,12 @@ body.session-locked .btn-primary,
 body.session-locked .btn-success,
 body.session-locked .btn-danger,
 body.session-locked .btn-warning,
-body.session-locked .queue-item {
+body.session-locked .queue-item,
+body.view-only .btn-primary,
+body.view-only .btn-success,
+body.view-only .btn-danger,
+body.view-only .btn-warning,
+body.view-only .queue-item {
   pointer-events: none;
   opacity: 0.4;
   cursor: not-allowed;
@@ -170,10 +176,23 @@ body.session-locked .tab,
 body.session-locked .lang-btn,
 body.session-locked .btn-icon,
 body.session-locked .results-row-clickable,
-body.session-locked .history-filters select {
+body.session-locked .history-filters select,
+body.view-only .tab,
+body.view-only .lang-btn,
+body.view-only .btn-icon,
+body.view-only .results-row-clickable,
+body.view-only .history-filters select {
   pointer-events: auto;
   opacity: 1;
   cursor: pointer;
+}
+
+/* --- View-only device (#108): a TV or shared tablet shows no controls at all --- */
+body.view-only .board-court-actions,
+body.view-only .add-player-form,
+body.view-only .emoji-picker,
+body.view-only #btnUndoLastMatch {
+  display: none;
 }
 
 /* The emoji toggle is a .btn-icon but it adds players — keep it and the

@@ -503,6 +503,21 @@ App.Lock = {
     return App.state && App.state.settings.locked === true;
   },
 
+  // View-only (#108): a device that joined someone else's session (viewer
+  // role, its changes never push) is always read-only; otherwise the
+  // per-device flag (Session tab checkbox or ?view=1) applies in player mode.
+  // Admin mode is behind the password, so it lifts the local flag.
+  isViewOnly: function() {
+    if (App.state && App.state.isAdmin === false) return true;
+    return localStorage.getItem('badminton_viewonly') === '1' &&
+      localStorage.getItem('badminton_mode') !== 'admin';
+  },
+
+  // Lock or view-only: no mutations from this device right now
+  isReadOnly: function() {
+    return this.isLocked() || this.isViewOnly();
+  },
+
   lock: function() {
     App.state.settings.locked = true;
     if (App.state.settings.clearQueueOnLock) {
@@ -3077,6 +3092,7 @@ App.UI = {
     this._bindWakeLock();
     this._bindFullscreen();
     this._bindZoom();
+    this._bindViewOnly();
     this._bindHelp();
     this.startTimers();
   },
@@ -3128,6 +3144,7 @@ App.UI = {
     this._applyShuffleModeUI();
     this.renderCurrentTab();
     this.applyLockState();
+    this._applyViewOnly();
     this._applyResultsTabVisibility();
     this._applyZoom();
     this.cacheTimerElements();
@@ -3170,6 +3187,18 @@ App.UI = {
       // In player mode, respect the setting; in admin mode, always show
       tab.style.display = (!show && !isAdmin) ? 'none' : '';
     }
+  },
+
+  _applyViewOnly: function() {
+    var viewOnly = App.Lock.isViewOnly();
+    var cl = document.body && document.body.classList;
+    if (cl) {
+      if (viewOnly) cl.add('view-only'); else cl.remove('view-only');
+    }
+    var icon = document.getElementById('viewOnlyIndicator');
+    if (icon) icon.hidden = !viewOnly;
+    var cb = document.getElementById('viewOnlyDevice');
+    if (cb) cb.checked = localStorage.getItem('badminton_viewonly') === '1';
   },
 
   applyLockState: function() {
@@ -3251,7 +3280,7 @@ App.UI = {
     });
 
     document.getElementById('sessionNameHeader').addEventListener('click', function() {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var html = '<h2>' + App.t('sessionNameLabel') + '</h2>';
       html += '<input type="text" id="editSessionNameInput" value="' + App.UI._esc(App.state.name || '') + '" placeholder="' + App.t('sessionNamePlaceholder') + '" style="display:block; width:100%; box-sizing:border-box; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; margin-bottom:16px;">';
       html += '<div class="btn-row">';
@@ -3443,7 +3472,7 @@ App.UI = {
     });
 
     document.getElementById('btnRenumberPlayers').addEventListener('click', function() {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       self.showConfirm(App.t('confirmRenumber'), function() {
         App.Players.renumber();
         App.Analytics.track('players_renumbered');
@@ -3455,7 +3484,7 @@ App.UI = {
     });
 
     document.getElementById('btnBulkAddPlayers').addEventListener('click', function() {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       self._showBulkAddDialog();
     });
 
@@ -3466,7 +3495,7 @@ App.UI = {
     });
 
     document.getElementById('btnEmojiToggle').addEventListener('click', function() {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var picker = document.getElementById('emojiPicker');
       if (!picker.hidden) {
         self._hideEmojiPicker();
@@ -3480,7 +3509,7 @@ App.UI = {
 
     // Event delegation for buttons in the list
     document.getElementById('playerList').addEventListener('click', function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
       var row = btn.closest('[data-id]');
@@ -3563,7 +3592,7 @@ App.UI = {
     picker.hidden = false;
 
     chips.onclick = function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var btn = e.target.closest('[data-emoji]');
       if (!btn) return;
       var emoji = btn.dataset.emoji;
@@ -3583,7 +3612,7 @@ App.UI = {
   _doAddPlayer: function(name) {
     // Every add path ends here (input, duplicate picker, emoji toggle) — guard
     // once so the picker cannot bypass the lock (#75)
-    if (App.Lock.isLocked()) return;
+    if (App.Lock.isReadOnly()) return;
     var input = document.getElementById('playerNameInput');
     var id = App.Players.add(name);
     if (id) {
@@ -3596,7 +3625,7 @@ App.UI = {
   },
 
   _addPlayerFromInput: function() {
-    if (App.Lock.isLocked()) return;
+    if (App.Lock.isReadOnly()) return;
     var input = document.getElementById('playerNameInput');
     var name = input.value.trim();
     if (!name) return;
@@ -4070,7 +4099,7 @@ App.UI = {
         App.UI.printSchedule();
         return;
       }
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
 
       switch (btn.dataset.action) {
         case 'schedule-generate':
@@ -4122,7 +4151,7 @@ App.UI = {
   _bindQueueActions: function(container) {
     var self = this;
     container.addEventListener('click', function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
       var pid = btn.dataset.pid;
@@ -4148,7 +4177,7 @@ App.UI = {
     var self = this;
 
     document.getElementById('courtsGrid').addEventListener('click', function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
       var card = btn.closest('[data-court-id]');
@@ -4964,7 +4993,7 @@ App.UI = {
   _bindBoardActions: function() {
     var self = this;
     document.getElementById('boardCourts').addEventListener('click', function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
       var courtId = btn.dataset.court;
@@ -5004,7 +5033,7 @@ App.UI = {
 
   _bindBoardSidebarActions: function() {
     document.getElementById('boardQueueList').addEventListener('click', function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
       switch (btn.dataset.action) {
@@ -5368,6 +5397,8 @@ App.UI = {
       shareLinkEl.hidden = false;
       var url = this._buildShareUrl(App.state.sessionId);
       document.getElementById('syncShareUrl').value = url;
+      var viewUrlEl = document.getElementById('syncViewUrl');
+      if (viewUrlEl) viewUrlEl.value = this._buildViewUrl(App.state.sessionId);
     } else {
       disconnectBtn.hidden = true;
       if (joinRow) joinRow.hidden = false;
@@ -5378,6 +5409,11 @@ App.UI = {
   _buildShareUrl: function(sessionId) {
     var base = window.location.href.split('?')[0].split('#')[0];
     return base + '?session=' + encodeURIComponent(sessionId);
+  },
+
+  // Share link that opens the session in view-only mode (TV, shared tablet)
+  _buildViewUrl: function(sessionId) {
+    return this._buildShareUrl(sessionId) + '&view=1';
   },
 
   _bindSync: function() {
@@ -5409,6 +5445,13 @@ App.UI = {
     document.getElementById('btnCopyLink').addEventListener('click', function() {
       var urlInput = document.getElementById('syncShareUrl');
       navigator.clipboard.writeText(urlInput.value).then(function() {
+        App.UI.showToast(App.t('linkCopied'));
+      });
+    });
+
+    document.getElementById('btnCopyViewLink').addEventListener('click', function() {
+      var viewInput = document.getElementById('syncViewUrl');
+      navigator.clipboard.writeText(viewInput.value).then(function() {
         App.UI.showToast(App.t('linkCopied'));
       });
     });
@@ -5892,6 +5935,27 @@ App.UI = {
     btn.textContent = zoom + 'x';
   },
 
+  // --- View-only on this device (#108) ---
+  _bindViewOnly: function() {
+    var self = this;
+    var cb = document.getElementById('viewOnlyDevice');
+    cb.checked = localStorage.getItem('badminton_viewonly') === '1';
+    cb.addEventListener('change', function() {
+      if (cb.checked) {
+        localStorage.setItem('badminton_viewonly', '1');
+        App.Analytics.track('view_only', { enabled: true });
+        // The flag only takes effect in player mode — go there now
+        if (self._setMode) self._setMode(false);
+        self.showTab('board');
+        self.showToast(App.t('viewOnlyEnabled'));
+      } else {
+        localStorage.removeItem('badminton_viewonly');
+        App.Analytics.track('view_only', { enabled: false });
+      }
+      self._applyViewOnly();
+    });
+  },
+
   _bindHelp: function() {
     document.getElementById('btnHelp').addEventListener('click', function() {
       var steps = App.t('helpSteps');
@@ -5935,7 +5999,9 @@ App.UI = {
       }
       localStorage.setItem('badminton_mode', isAdmin ? 'admin' : 'player');
       self._applyResultsTabVisibility();
+      self._applyViewOnly();
     }
+    self._setMode = setMode;
 
     // Restore saved mode, default to player
     setMode(savedMode === 'admin');
@@ -6458,7 +6524,7 @@ App.DnD = {
     var self = this;
 
     container.addEventListener('dragstart', function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var item = e.target.closest('.queue-item');
       if (!item) return;
       self.draggedId = item.dataset.id;
@@ -6518,7 +6584,7 @@ App.DnD = {
     var rafPending = false;
 
     container.addEventListener('touchstart', function(e) {
-      if (App.Lock.isLocked()) return;
+      if (App.Lock.isReadOnly()) return;
       var handle = e.target.closest('.drag-handle');
       if (!handle) return;
       var item = handle.closest('.queue-item');
@@ -6632,6 +6698,12 @@ App.init = function() {
   // Check for ?session= URL parameter — try localStorage first
   var urlParams = new URLSearchParams(window.location.search);
   var sessionParam = urlParams.get('session');
+
+  // ?view=1 — put this device into view-only player mode (#108)
+  if (urlParams.get('view') === '1') {
+    localStorage.setItem('badminton_viewonly', '1');
+    localStorage.setItem('badminton_mode', 'player');
+  }
 
   var saved = null;
   if (sessionParam) {
