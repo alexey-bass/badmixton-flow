@@ -207,9 +207,10 @@ describe('Shuffle: round and bench stored on entries (issue #77)', function() {
     clickAddRounds(2);
 
     var html = capturePrintHtml();
-    var courts = (html.match(/<td class="court-cell">([^<]*)<\/td>/g) || []).map(function(td) {
-      return td.replace(/<[^>]+>/g, '');
-    });
+    var courts = [];
+    var cellRe = /<td class="court-cell">([^<]*)<\/td>/g;
+    var m;
+    while ((m = cellRe.exec(html)) !== null) courts.push(m[1]);
     assert.deepStrictEqual(courts, ['K1', 'K2', 'K3', 'K1', 'K2', 'K3'], 'court 4 is never used by a 3-game round');
     var roundCells = html.match(/rowspan="3"/g) || [];
     assert.strictEqual(roundCells.length, 4, 'round cell + bench cell for each of 2 rounds, spanning 3 rows');

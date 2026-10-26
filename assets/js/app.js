@@ -138,24 +138,25 @@ App.Storage = {
   _ensureScheduleRounds: function(state) {
     var courtCount = Object.values(state.courts || {}).filter(function(c) { return c.active; }).length || 1;
     var presentIds = Object.values(state.players || {}).filter(function(p) { return p.present; }).map(function(p) { return p.id; });
-    var current = -1, seen = {}, count = 0;
+    // Keys come from synced data, so use prototype-less maps (no __proto__ pollution)
+    var current = -1, seen = Object.create(null), count = 0;
     state.schedule.forEach(function(e) {
       if (!Array.isArray(e.teamA)) e.teamA = [];
       if (!Array.isArray(e.teamB)) e.teamB = [];
       var pids = e.teamA.concat(e.teamB);
       if (typeof e.round === 'number') {
-        if (e.round !== current) { current = e.round; seen = {}; count = 0; }
+        if (e.round !== current) { current = e.round; seen = Object.create(null); count = 0; }
       } else {
         var clash = pids.some(function(pid) { return seen[pid]; });
-        if (current === -1 || clash || count >= courtCount) { current++; seen = {}; count = 0; }
+        if (current === -1 || clash || count >= courtCount) { current++; seen = Object.create(null); count = 0; }
         e.round = current;
       }
       pids.forEach(function(pid) { seen[pid] = true; });
       count++;
     });
-    var roundPlayers = {};
+    var roundPlayers = Object.create(null);
     state.schedule.forEach(function(e) {
-      var set = roundPlayers[e.round] || (roundPlayers[e.round] = {});
+      var set = roundPlayers[e.round] || (roundPlayers[e.round] = Object.create(null));
       e.teamA.concat(e.teamB).forEach(function(pid) { set[pid] = true; });
     });
     state.schedule.forEach(function(e) {
@@ -2354,7 +2355,7 @@ App.Shuffle = {
   // round's entries, limited to players who are present now.
   getRoundBench: function(round) {
     App.Storage._ensureScheduleRounds(App.state);
-    var seen = {}, out = [];
+    var seen = Object.create(null), out = [];
     App.state.schedule.forEach(function(e) {
       if (e.round !== round || !Array.isArray(e.bench)) return;
       e.bench.forEach(function(pid) {
@@ -2488,9 +2489,9 @@ App.Shuffle = {
     if (!App.state || App.state.mode !== 'shuffle' || !App.state.schedule || App.state.schedule.length === 0) return counts;
     // Entries written by older clients may lack round/bench — reconstruct first
     App.Storage._ensureScheduleRounds(App.state);
-    var rounds = {};
+    var rounds = Object.create(null);
     App.state.schedule.forEach(function(e) {
-      var r = rounds[e.round] || (rounds[e.round] = { allFinished: true, bench: {} });
+      var r = rounds[e.round] || (rounds[e.round] = { allFinished: true, bench: Object.create(null) });
       if (e.status !== 'finished') r.allFinished = false;
       (e.bench || []).forEach(function(pid) { r.bench[pid] = true; });
     });
