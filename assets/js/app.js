@@ -915,7 +915,6 @@ App.Courts = {
 
     match.status = 'finished';
     match.endTime = Date.now();
-    match.score = score || null;
     match.winner = winner || null; // 'teamA' | 'teamB' | 'draw' | null
 
     // Update player stats
@@ -929,6 +928,8 @@ App.Courts = {
 
     // Determine winners/losers from score or declared winner
     var result = App.Courts._matchResult(match, score, winner);
+    // Store the score only when it parsed, in canonical "N-M" form
+    match.score = result.scoreA !== null ? result.scoreA + '-' + result.scoreB : null;
 
     // Points count whenever a score was entered, draws included (#72)
     if (result.scoreA !== null) {
@@ -1040,8 +1041,11 @@ App.Courts = {
   // A score wins over a declared winner; an equal score is a draw with points.
   _matchResult: function(match, score, winner) {
     var r = { winnersTeam: null, losersTeam: null, scoreA: null, scoreB: null };
-    if (score) {
-      var parts = String(score).split('-').map(function(s) { return parseInt(s.trim()); });
+    // Only "N-M" with non-negative integers is a score; anything else (e.g.
+    // "-5-3" typed into a number input) is ignored so a declared winner still
+    // counts and no phantom trophy is shown (#92)
+    if (score && /^\s*\d+\s*[-:]\s*\d+\s*$/.test(String(score))) {
+      var parts = String(score).split(/[-:]/).map(function(s) { return parseInt(s.trim(), 10); });
       if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         r.scoreA = parts[0];
         r.scoreB = parts[1];
@@ -5468,9 +5472,15 @@ App.UI = {
       var scoreB = document.getElementById('finishScoreB').value.trim();
       var score = null;
       var winner = null;
-      if (scoreA && scoreB) {
+      if (scoreA || scoreB) {
+        // Both fields, whole numbers 0–99; number inputs still accept "-5" (#92)
+        var valid = /^\d{1,2}$/.test(scoreA) && /^\d{1,2}$/.test(scoreB);
+        if (!valid) {
+          App.UI.showToast(App.t('scoreInvalid'));
+          return;
+        }
         score = scoreA + '-' + scoreB;
-        var a = parseInt(scoreA), b = parseInt(scoreB);
+        var a = parseInt(scoreA, 10), b = parseInt(scoreB, 10);
         if (a > b) winner = 'teamA';
         else if (b > a) winner = 'teamB';
         else winner = 'draw';
@@ -5615,6 +5625,25 @@ App.UI = {
   },
 
   _wakeLock: null,
+  // What the user asked for. The browser releases the lock whenever the tab
+  // hides, so the lock object (and the button state it drives) cannot be used
+  // to decide whether to re-acquire on return (#93).
+  _wakeLockWanted: false,
+
+  _acquireWakeLock: function(btn) {
+    var self = this;
+    return navigator.wakeLock.request('screen').then(function(lock) {
+      self._wakeLock = lock;
+      btn.textContent = '\uD83D\uDD06';
+      btn.classList.add('active');
+      lock.addEventListener('release', function() {
+        self._wakeLock = null;
+        btn.textContent = '\u2600';
+        btn.classList.remove('active');
+      });
+      return lock;
+    }).catch(function() {});
+  },
 
   _bindWakeLock: function() {
     if (!('wakeLock' in navigator)) return;
@@ -5623,50 +5652,48 @@ App.UI = {
     var self = this;
 
     btn.addEventListener('click', function() {
-      if (self._wakeLock) {
-        self._wakeLock.release();
+      if (self._wakeLockWanted) {
+        self._wakeLockWanted = false;
+        if (self._wakeLock) self._wakeLock.release();
         self._wakeLock = null;
         btn.textContent = '\u2600';
         btn.classList.remove('active');
         App.Analytics.track('wake_lock_off');
       } else {
-        navigator.wakeLock.request('screen').then(function(lock) {
-          self._wakeLock = lock;
-          btn.textContent = '\uD83D\uDD06';
-          btn.classList.add('active');
-          lock.addEventListener('release', function() {
-            self._wakeLock = null;
-            btn.textContent = '\u2600';
-            btn.classList.remove('active');
-          });
-          App.Analytics.track('wake_lock_on');
-        }).catch(function() {});
+        self._wakeLockWanted = true;
+        self._acquireWakeLock(btn);
+        App.Analytics.track('wake_lock_on');
       }
     });
 
-    // Re-acquire wake lock when page becomes visible again
+    // Re-acquire when the page becomes visible again and the user still wants it
     document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible' && self._wakeLock === null && btn.classList.contains('active')) {
-        navigator.wakeLock.request('screen').then(function(lock) {
-          self._wakeLock = lock;
-          lock.addEventListener('release', function() {
-            self._wakeLock = null;
-            btn.textContent = '\u2600';
-            btn.classList.remove('active');
-          });
-        }).catch(function() {});
+      if (document.visibilityState === 'visible' && self._wakeLockWanted && !self._wakeLock) {
+        self._acquireWakeLock(btn);
       }
     });
   },
 
   _bindFullscreen: function() {
     var btn = document.getElementById('btnFullscreen');
+    var root = document.documentElement;
+    var request = root.requestFullscreen || root.webkitRequestFullscreen;
+    // iPhone Safari has no element fullscreen: hide the button instead of
+    // throwing on tap (#98)
+    if (typeof request !== 'function') {
+      btn.hidden = true;
+      return;
+    }
     btn.addEventListener('click', function() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(function() {});
-      } else {
-        document.exitFullscreen();
-      }
+      try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          var p = request.call(root);
+          if (p && typeof p.catch === 'function') p.catch(function() {});
+        } else {
+          var exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (typeof exit === 'function') exit.call(document);
+        }
+      } catch (e) { /* unsupported in this context */ }
     });
     document.addEventListener('fullscreenchange', function() {
       App.Analytics.track('fullscreen_toggle', { active: !!document.fullscreenElement });
@@ -6371,34 +6398,46 @@ App.DnD = {
       });
     }, { passive: false });
 
-    container.addEventListener('touchend', function(e) {
-      if (!dragItem) return;
-
+    // Remove the clone and all drag state. Returns the item that was dragged.
+    function endDrag() {
+      var item = dragItem;
       if (clone) {
         clone.remove();
         clone = null;
       }
-
-      dragItem.classList.remove('dragging');
+      if (item) item.classList.remove('dragging');
       container.querySelectorAll('.drag-over').forEach(function(el) {
         el.classList.remove('drag-over');
       });
+      dragItem = null;
+      self.draggedId = null;
+      return item;
+    }
+
+    container.addEventListener('touchend', function(e) {
+      if (!dragItem) return;
+      var draggedId = self.draggedId;
+      var item = endDrag();
 
       // Find drop target
       var touch = e.changedTouches[0];
       var elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
       if (elementBelow) {
         var targetItem = elementBelow.closest('.queue-item');
-        if (targetItem && targetItem !== dragItem) {
+        if (targetItem && targetItem !== item) {
           var targetIndex = parseInt(targetItem.dataset.index);
-          App.Queue.move(self.draggedId, targetIndex);
+          App.Queue.move(draggedId, targetIndex);
           App.Analytics.track('queue_reorder');
           App.UI.renderQueue();
         }
       }
+    });
 
-      dragItem = null;
-      self.draggedId = null;
+    // The OS cancelled the gesture (notification, palm, call): drop the
+    // clone and the drag state, never reorder (#94)
+    container.addEventListener('touchcancel', function() {
+      if (!dragItem) return;
+      endDrag();
     });
   }
 };
