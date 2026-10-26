@@ -534,9 +534,16 @@ App.Lock = {
 // PLAYERS — Player management
 // ============================================================
 App.Players = {
+  // Canonical form of a typed name: trimmed, runs of whitespace collapsed.
+  // Used for storage and for duplicate checks so 'Ola  Z' and 'Ola Z' are
+  // the same player (#101).
+  normalizeName: function(name) {
+    return String(name || '').replace(/\s+/g, ' ').trim();
+  },
+
   add: function(name) {
-    if (!name || !name.trim()) return null;
-    name = name.trim();
+    name = this.normalizeName(name);
+    if (!name) return null;
 
     var id = App.Utils.generateId('p');
     App.state.players[id] = {
@@ -670,10 +677,11 @@ App.Players = {
   },
 
   rename: function(playerId, newName) {
-    if (!newName || !newName.trim()) return false;
+    newName = this.normalizeName(newName);
+    if (!newName) return false;
     var p = App.state.players[playerId];
     if (!p) return false;
-    p.name = newName.trim();
+    p.name = newName;
     App.save();
     return true;
   },
@@ -3383,11 +3391,11 @@ App.UI = {
   _emojiAnimals: ['🐶','🐱','🐰','🦊','🐼','🐸','🐯','🐨','🦁','🐮','🐷','🐵','🐔','🦄','🐢','🐬','🦋','🐝'],
 
   _hasNameDuplicate: function(name, excludeId) {
-    var lower = name.toLowerCase();
+    var lower = App.Players.normalizeName(name).toLowerCase();
     var players = App.state.players;
     for (var id in players) {
       if (id === excludeId) continue;
-      if (players[id].name.toLowerCase() === lower) return true;
+      if (App.Players.normalizeName(players[id].name).toLowerCase() === lower) return true;
     }
     return false;
   },
