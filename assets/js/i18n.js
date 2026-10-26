@@ -324,6 +324,8 @@ App.i18n = {
       // Confirm actions
       confirmCancelGame: 'Anulować grę? Gracze wrócą do kolejki.',
       confirmDeletePlayer: 'Usunąć gracza ',
+      deletePlayer: 'Usuń gracza',
+      scoreInvalid: 'Nieprawidłowy wynik — wpisz liczby 0–99 w obu polach',
       confirmDeleteSuffix: '?',
       confirmRemoveAll: 'Usunąć wszystkich graczy, którzy nie są na korcie?',
       removeAllPlayers: 'Usuń wszystkich',
@@ -698,6 +700,8 @@ App.i18n = {
       // Confirm actions
       confirmCancelGame: 'Cancel game? Players will return to queue.',
       confirmDeletePlayer: 'Delete player ',
+      deletePlayer: 'Delete player',
+      scoreInvalid: 'Invalid score — enter numbers 0–99 in both fields',
       confirmDeleteSuffix: '?',
       confirmRemoveAll: 'Remove all players who are not on court?',
       removeAllPlayers: 'Remove all',

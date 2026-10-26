@@ -166,7 +166,8 @@ describe('App.UI.printSchedule', function() {
     App.UI.printSchedule();
     window.open = origOpen;
 
-    assert.ok(html._html.includes('21:15'), 'should contain score for finished game');
+    // Scores are stored in canonical "N-M" form whatever separator was entered
+    assert.ok(html._html.includes('21-15'), 'should contain score for finished game');
   });
 
   it('should show toast when popup is blocked', function() {
