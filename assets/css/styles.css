@@ -176,6 +176,15 @@ body.session-locked .history-filters select {
   cursor: pointer;
 }
 
+/* The emoji toggle is a .btn-icon but it adds players — keep it and the
+   picker disabled while locked (#75) */
+body.session-locked .btn-emoji-toggle,
+body.session-locked .emoji-picker {
+  pointer-events: none;
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* --- Language switcher --- */
 .lang-switcher {
   display: flex;

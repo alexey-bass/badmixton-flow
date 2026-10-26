@@ -427,7 +427,15 @@ App.Session = {
     App.UI.showToast(App.t('dayReset'));
   },
 
+  // Returns false (and changes nothing) when a court with a game in progress
+  // would be dropped: its players would stay 'on court' forever with no court
+  // to finish or cancel the game on (#65).
   initCourts: function(numbers) {
+    var keep = {};
+    numbers.forEach(function(num) { keep['c_' + num] = true; });
+    var blocked = Object.values(App.state.courts).some(function(c) { return c.occupied && !keep[c.id]; });
+    if (blocked) return false;
+
     var newCourts = {};
     numbers.forEach(function(num) {
       var id = 'c_' + num;
@@ -448,6 +456,7 @@ App.Session = {
     });
     App.state.courts = newCourts;
     App.save();
+    return true;
   }
 };
 
@@ -473,21 +482,33 @@ App.Lock = {
 
   unlock: function() {
     App.state.settings.locked = false;
+    // A fired auto-lock is spent. Otherwise App.save() → checkAutoLock() would
+    // re-lock in the same tick because the clock is still past the set time (#64).
+    if (this._autoLockDue()) {
+      App.state.settings.autoLockTime = null;
+      if (App.UI.renderDashboard) App.UI.renderDashboard();
+    }
     App.save();
     App.UI.applyLockState();
     App.UI.showToast(App.t('sessionUnlocked'));
     App.Analytics.track('session_unlock');
   },
 
-  checkAutoLock: function() {
-    if (!App.state || App.state.settings.locked) return;
+  // True when an auto-lock time is set and the clock has reached it
+  _autoLockDue: function() {
+    if (!App.state) return false;
     var autoTime = App.state.settings.autoLockTime;
-    if (!autoTime) return;
+    if (!autoTime) return false;
     var parts = autoTime.split(':');
     var lockMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
     var now = new Date();
     var nowMinutes = now.getHours() * 60 + now.getMinutes();
-    if (nowMinutes >= lockMinutes) {
+    return nowMinutes >= lockMinutes;
+  },
+
+  checkAutoLock: function() {
+    if (!App.state || App.state.settings.locked) return;
+    if (this._autoLockDue()) {
       App.state.settings.locked = true;
       if (App.state.settings.clearQueueOnLock) {
         App.state.waitingQueue = [];
@@ -2965,7 +2986,10 @@ App.UI = {
         App.UI.showToast(App.t('maxCourts'));
         return;
       }
-      App.Session.initCourts(numbers);
+      if (!App.Session.initCourts(numbers)) {
+        App.UI.showToast(App.t('courtOccupiedCannotRemove'));
+        return;
+      }
       App.save();
       App.UI.renderAll();
       App.UI.showToast(App.t('courtsUpdated') + numbers.join(', '));
@@ -3123,6 +3147,7 @@ App.UI = {
     });
 
     document.getElementById('btnEmojiToggle').addEventListener('click', function() {
+      if (App.Lock.isLocked()) return;
       var picker = document.getElementById('emojiPicker');
       if (!picker.hidden) {
         self._hideEmojiPicker();
@@ -3219,6 +3244,7 @@ App.UI = {
     picker.hidden = false;
 
     chips.onclick = function(e) {
+      if (App.Lock.isLocked()) return;
       var btn = e.target.closest('[data-emoji]');
       if (!btn) return;
       var emoji = btn.dataset.emoji;
@@ -3236,6 +3262,9 @@ App.UI = {
   },
 
   _doAddPlayer: function(name) {
+    // Every add path ends here (input, duplicate picker, emoji toggle) — guard
+    // once so the picker cannot bypass the lock (#75)
+    if (App.Lock.isLocked()) return;
     var input = document.getElementById('playerNameInput');
     var id = App.Players.add(name);
     if (id) {
