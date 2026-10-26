@@ -6322,18 +6322,15 @@ App.UI = {
       var virtualCourt = activeCourts[posInRound % courtCount];
       var courtCell = virtualCourt ? esc(courtPrefix + virtualCourt.displayNumber) : '';
       var scoreCell = '';
-      var teamAClass = '';
-      var teamBClass = '';
       if (match && match.status === 'finished') {
         if (match.courtId && state.courts[match.courtId]) {
           courtCell = esc(courtPrefix + state.courts[match.courtId].displayNumber);
         }
-        // Winner marked on the team cell so a game finished with the team-win
-        // button (no score) still reads as decided (#106)
+        // Result column: the score, or for a game finished with the team-win
+        // button a trophy with the winning team's letter, or the draw label (#106)
         var res = App.Matches.resultOf(match);
-        if (res.winnerSide === 'teamA') { teamAClass = ' class="winner"'; teamANames = '\u2713 ' + teamANames; }
-        if (res.winnerSide === 'teamB') { teamBClass = ' class="winner"'; teamBNames = '\u2713 ' + teamBNames; }
         if (res.score) scoreCell = esc(res.score);
+        else if (res.winnerSide) scoreCell = '\uD83C\uDFC6 ' + (res.winnerSide === 'teamA' ? 'A' : 'B');
         else if (res.draw) scoreCell = esc(App.t('printDraw'));
       }
 
@@ -6371,8 +6368,8 @@ App.UI = {
       gameRows += '<tr' + rowClass + '>' +
         roundCell +
         '<td class="court-cell">' + courtCell + '</td>' +
-        '<td' + teamAClass + '>' + teamANames + '</td>' +
-        '<td' + teamBClass + '>' + teamBNames + '</td>' +
+        '<td>' + teamANames + '</td>' +
+        '<td>' + teamBNames + '</td>' +
         '<td class="fill">' + scoreCell + '</td>' +
         benchCell +
         '</tr>';
@@ -6390,7 +6387,6 @@ App.UI = {
       'th { background:#f5f5f5; font-weight:600; text-align:left; border-bottom:2px solid #666; }' +
       'td.fill { min-width:60px; }' +
       'td.court-cell { text-align:center; width:48px; font-weight:700; font-size:13px; font-variant-numeric:tabular-nums; }' +
-      'td.winner { font-weight:700; }' +
       'tr { break-inside:avoid; }' +
       'tr.round-end td, td.round-cell { border-bottom:2px solid #666; }' +
       // Alternating per-round background. Print-friendly gray — light enough

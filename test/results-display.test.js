@@ -51,12 +51,14 @@ describe('Schedule tab shows results of finished games (#106)', function() {
   beforeEach(function() { localStorage.clear(); });
 
   it('marks the winning team when finished with the team-win button and no score', function() {
-    createShuffle(['A', 'B', 'C', 'D']);
+    createShuffle(['Ola', 'Aleks', 'Marek', 'Kasia']);
     var e = playOne(null, 'teamB');
     App.UI._renderScheduleTab();
     var html = document.getElementById('queueList').innerHTML;
-    var iA = html.indexOf(nameOf(e.teamA[0]));
-    var iB = html.indexOf(nameOf(e.teamB[0]));
+    // names are rendered as "#n<nbsp>Name"; search that form so a short name
+    // cannot match other markup
+    var iA = html.indexOf('\u00a0' + nameOf(e.teamA[0]));
+    var iB = html.indexOf('\u00a0' + nameOf(e.teamB[0]));
     var iT = html.indexOf(TROPHY);
     assert.ok(iT !== -1, 'trophy shown');
     assert.ok(iA < iT && iT < iB, 'trophy sits before team B, after team A');
@@ -81,14 +83,18 @@ describe('Schedule tab shows results of finished games (#106)', function() {
 describe('Print schedule shows the winner without a score (#106)', function() {
   beforeEach(function() { localStorage.clear(); });
 
-  it('marks the winning team cell and leaves the score column blank', function() {
+  it('puts a trophy with the winning team letter in the score column', function() {
     createShuffle(['A', 'B', 'C', 'D']);
-    var e = playOne(null, 'teamA');
+    playOne(null, 'teamB');
     var html = printHtml();
-    var cells = html.match(/<td class="winner">[^<]*<\/td>/g) || [];
-    assert.strictEqual(cells.length, 1, 'exactly one winner cell');
-    assert.ok(cells[0].indexOf('✓ ') !== -1 && cells[0].indexOf(nameOf(e.teamA[0])) !== -1);
-    assert.ok(/<td class="fill"><\/td>/.test(html), 'score column stays blank for handwriting');
+    assert.ok(html.indexOf('<td class="fill">' + TROPHY + ' B</td>') !== -1, 'trophy + B in Wynik');
+    assert.ok(html.indexOf('class="winner"') === -1, 'team cells are left plain');
+
+    localStorage.clear();
+    createShuffle(['A', 'B', 'C', 'D']);
+    playOne('21-15');
+    html = printHtml();
+    assert.ok(html.indexOf('<td class="fill">21-15</td>') !== -1, 'a typed score shows as is');
   });
 
   it('shows the draw label when a draw was declared without a score', function() {
