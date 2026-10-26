@@ -130,7 +130,7 @@ Sync uses Firebase Realtime Database. Configuration is inlined in `index.html`.
 - Google Analytics (gtag.js)
 - Mobile-first responsive CSS
 - Preconnect hints for faster CDN loading
-- Node.js built-in test runner (`node:test`) — 510+ tests, zero dependencies
+- Node.js built-in test runner (`node:test`) — 580+ tests, zero dependencies
 - Lighthouse — 100/100 across Performance, Accessibility, Best Practices, and SEO; `npm run validate` fails any category below 90
 
 ## Simulation

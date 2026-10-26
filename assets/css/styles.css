@@ -1215,6 +1215,21 @@ body.player-mode .admin-only {
   padding: 16px;
 }
 
+/* Schedule generation progress (#96) */
+.gen-progress {
+  height: 8px;
+  margin-top: 12px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gen-progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--primary);
+  transition: width 0.1s linear;
+}
+
 .modal-overlay[hidden] {
   display: none;
 }

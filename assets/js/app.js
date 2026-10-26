@@ -1589,15 +1589,24 @@ App.Shuffle = {
   // hill-climbing with lexicographic objective to minimize partner/opponent
   // repeats, bench spread, and max consecutive benches. See ALGO.md.
   generate: function(count, salt) {
+    var prep = this._prepareGeneration(count, salt);
+    if (!prep) return 0;
+    this._runSA(prep.state, prep.rng, prep.iterations);
+    return this._commitGeneration(prep);
+  },
+
+  // Everything generate() needs before the annealing runs, or null when
+  // nothing can be generated (toast already shown).
+  _prepareGeneration: function(count, salt) {
     var present = App.Players.getPresent();
     if (present.length < 2) {
       App.UI.showToast(App.t('noPlayersForShuffle'));
-      return 0;
+      return null;
     }
 
     var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
     var gameSizes = this._computeRoundFormat(present.length, courtCount);
-    if (gameSizes.length === 0) return 0;
+    if (gameSizes.length === 0) return null;
 
     var gamesPerRound = gameSizes.length;
     var rounds = Math.ceil(count / gamesPerRound);
@@ -1637,12 +1646,16 @@ App.Shuffle = {
     state.baseOneVOne = hist.v1v1 || {};
 
     var iterations = Math.max(2000, Math.min(20000, gamesPerRound * rounds * 400));
-    this._runSA(state, rng, iterations);
+    return { state: state, rng: rng, iterations: iterations, count: count };
+  },
 
-    // Commit games to schedule, truncating to exactly `count`.
-    // Each entry records its round (continuing from the rounds already in the
-    // schedule) and that round's bench, so the board, bench counts and print
-    // never have to re-derive rounds from court count (#77).
+  // Commit the optimized games to the schedule, truncating to exactly `count`.
+  // Each entry records its round (continuing from the rounds already in the
+  // schedule) and that round's bench, so the board, bench counts and print
+  // never have to re-derive rounds from court count (#77).
+  _commitGeneration: function(prep) {
+    var state = prep.state;
+    var count = prep.count;
     var generated = 0;
     var startRound = this._nextRound();
     for (var gi = 0; gi < state.games.length && generated < count; gi++) {
@@ -1669,6 +1682,57 @@ App.Shuffle = {
       App.UI.showToast(App.t('scheduleGenerated') + generated);
     }
     return generated;
+  },
+
+  generating: false,
+
+  // Chunked generation for the UI (#96): the annealing runs in ~30 ms slices
+  // between timeouts so the page keeps painting and the progress modal
+  // updates. Same seed and loop as generate(), so the schedule is identical.
+  // onProgress(fraction) is called after every slice; onDone(generated) once.
+  generateAsync: function(count, salt, onProgress, onDone) {
+    var self = this;
+    if (this.generating) {
+      App.UI.showToast(App.t('scheduleGenerationBusy'));
+      if (onDone) onDone(0);
+      return false;
+    }
+    var prep = this._prepareGeneration(count, salt);
+    if (!prep) {
+      if (onDone) onDone(0);
+      return false;
+    }
+    this.generating = true;
+    var ctx = this._saBegin(prep.state, prep.rng, prep.iterations);
+    if (onProgress) onProgress(0);
+    var tick = function() {
+      var done = self._saStep(ctx, ctx.maxIters, Date.now() + 30);
+      if (onProgress) onProgress(ctx.iter / ctx.maxIters);
+      if (!done) {
+        setTimeout(tick, 0);
+        return;
+      }
+      self._saFinish(ctx);
+      self.generating = false;
+      var generated = self._commitGeneration(prep);
+      if (onDone) onDone(generated);
+    };
+    setTimeout(tick, 0);
+    return true;
+  },
+
+  generateRoundsAsync: function(rounds, salt, onProgress, onDone) {
+    var gpr = this.gamesPerRound();
+    if (gpr === 0) {
+      if (onDone) onDone(0);
+      return false;
+    }
+    return this.generateAsync(gpr * Math.max(1, rounds | 0), salt, onProgress, onDone);
+  },
+
+  reshuffleAsync: function(onProgress, onDone) {
+    var rounds = this._removeOpenEntries();
+    return this.generateRoundsAsync(rounds, Date.now(), onProgress, onDone);
   },
 
   // Build virtual history from real player stats + non-finished schedule entries.
@@ -2285,56 +2349,84 @@ App.Shuffle = {
   },
 
   // SA main loop: stochastic hill-climb with lateral moves and stagnation restarts.
-  _runSA: function(state, rng, maxIters) {
+  // The annealing loop is split into begin / step / finish so the UI can run
+  // it in time-boxed slices and keep painting (#96). _runSA() runs it in one
+  // go for tests and scripts; both paths consume the RNG identically, so the
+  // result is the same for the same inputs.
+  _saBegin: function(state, rng, maxIters) {
     var currentTuple = this._lexTuple(state);
-    var bestTuple = currentTuple.slice();
-    var bestSnap = this._snapshotState(state);
-    var stagnant = 0;
-    var STAGNANT_LIMIT = Math.max(500, Math.floor(maxIters / 10));
+    return {
+      state: state,
+      rng: rng,
+      maxIters: maxIters,
+      iter: 0,
+      currentTuple: currentTuple,
+      bestTuple: currentTuple.slice(),
+      bestSnap: this._snapshotState(state),
+      stagnant: 0,
+      stagnantLimit: Math.max(500, Math.floor(maxIters / 10))
+    };
+  },
 
-    for (var iter = 0; iter < maxIters; iter++) {
+  // Run up to `n` iterations, stopping early once `deadline` (ms timestamp)
+  // has passed. Returns true when all iterations are done.
+  _saStep: function(ctx, n, deadline) {
+    var state = ctx.state;
+    var rng = ctx.rng;
+    var end = Math.min(ctx.maxIters, ctx.iter + (n || ctx.maxIters));
+    for (; ctx.iter < end; ctx.iter++) {
+      if (deadline && (ctx.iter & 63) === 0 && Date.now() > deadline) break;
       var move = this._proposeMove(state, rng);
       if (!move) continue;
       this._applySwap(state, move);
       var newTuple = this._lexTuple(state);
-      var cmp = this._lexCmp(newTuple, currentTuple);
+      var cmp = this._lexCmp(newTuple, ctx.currentTuple);
       if (cmp < 0) {
-        currentTuple = newTuple;
-        stagnant = 0;
-        if (this._lexCmp(newTuple, bestTuple) < 0) {
-          bestTuple = newTuple.slice();
-          bestSnap = this._snapshotState(state);
+        ctx.currentTuple = newTuple;
+        ctx.stagnant = 0;
+        if (this._lexCmp(newTuple, ctx.bestTuple) < 0) {
+          ctx.bestTuple = newTuple.slice();
+          ctx.bestSnap = this._snapshotState(state);
         }
       } else if (cmp === 0) {
         // Lateral move — accept with 50% probability to escape plateaus.
         if (rng() < 0.5) {
-          currentTuple = newTuple;
+          ctx.currentTuple = newTuple;
         } else {
           this._applySwap(state, move);
         }
-        stagnant++;
+        ctx.stagnant++;
       } else {
         this._applySwap(state, move);
-        stagnant++;
+        ctx.stagnant++;
       }
 
-      if (stagnant >= STAGNANT_LIMIT) {
+      if (ctx.stagnant >= ctx.stagnantLimit) {
         // Restart from best seen, perturb with a few random swaps.
-        this._restoreState(state, bestSnap);
-        currentTuple = bestTuple.slice();
+        this._restoreState(state, ctx.bestSnap);
+        ctx.currentTuple = ctx.bestTuple.slice();
         for (var p = 0; p < 3; p++) {
           var pm = this._proposeMove(state, rng);
           if (pm) this._applySwap(state, pm);
         }
-        currentTuple = this._lexTuple(state);
-        stagnant = 0;
+        ctx.currentTuple = this._lexTuple(state);
+        ctx.stagnant = 0;
       }
     }
+    return ctx.iter >= ctx.maxIters;
+  },
 
-    // Always return the best state seen.
-    if (this._lexCmp(currentTuple, bestTuple) > 0) {
-      this._restoreState(state, bestSnap);
+  // Always return the best state seen.
+  _saFinish: function(ctx) {
+    if (this._lexCmp(ctx.currentTuple, ctx.bestTuple) > 0) {
+      this._restoreState(ctx.state, ctx.bestSnap);
     }
+  },
+
+  _runSA: function(state, rng, maxIters) {
+    var ctx = this._saBegin(state, rng, maxIters);
+    this._saStep(ctx);
+    this._saFinish(ctx);
   },
 
   // Number of games that fit in one round for the current present players
@@ -2362,6 +2454,12 @@ App.Shuffle = {
 
   // Regenerate all pending/ready entries: same number of rounds, new draw
   reshuffle: function() {
+    var rounds = this._removeOpenEntries();
+    return this.generateRounds(rounds, Date.now());
+  },
+
+  // Drop pending/ready entries; returns how many rounds they spanned (min 1)
+  _removeOpenEntries: function() {
     var self = this;
     var removed = App.state.schedule.filter(function(e) {
       return e.status === 'pending' || e.status === 'ready';
@@ -2375,10 +2473,9 @@ App.Shuffle = {
         delete c._scheduleId;
       }
     });
-    // Regenerate as many rounds as were removed, with a fresh seed (#76)
     var rounds = {};
     removed.forEach(function(e) { rounds[self._roundOf(e)] = true; });
-    return this.generateRounds(Math.max(1, Object.keys(rounds).length), Date.now());
+    return Math.max(1, Object.keys(rounds).length);
   },
 
   _roundOf: function(e) {
@@ -3919,6 +4016,23 @@ App.UI = {
     }
   },
 
+  // Run a schedule generation behind a progress modal, then auto-assign and
+  // re-render. `start(onProgress, onDone)` kicks off an async generator.
+  _runGeneration: function(start, after) {
+    var self = this;
+    this.showModal('<h2>' + App.t('scheduleGenerating') + '</h2>' +
+      '<div class="gen-progress"><div class="gen-progress-bar" id="genProgressBar" style="width:0%"></div></div>');
+    start(function(fraction) {
+      var bar = document.getElementById('genProgressBar');
+      if (bar) bar.style.width = Math.round(fraction * 100) + '%';
+    }, function(generated) {
+      self.hideModal();
+      if (after) after(generated);
+      App.Shuffle.autoAssignAll();
+      self.renderAll();
+    });
+  },
+
   _bindScheduleActions: function(container) {
     container.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-action]');
@@ -3934,17 +4048,19 @@ App.UI = {
       switch (btn.dataset.action) {
         case 'schedule-generate':
           var rounds = parseInt(btn.dataset.rounds, 10) || 1;
-          App.Shuffle.generateRounds(rounds);
-          App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
-          App.Shuffle.autoAssignAll();
-          App.UI.renderAll();
+          App.UI._runGeneration(function(onProgress, onDone) {
+            return App.Shuffle.generateRoundsAsync(rounds, null, onProgress, onDone);
+          }, function() {
+            App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
+          });
           break;
         case 'schedule-reshuffle':
           App.UI.showConfirm(App.t('confirmReshuffle'), function() {
-            App.Shuffle.reshuffle();
-            App.Analytics.track('shuffle_reshuffle');
-            App.Shuffle.autoAssignAll();
-            App.UI.renderAll();
+            App.UI._runGeneration(function(onProgress, onDone) {
+              return App.Shuffle.reshuffleAsync(onProgress, onDone);
+            }, function() {
+              App.Analytics.track('shuffle_reshuffle');
+            });
           });
           break;
         case 'schedule-edit':
@@ -4867,17 +4983,19 @@ App.UI = {
       switch (btn.dataset.action) {
         case 'board-continue-shuffle':
           var rounds = parseInt(btn.dataset.rounds, 10) || 1;
-          App.Shuffle.generateRounds(rounds);
-          App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
-          App.Shuffle.autoAssignAll();
-          App.UI.renderAll();
+          App.UI._runGeneration(function(onProgress, onDone) {
+            return App.Shuffle.generateRoundsAsync(rounds, null, onProgress, onDone);
+          }, function() {
+            App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
+          });
           break;
         case 'board-reshuffle':
           App.UI.showConfirm(App.t('confirmReshuffle'), function() {
-            App.Shuffle.reshuffle();
-            App.Analytics.track('shuffle_reshuffle');
-            App.Shuffle.autoAssignAll();
-            App.UI.renderAll();
+            App.UI._runGeneration(function(onProgress, onDone) {
+              return App.Shuffle.reshuffleAsync(onProgress, onDone);
+            }, function() {
+              App.Analytics.track('shuffle_reshuffle');
+            });
           });
           break;
       }

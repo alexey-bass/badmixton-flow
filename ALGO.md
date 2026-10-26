@@ -82,7 +82,7 @@ Shuffle mode treats scheduling as an **offline combinatorial optimization proble
 1. Build **virtual history** from real player stats + any uncommitted pending schedule entries.
 2. Compute **round format**: how many games fit per round given the player count (e.g. 17 players / 4 courts = 4 × 2v2; 15 players = 3 × 2v2 + 1 × 2v1).
 3. Build a randomized **seed schedule**: `rounds` rounds, each a shuffled assignment of players to game slots + bench.
-4. Run **simulated annealing** (~20k iterations) to minimize a lexicographic objective.
+4. Run **simulated annealing** (~20k iterations) to minimize a lexicographic objective. The loop is split into begin/step/finish so the UI can run it in ~30 ms slices with a progress bar; the synchronous path used by tests and scripts walks the same RNG sequence, so both give the same schedule.
 5. Append the optimized games to `App.state.schedule` in round order.
 
 ### Round-based invariant
