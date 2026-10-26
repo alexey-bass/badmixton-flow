@@ -156,7 +156,7 @@ Queue simulation generates `simulation-report.html`, shuffle generates `simulati
 - Samsung S24 Ultra (Android, Chrome)
 - Xiaomi Redmi Pad Pro 12.1" (HyperOS, Chrome)
 - Magcubic L018 (Google Chrome)
-- iPhone (iOS 26, Safari) — 375×812 class; session creator seen in Firebase
+- iPhone (iOS 26, Safari)
 
 ## License
 
