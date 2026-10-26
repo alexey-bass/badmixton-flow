@@ -3177,7 +3177,7 @@ App.UI = {
           self._showWishDialog(playerId);
           break;
         case 'delete':
-          self.showConfirm(App.t('confirmDeletePlayer') + App.state.players[playerId].name + App.t('confirmDeleteSuffix'), function() {
+          self.showConfirm(App.t('confirmDeletePlayer') + App.UI._pname(App.state.players[playerId]) + App.t('confirmDeleteSuffix'), function() {
             App.Players.remove(playerId);
             App.Analytics.track('player_remove');
             App.save();
@@ -3299,7 +3299,7 @@ App.UI = {
           var fulfilled = Array.isArray(p.wishesFulfilled) && p.wishesFulfilled.indexOf(wid) !== -1;
           wishParts.push(
             (fulfilled ? '&#10003; ' : '&#9829; ') +
-            wp.name +
+            App.UI._pname(wp) +
             (fulfilled ? App.t('wishFulfilled') : '')
           );
         });
@@ -3935,7 +3935,7 @@ App.UI = {
     if (hints.length === 0) return '';
     var html = '<div class="court-hints">';
     hints.forEach(function(h) {
-      html += '<div class="hint-' + h.type + '">' + h.text + '</div>';
+      html += '<div class="hint-' + h.type + '">' + App.UI._esc(h.text) + '</div>';
     });
     html += '</div>';
     return html;
@@ -3965,9 +3965,9 @@ App.UI = {
     result.allSplits.forEach(function(split, idx) {
       var isSelected = idx === 0;
       html += '<div class="team-split-option' + (isSelected ? ' selected' : '') + '" data-split-idx="' + idx + '">';
-      html += '<strong>' + split.label + '</strong>';
+      html += '<strong>' + App.UI._esc(split.label) + '</strong>';
       if (split.reasons.length > 0) {
-        html += '<div style="font-size:11px; color:var(--text-secondary);">' + split.reasons.join('; ') + '</div>';
+        html += '<div style="font-size:11px; color:var(--text-secondary);">' + split.reasons.map(function(r) { return App.UI._esc(r); }).join('; ') + '</div>';
       }
       html += '</div>';
     });
@@ -4201,6 +4201,37 @@ App.UI = {
     var btnStart = document.getElementById('btnStartManual');
     var preview = document.getElementById('selectedTeamsPreview');
     var chosenSplit = null;
+    var currentSplit = null;
+    var customArea = null;
+    var isCustom = false;
+
+    // Bound once. The preview is re-rendered on every selection change, but
+    // adding a listener per render made one chip tap fire N handlers (#80),
+    // and the Start handler below must see the same isCustom flag (#62).
+    preview.addEventListener('click', function(e2) {
+      if (!currentSplit) return;
+      var opt = e2.target.closest('.team-split-option');
+      if (opt) {
+        preview.querySelectorAll('.team-split-option').forEach(function(o) { o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        var sidx = opt.dataset.sidx;
+        if (sidx === 'custom') {
+          isCustom = true;
+          customArea.classList.add('active');
+          App.UI._syncCustomSplit(customArea, chosenSplit);
+        } else {
+          isCustom = false;
+          customArea.classList.remove('active');
+          chosenSplit = currentSplit.allSplits[parseInt(sidx)];
+        }
+      }
+
+      // Handle chip clicks in custom area
+      var chip = e2.target.closest('.custom-split-chip');
+      if (chip && isCustom) {
+        App.UI._handleCustomChipClick(chip, customArea, chosenSplit);
+      }
+    });
 
     grid.addEventListener('click', function(e) {
       var item = e.target.closest('.player-select-item');
@@ -4231,9 +4262,9 @@ App.UI = {
         var phtml = '<h4>' + App.t('splitHeading') + '</h4><div class="team-split-options">';
         split.allSplits.forEach(function(s, i) {
           phtml += '<div class="team-split-option' + (i === 0 ? ' selected' : '') + '" data-sidx="' + i + '">' +
-            '<strong>' + s.label + '</strong>';
+            '<strong>' + App.UI._esc(s.label) + '</strong>';
           if (s.reasons.length > 0) {
-            phtml += '<div style="font-size:11px; color:var(--text-secondary);">' + s.reasons.join('; ') + '</div>';
+            phtml += '<div style="font-size:11px; color:var(--text-secondary);">' + s.reasons.map(function(r) { return App.UI._esc(r); }).join('; ') + '</div>';
           }
           phtml += '</div>';
         });
@@ -4245,42 +4276,19 @@ App.UI = {
         phtml += App.UI._buildCustomSplitHtml(split.teamA, split.teamB);
         preview.innerHTML = phtml;
 
-        var customArea2 = document.getElementById('customSplitArea');
-        var isCustom2 = false;
-
-        // Split selection handler
-        preview.addEventListener('click', function(e2) {
-          var opt = e2.target.closest('.team-split-option');
-          if (opt) {
-            preview.querySelectorAll('.team-split-option').forEach(function(o) { o.classList.remove('selected'); });
-            opt.classList.add('selected');
-            var sidx = opt.dataset.sidx;
-            if (sidx === 'custom') {
-              isCustom2 = true;
-              customArea2.classList.add('active');
-              App.UI._syncCustomSplit(customArea2, chosenSplit);
-            } else {
-              isCustom2 = false;
-              customArea2.classList.remove('active');
-              chosenSplit = split.allSplits[parseInt(sidx)];
-            }
-          }
-
-          // Handle chip clicks in custom area
-          var chip = e2.target.closest('.custom-split-chip');
-          if (chip && isCustom2) {
-            App.UI._handleCustomChipClick(chip, customArea2, chosenSplit);
-          }
-        });
+        currentSplit = split;
+        customArea = document.getElementById('customSplitArea');
+        isCustom = false;
       } else {
         preview.innerHTML = '';
         chosenSplit = null;
+        currentSplit = null;
       }
     });
 
     btnStart.addEventListener('click', function() {
       if (!chosenSplit) return;
-      App.Analytics.track('game_start', { split_type: isCustom2 ? 'custom' : 'suggested', source: 'manual' });
+      App.Analytics.track('game_start', { split_type: isCustom ? 'custom' : 'suggested', source: 'manual' });
       App.Courts.startGame(courtId, chosenSplit.teamA, chosenSplit.teamB);
       App.UI.hideModal();
       App.UI.renderAll();
@@ -4738,7 +4746,7 @@ App.UI = {
       html += '</div>';
       html += '<div class="history-item-teams">';
       html += teamAStr + '  <strong>vs</strong>  ' + teamBStr;
-      if (m.score) html += '  <span style="color:var(--primary);">' + m.score + '</span>';
+      if (m.score) html += '  <span style="color:var(--primary);">' + App.UI._esc(m.score) + '</span>';
       if (isDraw) html += '  <span>\uD83E\uDD1D</span>';
       html += '</div></div>';
     });
@@ -5114,6 +5122,17 @@ App.UI = {
     var btnCreate = document.getElementById('btnScheduleCreate');
     var preview = document.getElementById('selectedTeamsPreview');
     var chosenSplit = null;
+    var currentSplit = null;
+
+    // Bound once (see #80): the preview is re-rendered per selection change
+    preview.addEventListener('click', function(e2) {
+      if (!currentSplit) return;
+      var opt = e2.target.closest('.team-split-option');
+      if (!opt) return;
+      preview.querySelectorAll('.team-split-option').forEach(function(o) { o.classList.remove('selected'); });
+      opt.classList.add('selected');
+      chosenSplit = currentSplit.allSplits[parseInt(opt.dataset.sidx)];
+    });
 
     grid.addEventListener('click', function(e) {
       var item = e.target.closest('.player-select-item');
@@ -5143,26 +5162,19 @@ App.UI = {
         var phtml = '<h4>' + App.t('splitHeading') + '</h4><div class="team-split-options">';
         split.allSplits.forEach(function(s, i) {
           phtml += '<div class="team-split-option' + (i === 0 ? ' selected' : '') + '" data-sidx="' + i + '">';
-          phtml += '<strong>' + s.label + '</strong>';
+          phtml += '<strong>' + App.UI._esc(s.label) + '</strong>';
           if (s.reasons.length > 0) {
-            phtml += '<div style="font-size:11px; color:var(--text-secondary);">' + s.reasons.join('; ') + '</div>';
+            phtml += '<div style="font-size:11px; color:var(--text-secondary);">' + s.reasons.map(function(r) { return App.UI._esc(r); }).join('; ') + '</div>';
           }
           phtml += '</div>';
         });
         phtml += '</div>';
         preview.innerHTML = phtml;
-
-        preview.addEventListener('click', function(e2) {
-          var opt = e2.target.closest('.team-split-option');
-          if (!opt) return;
-          preview.querySelectorAll('.team-split-option').forEach(function(o) { o.classList.remove('selected'); });
-          opt.classList.add('selected');
-          var sidx = parseInt(opt.dataset.sidx);
-          chosenSplit = split.allSplits[sidx];
-        });
+        currentSplit = split;
       } else {
         preview.innerHTML = '';
         chosenSplit = null;
+        currentSplit = null;
       }
     });
 
