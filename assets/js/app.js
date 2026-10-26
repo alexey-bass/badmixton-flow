@@ -2535,6 +2535,19 @@ App.Sync = {
   connected: false,
   _listener: null,
   _pushCount: 0,
+  _pendingRemote: null,
+
+  // Detach the current listener (if any) without touching session state.
+  // Called before every (re)connect so switching sessions never leaves the
+  // previous session's listener alive to merge its updates into the new one (#67).
+  _detach: function() {
+    if (this._listener && this.ref) {
+      this.ref.off('value', this._listener);
+    }
+    this._listener = null;
+    this._pendingRemote = null;
+    this.connected = false;
+  },
 
   init: function(sessionId, asAdmin, callback) {
     // Check if Firebase SDK is loaded
@@ -2554,6 +2567,7 @@ App.Sync = {
       firebase.initializeApp(FIREBASE_CONFIG);
     }
 
+    this._detach();
     this.db = firebase.database();
     this.ref = this.db.ref('sessions/' + sessionId);
 
@@ -2585,44 +2599,76 @@ App.Sync = {
   },
 
   _connect: function(sessionId, asAdmin) {
-    App.state.settings.syncEnabled = true;
+    // The role is kept in the local copy of the state (never overwritten by
+    // _merge), so a reload reconnects with the same role (#66).
     App.state.isAdmin = !!asAdmin;
 
     var self = this;
     this._initialLoad = true;
+    // Mark connected before attaching: the SDK may deliver the first value
+    // synchronously and the initial-load branch pushes through push(), which
+    // refuses while not connected.
+    this.connected = true;
 
     // Listen for changes
     this._listener = this.ref.on('value', function(snapshot) {
-      if (self._pushCount > 0) return; // ignore own changes
-
       var remote = snapshot.val();
+
       if (self._initialLoad) {
-        // First load: non-admin always takes remote state
         self._initialLoad = false;
-        if (remote && !asAdmin) {
-          self._merge(remote);
-          self._blink();
-          App.UI.renderAll();
+        if (!asAdmin) {
+          // Joining device always takes the remote state
+          if (remote) self._applyRemote(remote);
           return;
         }
+        // Admin: adopt a newer remote copy (this device was closed while
+        // another kept working) instead of overwriting it; otherwise publish
+        // the local state, which also creates the session on first connect.
+        if (remote && remote.lastModified > App.state.lastModified) {
+          self._applyRemote(remote);
+        } else {
+          self.push();
+        }
+        return;
+      }
+
+      if (self._pushCount > 0) {
+        // Own echo or a concurrent remote write: keep the latest and decide
+        // once the push has settled, instead of dropping it for good (#79)
+        self._pendingRemote = remote;
+        return;
       }
 
       if (remote && remote.lastModified > App.state.lastModified) {
-        self._merge(remote);
-        self._blink();
-        App.UI.renderAll();
+        self._applyRemote(remote);
       }
     });
 
-    this.connected = true;
-    this._updateStatus('connected');
+    this._updateStatus('connected', sessionId);
 
-    // If admin — push current state
     if (asAdmin) {
-      this.push();
+      App.state.settings.syncEnabled = true;
+      App.Storage.save(); // save locally only; the push happens on initial load
     }
+    // Joining device: flags and local save are applied by _merge once the
+    // remote state arrives, so the pre-join local session is left untouched (#78)
+  },
 
-    App.Storage.save(); // save locally only, don't push to Firebase
+  _applyRemote: function(remote) {
+    this._merge(remote);
+    this._blink();
+    App.UI.renderAll();
+  },
+
+  // A remote update that arrived while a push was in flight
+  _applyPendingRemote: function() {
+    // Wait for the last in-flight push; only then take the pending update
+    if (this._pushCount > 0 || !this.connected) return;
+    var remote = this._pendingRemote;
+    this._pendingRemote = null;
+    if (remote && remote.lastModified > App.state.lastModified) {
+      this._applyRemote(remote);
+    }
   },
 
   push: function() {
@@ -2632,9 +2678,11 @@ App.Sync = {
     var self = this;
     this.ref.set(App.state).then(function() {
       self._pushCount--;
+      self._applyPendingRemote();
     }).catch(function(err) {
       self._pushCount--;
       console.error('Sync push error:', err);
+      self._applyPendingRemote();
     });
   },
 
@@ -2644,12 +2692,21 @@ App.Sync = {
     var remoteModified = remote.lastModified;
     App.state = App.Storage._ensureState(remote);
     App.state.isAdmin = localIsAdmin;
+    App.state.settings.syncEnabled = true;
     // Save to localStorage without bumping lastModified — preserve the remote
     // timestamp so future comparisons use the sender's clock, avoiding clock
-    // skew between devices that would silently drop updates.
-    var key = App.Storage.SESSION_PREFIX + App.Storage._keySuffix();
+    // skew between devices that would silently drop updates. Also make this
+    // the last-opened session so a reload lands on it (#78).
+    var suffix = App.Storage._keySuffix();
+    var key = App.Storage.SESSION_PREFIX + suffix;
     try {
       localStorage.setItem(key, JSON.stringify(App.state));
+      localStorage.setItem(App.Storage.LAST_KEY, suffix);
+      var index = App.Storage.getIndex();
+      if (index.indexOf(suffix) === -1) {
+        index.unshift(suffix);
+        localStorage.setItem(App.Storage.INDEX_KEY, JSON.stringify(index));
+      }
     } catch (e) {
       console.error('Merge save error:', e);
     }
@@ -2657,11 +2714,7 @@ App.Sync = {
   },
 
   disconnect: function() {
-    if (this._listener && this.ref) {
-      this.ref.off('value', this._listener);
-    }
-    this.connected = false;
-    this._listener = null;
+    this._detach();
     App.state.settings.syncEnabled = false;
     App.save();
     this._updateStatus('disconnected');
@@ -2679,13 +2732,13 @@ App.Sync = {
     indicator.classList.add('blink');
   },
 
-  _updateStatus: function(status) {
+  _updateStatus: function(status, sessionId) {
     var el = document.getElementById('syncStatus');
     var indicator = document.getElementById('syncIndicator');
     var btnDisconnect = document.getElementById('btnDisconnect');
 
     if (status === 'connected') {
-      el.textContent = App.t('connectedToSession') + App.state.sessionId;
+      el.textContent = App.t('connectedToSession') + (sessionId || App.state.sessionId);
       el.className = 'sync-status connected';
       indicator.hidden = false;
       indicator.className = 'sync-indicator';
@@ -2698,10 +2751,14 @@ App.Sync = {
     }
   },
 
-  autoConnect: function(sessionId) {
+  // Reconnect with the role this device had (admin unless told otherwise),
+  // so a reloaded viewer does not come back as admin and overwrite the
+  // live session with its stale copy (#66).
+  autoConnect: function(sessionId, asAdmin) {
     var self = this;
+    var admin = asAdmin !== false;
     if (typeof firebase !== 'undefined' && firebase.database) {
-      this.init(sessionId, true, function(ok) {
+      this.init(sessionId, admin, function(ok) {
         if (ok) {
           App.UI.renderSync();
         }
@@ -2715,7 +2772,7 @@ App.Sync = {
       attempts++;
       if (typeof firebase !== 'undefined' && firebase.database) {
         clearInterval(timer);
-        self.init(sessionId, true, function(ok) {
+        self.init(sessionId, admin, function(ok) {
           if (ok) {
             App.UI.renderSync();
           }
@@ -5055,6 +5112,7 @@ App.UI = {
       App.Sync.init(sessionId, false, function(ok) {
         if (ok) {
           App.Analytics.track('sync_join', { source: 'manual' });
+          App.Utils.updateUrlSession(sessionId);
           App.UI.showToast(App.t('connectedToSession') + sessionId);
           self.renderSync();
         }
@@ -6300,7 +6358,7 @@ App.init = function() {
       }
     });
   } else if (App.state.settings.syncEnabled) {
-    App.Sync.autoConnect(App.state.sessionId);
+    App.Sync.autoConnect(App.state.sessionId, App.state.isAdmin !== false);
   }
 
   // Close modal on overlay click

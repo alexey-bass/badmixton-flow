@@ -254,7 +254,10 @@ Header layout (left to right): title + session name, lock indicator (🔒) | lan
 - Auto-connects to Firebase when creating a new session — no separate "Create session" step
 - `App.Sync.autoConnect(sessionId)` polls for Firebase SDK (deferred load) up to 10s, then gives up silently
 - Single unified `state.sessionId` used for localStorage, Firebase, and URL (no separate `syncSessionId`)
-- Auto-reconnects on page load if `settings.syncEnabled` is true
+- Auto-reconnects on page load if `settings.syncEnabled` is true, with the role stored in the local copy (`state.isAdmin`, preserved by `_merge`): a joined viewer reconnects as viewer and never pushes its copy; an admin reconnect adopts a newer remote copy instead of overwriting it, otherwise pushes
+- Switching sessions (New Session, Join) detaches the previous listener first (`Sync._detach()`)
+- A remote update that arrives while a push is in flight is kept and applied once the push settles (`_pendingRemote`)
+- Manual Join updates the URL and `bs_last`, so a reload lands on the joined session
 - Shareable URL with `?session=` parameter for auto-join; share link + copy button shown when connected
 - Join: paste session ID into input field, or use the `?session=` URL directly
 - Join checks session existence first via `ref.once('value')` — rejects if not found
