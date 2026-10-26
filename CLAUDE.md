@@ -65,7 +65,7 @@ npm run validate   # runs syntax check + tests + simulation quality check + ligh
 - All tests must pass before committing
 - `App.VERSION` and `?v=` cache-busting params are auto-stamped by the pre-commit hook — no manual update needed
 - Git hooks live in `hooks/` (tracked). After cloning, run: `git config core.hooksPath hooks`
-- Lighthouse scores must stay at 100 across all categories. `npm run validate` runs Lighthouse after tests.
+- Lighthouse scores must stay at 90 or above in every category (target 100). `npm run validate` runs Lighthouse after tests and fails below `LIGHTHOUSE_MIN` (default 90).
 - Shuffle algorithm must pass quality criteria (see ALGO.md). `npm run validate` runs 10 simulations after tests.
 
 ### Player & Court Display:

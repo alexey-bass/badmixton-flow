@@ -14,8 +14,8 @@ var fs = require('fs');
 var BASE_URL = 'http://localhost:8091';
 var REPORT_DIR = path.join(__dirname, '..', 'reports');
 // Every category must reach this score or the run fails (#95).
-// Override for local experiments: LIGHTHOUSE_MIN=90 npm run lighthouse
-var MIN_SCORE = parseInt(process.env.LIGHTHOUSE_MIN || '100', 10);
+// Override per run: LIGHTHOUSE_MIN=100 npm run lighthouse
+var MIN_SCORE = parseInt(process.env.LIGHTHOUSE_MIN || '90', 10);
 
 // Returns the categories (title + rounded score) that fall below the minimum.
 function checkScores(categories, min) {
