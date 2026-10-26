@@ -131,6 +131,41 @@ App.Storage = {
   },
 
   // Ensure all required state fields exist (migration/corruption safety)
+  // Schedule entries carry the round they belong to and that round's bench.
+  // Older sessions (and entries written by older clients) lack both, so
+  // reconstruct them: walk the schedule in order and start a new round when
+  // a player would repeat or the round already holds one game per court.
+  _ensureScheduleRounds: function(state) {
+    var courtCount = Object.values(state.courts || {}).filter(function(c) { return c.active; }).length || 1;
+    var presentIds = Object.values(state.players || {}).filter(function(p) { return p.present; }).map(function(p) { return p.id; });
+    // Keys come from synced data, so use prototype-less maps (no __proto__ pollution)
+    var current = -1, seen = Object.create(null), count = 0;
+    state.schedule.forEach(function(e) {
+      if (!Array.isArray(e.teamA)) e.teamA = [];
+      if (!Array.isArray(e.teamB)) e.teamB = [];
+      var pids = e.teamA.concat(e.teamB);
+      if (typeof e.round === 'number') {
+        if (e.round !== current) { current = e.round; seen = Object.create(null); count = 0; }
+      } else {
+        var clash = pids.some(function(pid) { return seen[pid]; });
+        if (current === -1 || clash || count >= courtCount) { current++; seen = Object.create(null); count = 0; }
+        e.round = current;
+      }
+      pids.forEach(function(pid) { seen[pid] = true; });
+      count++;
+    });
+    var roundPlayers = Object.create(null);
+    state.schedule.forEach(function(e) {
+      var set = roundPlayers[e.round] || (roundPlayers[e.round] = Object.create(null));
+      e.teamA.concat(e.teamB).forEach(function(pid) { set[pid] = true; });
+    });
+    state.schedule.forEach(function(e) {
+      if (!Array.isArray(e.bench)) {
+        e.bench = presentIds.filter(function(pid) { return !roundPlayers[e.round][pid]; });
+      }
+    });
+  },
+
   _ensureState: function(state) {
     if (!state || typeof state !== 'object') return null;
     if (!state.players || typeof state.players !== 'object') state.players = {};
@@ -157,6 +192,7 @@ App.Storage = {
     if (!state.sessionId) state.sessionId = App.Utils.generateSessionId();
     if (!state.mode) state.mode = 'queue';
     if (!Array.isArray(state.schedule)) state.schedule = [];
+    App.Storage._ensureScheduleRounds(state);
     // Ensure player fields (migration)
     Object.values(state.players).forEach(function(p) {
       if (!p.partnerHistory) p.partnerHistory = {};
@@ -1467,7 +1503,11 @@ App.Shuffle = {
     this._runSA(state, rng, iterations);
 
     // Commit games to schedule, truncating to exactly `count`.
+    // Each entry records its round (continuing from the rounds already in the
+    // schedule) and that round's bench, so the board, bench counts and print
+    // never have to re-derive rounds from court count (#77).
     var generated = 0;
+    var startRound = this._nextRound();
     for (var gi = 0; gi < state.games.length && generated < count; gi++) {
       var g = state.games[gi];
       var cleanA = g.teamA.filter(function(x) { return x != null; });
@@ -1477,6 +1517,8 @@ App.Shuffle = {
         id: App.Utils.generateId('sg'),
         teamA: cleanA,
         teamB: cleanB,
+        round: startRound + g.round,
+        bench: (state.benchByRound[g.round] || []).filter(function(x) { return x != null; }),
         status: 'pending',
         courtId: null,
         matchId: null
@@ -2300,11 +2342,56 @@ App.Shuffle = {
     App.save();
   },
 
+  // Round index for the next batch: one past the highest round in the schedule.
+  _nextRound: function() {
+    var max = -1;
+    App.state.schedule.forEach(function(e) {
+      if (typeof e.round === 'number' && e.round > max) max = e.round;
+    });
+    return max + 1;
+  },
+
+  // Bench (pause) player ids for a round: the bench lists stored on the
+  // round's entries, limited to players who are present now.
+  getRoundBench: function(round) {
+    App.Storage._ensureScheduleRounds(App.state);
+    var seen = Object.create(null), out = [];
+    App.state.schedule.forEach(function(e) {
+      if (e.round !== round || !Array.isArray(e.bench)) return;
+      e.bench.forEach(function(pid) {
+        var p = App.state.players[pid];
+        if (p && p.present && !seen[pid]) { seen[pid] = true; out.push(pid); }
+      });
+    });
+    return out;
+  },
+
+  // Bench for a brand-new round: everyone present who is not in the game.
+  _benchFor: function(teamA, teamB) {
+    var inGame = teamA.concat(teamB);
+    return App.Players.getPresent().map(function(p) { return p.id; })
+      .filter(function(pid) { return inGame.indexOf(pid) === -1; });
+  },
+
+  // After a pending game's teams changed, move players between the game and
+  // the round's bench so the stored bench lists stay consistent.
+  _syncRoundBench: function(entry, oldPids) {
+    var newPids = entry.teamA.concat(entry.teamB);
+    var removed = oldPids.filter(function(pid) { return newPids.indexOf(pid) === -1; });
+    App.state.schedule.forEach(function(e) {
+      if (e.round !== entry.round) return;
+      if (!Array.isArray(e.bench)) e.bench = [];
+      e.bench = e.bench.filter(function(pid) { return newPids.indexOf(pid) === -1; });
+      removed.forEach(function(pid) { if (e.bench.indexOf(pid) === -1) e.bench.push(pid); });
+    });
+  },
+
   // Swap a player in a pending game
   swapPlayer: function(gameId, oldPid, newPid) {
     var entry = App.state.schedule.find(function(e) { return e.id === gameId; });
     if (!entry || entry.status !== 'pending') return false;
 
+    var oldPids = entry.teamA.concat(entry.teamB);
     var idxA = entry.teamA.indexOf(oldPid);
     var idxB = entry.teamB.indexOf(oldPid);
     if (idxA !== -1) {
@@ -2314,6 +2401,7 @@ App.Shuffle = {
     } else {
       return false;
     }
+    this._syncRoundBench(entry, oldPids);
     App.save();
     return true;
   },
@@ -2393,28 +2481,26 @@ App.Shuffle = {
     return { total: total, pending: pending, ready: ready, playing: playing, finished: finished };
   },
 
+  // Bench (pause) count per player over rounds whose games are all finished.
+  // Uses the round and bench stored on each entry, so a late arrival is not
+  // counted as benched for rounds generated before they turned up.
   getBenchCounts: function() {
     var counts = {};
     if (!App.state || App.state.mode !== 'shuffle' || !App.state.schedule || App.state.schedule.length === 0) return counts;
-    var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-    var presentIds = Object.values(App.state.players).filter(function(p) { return p.present; }).map(function(p) { return p.id; });
-    var totalRounds = Math.ceil(App.state.schedule.length / courtCount);
-    for (var r = 0; r < totalRounds; r++) {
-      // Only count rounds where all games are finished
-      var allFinished = true;
-      var playingIds = {};
-      for (var g = r * courtCount; g < Math.min((r + 1) * courtCount, App.state.schedule.length); g++) {
-        if (App.state.schedule[g].status !== 'finished') { allFinished = false; break; }
-        App.state.schedule[g].teamA.forEach(function(pid) { playingIds[pid] = true; });
-        App.state.schedule[g].teamB.forEach(function(pid) { playingIds[pid] = true; });
-      }
-      if (!allFinished) continue;
-      presentIds.forEach(function(pid) {
-        if (!playingIds[pid]) {
-          counts[pid] = (counts[pid] || 0) + 1;
-        }
+    // Entries written by older clients may lack round/bench — reconstruct first
+    App.Storage._ensureScheduleRounds(App.state);
+    var rounds = Object.create(null);
+    App.state.schedule.forEach(function(e) {
+      var r = rounds[e.round] || (rounds[e.round] = { allFinished: true, bench: Object.create(null) });
+      if (e.status !== 'finished') r.allFinished = false;
+      (e.bench || []).forEach(function(pid) { r.bench[pid] = true; });
+    });
+    Object.keys(rounds).forEach(function(k) {
+      if (!rounds[k].allFinished) return;
+      Object.keys(rounds[k].bench).forEach(function(pid) {
+        if (App.state.players[pid]) counts[pid] = (counts[pid] || 0) + 1;
       });
-    }
+    });
     return counts;
   }
 };
@@ -4339,18 +4425,21 @@ App.UI = {
       html += '</div>';
     });
 
-    // Rounds: group upcoming games by court count, with bench per round
+    // Rounds: group upcoming games by the round stored on each entry, with
+    // that round's stored bench (a round can hold fewer games than courts)
     if (isShuffle) {
-      var courtCount = courts.length;
-      var presentPlayers = Object.values(App.state.players).filter(function(p) { return p.present; });
-      presentPlayers.sort(function(a, b) { return (a.number || 999) - (b.number || 999); });
+      var benchNames = function(round) {
+        return App.Shuffle.getRoundBench(round)
+          .map(function(pid) { return App.state.players[pid]; })
+          .sort(function(a, b) { return (a.number || 999) - (b.number || 999); })
+          .map(function(p) { return '#' + p.number + '\u00a0' + App.UI._pname(p); }).join(', ');
+      };
 
-      // Build round info from schedule (each round = courtCount consecutive games)
+      App.Storage._ensureScheduleRounds(App.state);
       var roundMap = {};
-      App.state.schedule.forEach(function(entry, idx) {
-        var rIdx = Math.floor(idx / courtCount);
-        if (!roundMap[rIdx]) roundMap[rIdx] = { allPlayerIds: {}, pendingGames: [] };
-        entry.teamA.concat(entry.teamB).forEach(function(pid) { roundMap[rIdx].allPlayerIds[pid] = true; });
+      App.state.schedule.forEach(function(entry) {
+        var rIdx = entry.round;
+        if (!roundMap[rIdx]) roundMap[rIdx] = { pendingGames: [] };
         if (entry.status === 'pending' && !previewedPendingIds[entry.id]) {
           roundMap[rIdx].pendingGames.push(entry);
         }
@@ -4358,18 +4447,17 @@ App.UI = {
 
       // Current round = the round that has playing or ready games
       var currentRoundIdx = -1;
-      App.state.schedule.forEach(function(entry, idx) {
+      App.state.schedule.forEach(function(entry) {
         if (currentRoundIdx === -1 && (entry.status === 'playing' || entry.status === 'ready')) {
-          currentRoundIdx = Math.floor(idx / courtCount);
+          currentRoundIdx = entry.round;
         }
       });
 
       // Current round bench (fixed per round, not per court)
-      if (currentRoundIdx >= 0 && roundMap[currentRoundIdx]) {
-        var currentBench = presentPlayers.filter(function(p) { return !roundMap[currentRoundIdx].allPlayerIds[p.id]; });
-        if (currentBench.length > 0) {
-          html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
-            currentBench.map(function(p) { return '#' + p.number + '\u00a0' + App.UI._pname(p); }).join(', ') + '</div>';
+      if (currentRoundIdx >= 0) {
+        var currentBenchNames = benchNames(currentRoundIdx);
+        if (currentBenchNames) {
+          html += '<div class="board-round-bench">' + App.t('printBench') + ': ' + currentBenchNames + '</div>';
         }
       }
 
@@ -4404,11 +4492,10 @@ App.UI = {
               '</div>';
           });
 
-          // Round bench (based on ALL games in the round, not just pending)
-          var roundBench = presentPlayers.filter(function(p) { return !round.allPlayerIds[p.id]; });
-          if (roundBench.length > 0) {
-            html += '<div class="board-round-bench">' + App.t('printBench') + ': ' +
-              roundBench.map(function(p) { return '#' + p.number + '\u00a0' + App.UI._pname(p); }).join(', ') + '</div>';
+          // Round bench (stored on the round's entries at generation time)
+          var roundBenchNames = benchNames(roundKey);
+          if (roundBenchNames) {
+            html += '<div class="board-round-bench">' + App.t('printBench') + ': ' + roundBenchNames + '</div>';
           }
         });
       }
@@ -4984,8 +5071,10 @@ App.UI = {
 
     // Save
     document.getElementById('btnScheduleEditSave').addEventListener('click', function() {
+      var oldPids = entry.teamA.concat(entry.teamB);
       entry.teamA = splitObj.teamA;
       entry.teamB = splitObj.teamB;
+      App.Shuffle._syncRoundBench(entry, oldPids);
       App.Analytics.track('schedule_edit_saved');
       App.save();
       App.UI.hideModal();
@@ -5083,6 +5172,8 @@ App.UI = {
         id: App.Utils.generateId('sg'),
         teamA: chosenSplit.teamA,
         teamB: chosenSplit.teamB,
+        round: App.Shuffle._nextRound(),
+        bench: App.Shuffle._benchFor(chosenSplit.teamA, chosenSplit.teamB),
         status: 'pending',
         courtId: null,
         matchId: null
@@ -5774,6 +5865,8 @@ App.UI = {
     var state = App.state;
     var schedule = state.schedule;
     if (!schedule || schedule.length === 0) return;
+    // Print in round order (stable sort) so each round's rows are contiguous
+    schedule = schedule.slice().sort(function(a, b) { return (a.round || 0) - (b.round || 0); });
 
     var esc = this._esc;
     var pname = this._pname.bind(this);
@@ -5783,31 +5876,29 @@ App.UI = {
       .filter(function(p) { return p.present; })
       .sort(function(a, b) { return a.number - b.number; });
 
-    // Game rows — group by court count (round dividers)
+    // Game rows — grouped by the round stored on each entry (round dividers)
     var activeCourts = Object.values(state.courts)
       .filter(function(c) { return c.active; })
       .sort(function(a, b) { return a.displayNumber - b.displayNumber; });
     var courtCount = activeCourts.length || 1;
-    var presentIds = presentPlayers.map(function(p) { return p.id; });
-    var maxPerRound = courtCount * 4; // max players on courts (2v2)
-    var hasBench = presentIds.length > maxPerRound;
 
-    // Pre-compute bench players per round
-    var benchByRound = {};
-    if (hasBench) {
-      var totalRounds = Math.ceil(schedule.length / courtCount);
-      for (var r = 0; r < totalRounds; r++) {
-        var playingIds = {};
-        for (var g = r * courtCount; g < Math.min((r + 1) * courtCount, schedule.length); g++) {
-          schedule[g].teamA.forEach(function(pid) { playingIds[pid] = true; });
-          schedule[g].teamB.forEach(function(pid) { playingIds[pid] = true; });
-        }
-        benchByRound[r] = presentIds.filter(function(pid) { return !playingIds[pid]; });
+    // Round layout: size, display number and stored bench per round
+    var roundOrder = [];
+    var roundInfo = {};
+    schedule.forEach(function(entry) {
+      if (!roundInfo[entry.round]) {
+        roundInfo[entry.round] = { size: 0, display: roundOrder.length, bench: App.Shuffle.getRoundBench(entry.round) };
+        roundOrder.push(entry.round);
       }
-    }
+      roundInfo[entry.round].size++;
+    });
+    var hasBench = roundOrder.some(function(r) { return roundInfo[r].bench.length > 0; });
 
     var gameRows = '';
-    schedule.forEach(function(entry, idx) {
+    var roundPos = {};
+    schedule.forEach(function(entry) {
+      var info = roundInfo[entry.round];
+      var posInRound = roundPos[entry.round] = (roundPos[entry.round] === undefined ? 0 : roundPos[entry.round] + 1);
       var teamANames = entry.teamA.map(function(pid) {
         var p = state.players[pid];
         return p ? ('#' + p.number + '\u00a0' + pname(p)) : '?';
@@ -5822,7 +5913,7 @@ App.UI = {
       // can read their court off the printed schedule even before games run.
       // Finished matches override with the actual court the game played on.
       var courtPrefix = App.t('printCourtPrefix');
-      var virtualCourt = activeCourts[idx % courtCount];
+      var virtualCourt = activeCourts[posInRound % courtCount];
       var courtCell = virtualCourt ? esc(courtPrefix + virtualCourt.displayNumber) : '';
       var scoreCell = '';
       if (match && match.status === 'finished') {
@@ -5832,11 +5923,11 @@ App.UI = {
         if (match.score) scoreCell = esc(match.score);
       }
 
-      var round = Math.floor(idx / courtCount);
-      var isFirstInRound = idx % courtCount === 0;
-      var rowspan = Math.min(courtCount, schedule.length - idx);
-      var isLastRound = idx + rowspan >= schedule.length;
-      var isRoundEnd = courtCount > 1 && (idx + 1) % courtCount === 0 && idx < schedule.length - 1;
+      var round = info.display;
+      var isFirstInRound = posInRound === 0;
+      var rowspan = info.size;
+      var isLastRound = round === roundOrder.length - 1;
+      var isRoundEnd = courtCount > 1 && posInRound === info.size - 1 && !isLastRound;
       var classes = [];
       if (isRoundEnd) classes.push('round-end');
       // Alternating round tint — pairs rows visually into round-blocks so the
@@ -5855,7 +5946,7 @@ App.UI = {
 
       var benchCell = '';
       if (hasBench && isFirstInRound) {
-        var benchNames = (benchByRound[round] || []).map(function(pid) {
+        var benchNames = info.bench.map(function(pid) {
           var p = state.players[pid];
           return p ? ('#' + p.number + '\u00a0' + pname(p)) : '';
         }).filter(Boolean).join(', ');
