@@ -2157,10 +2157,27 @@ App.Shuffle = {
     }
   },
 
-  // Generate one more batch (size = court count)
-  continueShuffle: function() {
+  // Number of games that fit in one round for the current present players
+  // and active courts (e.g. 13 players / 4 courts = 3, not 4).
+  gamesPerRound: function() {
+    var present = App.Players.getPresent();
     var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-    return this.generate(courtCount);
+    return this._computeRoundFormat(present.length, courtCount).length;
+  },
+
+  // Generate `rounds` whole rounds. "Add N rounds" must not request
+  // courtCount * N games: when players < 4 * courts a round has fewer games
+  // than courts, and a plain game count would truncate the last round and
+  // leave later batches misaligned with round boundaries (#82).
+  generateRounds: function(rounds) {
+    var gpr = this.gamesPerRound();
+    if (gpr === 0) return 0;
+    return this.generate(gpr * Math.max(1, rounds | 0));
+  },
+
+  // Generate one more round
+  continueShuffle: function() {
+    return this.generateRounds(1);
   },
 
   // Regenerate all pending/ready entries
@@ -2175,9 +2192,8 @@ App.Shuffle = {
         delete c._scheduleId;
       }
     });
-    // Generate new batch
-    var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
-    return this.generate(courtCount);
+    // Generate one new round
+    return this.generateRounds(1);
   },
 
   // Assign first eligible pending entry to this court (status → ready)
@@ -3597,9 +3613,8 @@ App.UI = {
 
       switch (btn.dataset.action) {
         case 'schedule-generate':
-          var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
           var rounds = parseInt(btn.dataset.rounds, 10) || 1;
-          App.Shuffle.generate(courtCount * rounds);
+          App.Shuffle.generateRounds(rounds);
           App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
@@ -4527,9 +4542,8 @@ App.UI = {
       if (!btn) return;
       switch (btn.dataset.action) {
         case 'board-continue-shuffle':
-          var courtCount = Object.values(App.state.courts).filter(function(c) { return c.active; }).length || 1;
           var rounds = parseInt(btn.dataset.rounds, 10) || 1;
-          App.Shuffle.generate(courtCount * rounds);
+          App.Shuffle.generateRounds(rounds);
           App.Analytics.track('shuffle_generate', { rounds: rounds, game_count: App.Shuffle.getPending().length });
           App.Shuffle.autoAssignAll();
           App.UI.renderAll();
