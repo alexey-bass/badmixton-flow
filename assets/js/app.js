@@ -1167,6 +1167,23 @@ App.Matches = {
     return matches;
   },
 
+  // Outcome of a finished match from its stored score/winner. A parsable
+  // score decides; otherwise the declared winner. Used by History, the
+  // Schedule tab, the printout and the win-streak highlight (#106).
+  resultOf: function(m) {
+    var r = { winnerSide: null, draw: false, score: m.score || null };
+    var parsed = App.Courts._matchResult(m, m.score, null);
+    if (parsed.scoreA !== null) {
+      if (parsed.scoreA === parsed.scoreB) r.draw = true;
+      else r.winnerSide = parsed.scoreA > parsed.scoreB ? 'teamA' : 'teamB';
+    } else if (m.winner === 'teamA' || m.winner === 'teamB') {
+      r.winnerSide = m.winner;
+    } else if (m.winner === 'draw') {
+      r.draw = true;
+    }
+    return r;
+  },
+
   undoLast: function() {
     var finished = this.getFinished();
     if (finished.length === 0) {
@@ -4001,7 +4018,17 @@ App.UI = {
           html += '</span>';
         }
         html += '</div>';
-        html += '<div style="font-size:14px; font-weight:500;">' + teamANames + ' <span style="color:var(--text-secondary)">vs</span> ' + teamBNames + '</div>';
+        // Finished game: mark the winner, show the score / draw (#106)
+        var resultStr = '';
+        var finishedMatch = entry.status === 'finished' && entry.matchId ? App.state.matches[entry.matchId] : null;
+        if (finishedMatch) {
+          var res = App.Matches.resultOf(finishedMatch);
+          if (res.winnerSide === 'teamA') teamANames = App.UI._winnerSpan(teamANames);
+          if (res.winnerSide === 'teamB') teamBNames = App.UI._winnerSpan(teamBNames);
+          if (res.score) resultStr += '  <span style="color:var(--primary)">' + App.UI._esc(res.score) + '</span>';
+          if (res.draw) resultStr += '  <span>\uD83E\uDD1D</span>';
+        }
+        html += '<div style="font-size:14px; font-weight:500;">' + teamANames + ' <span style="color:var(--text-secondary)">vs</span> ' + teamBNames + resultStr + '</div>';
         html += '</div>';
       });
     }
@@ -5063,27 +5090,16 @@ App.UI = {
         return p ? ('#' + p.number + '\u00a0' + App.UI._pname(p)) : '?';
       });
 
-      // Determine which team won
-      var winnerSide = null;
-      if (m.winner === 'teamA' || m.winner === 'teamB') {
-        winnerSide = m.winner;
-      } else if (m.score) {
-        var parts = m.score.split('-').map(function(s) { return parseInt(s.trim()); });
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[0] !== parts[1]) {
-          winnerSide = parts[0] > parts[1] ? 'teamA' : 'teamB';
-        }
-      }
-      var isDraw = m.winner === 'draw' || (m.score && (function() {
-        var p = m.score.split('-').map(function(s) { return parseInt(s.trim()); });
-        return p.length === 2 && p[0] === p[1];
-      })());
+      var result = App.Matches.resultOf(m);
+      var winnerSide = result.winnerSide;
+      var isDraw = result.draw;
 
       var teamAStr = teamANames.join(' + ');
       var teamBStr = teamBNames.join(' + ');
       if (winnerSide === 'teamA') {
-        teamAStr = '<span style="color:var(--success)">\uD83C\uDFC6 ' + teamAStr + '</span>';
+        teamAStr = App.UI._winnerSpan(teamAStr);
       } else if (winnerSide === 'teamB') {
-        teamBStr = '<span style="color:var(--success)">\uD83C\uDFC6 ' + teamBStr + '</span>';
+        teamBStr = App.UI._winnerSpan(teamBStr);
       }
 
       html += '<div class="history-item">';
@@ -5215,17 +5231,20 @@ App.UI = {
     }
 
     // 2. Win streak — longest consecutive wins from match history
-    var scoredMatches = Object.values(App.state.matches)
-      .filter(function(m) { return m.status === 'finished' && m.score; })
+    var decidedMatches = Object.values(App.state.matches)
+      .filter(function(m) { return m.status === 'finished'; })
       .sort(function(a, b) { return a.endTime - b.endTime; });
 
-    if (scoredMatches.length > 0) {
+    if (decidedMatches.length > 0) {
       var streaks = {};
-      scoredMatches.forEach(function(m) {
-        var parts = m.score.split('-').map(function(s) { return parseInt(s.trim()); });
-        if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
-        var winners = parts[0] >= parts[1] ? m.teamA : m.teamB;
-        var losers = parts[0] >= parts[1] ? m.teamB : m.teamA;
+      decidedMatches.forEach(function(m) {
+        // A declared winner counts like a scored one; a draw ends streaks (#106)
+        var res = App.Matches.resultOf(m);
+        var winners, losers;
+        if (res.winnerSide === 'teamA') { winners = m.teamA; losers = m.teamB; }
+        else if (res.winnerSide === 'teamB') { winners = m.teamB; losers = m.teamA; }
+        else if (res.draw) { winners = []; losers = m.teamA.concat(m.teamB); }
+        else return;
         winners.forEach(function(pid) {
           if (!streaks[pid]) streaks[pid] = { current: 0, best: 0 };
           streaks[pid].current++;
@@ -6307,7 +6326,12 @@ App.UI = {
         if (match.courtId && state.courts[match.courtId]) {
           courtCell = esc(courtPrefix + state.courts[match.courtId].displayNumber);
         }
-        if (match.score) scoreCell = esc(match.score);
+        // Result column: the score, or for a game finished with the team-win
+        // button a trophy with the winning team's letter, or the draw label (#106)
+        var res = App.Matches.resultOf(match);
+        if (res.score) scoreCell = esc(res.score);
+        else if (res.winnerSide) scoreCell = '\uD83C\uDFC6 ' + (res.winnerSide === 'teamA' ? 'A' : 'B');
+        else if (res.draw) scoreCell = esc(App.t('printDraw'));
       }
 
       var round = info.display;
@@ -6408,6 +6432,11 @@ App.UI = {
   // --- Utilities ---
   _pname: function(p) {
     return this._esc(p.name);
+  },
+
+  // Winning team markup shared by History and the Schedule tab
+  _winnerSpan: function(namesHtml) {
+    return '<span style="color:var(--success)">\uD83C\uDFC6 ' + namesHtml + '</span>';
   },
 
   _esc: function(str) {

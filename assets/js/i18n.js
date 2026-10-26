@@ -390,6 +390,7 @@ App.i18n = {
       printRoundPrefix: 'R',
       printCourtPrefix: 'K',
       printScore: 'Wynik',
+      printDraw: 'remis',
 
     },
 
@@ -770,6 +771,7 @@ App.i18n = {
       printRoundPrefix: 'R',
       printCourtPrefix: 'C',
       printScore: 'Score',
+      printDraw: 'draw',
 
     }
   },
