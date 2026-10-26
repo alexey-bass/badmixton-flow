@@ -224,7 +224,7 @@ Header layout (left to right): title + session name, lock indicator (🔒) | lan
 - Finish modal with winner declaration: tap the winning team, declare a draw, or enter a score
 - Winner can be declared without entering a score — wins/losses tracked, but no points
 - Optional score input always visible below winner buttons (e.g. 21:15)
-- If score provided: wins/losses and points scored/conceded tracked per player
+- If score provided: wins/losses and points scored/conceded tracked per player; an equal score (e.g. 20:20) is a draw that still counts points for both teams
 - Board court cards have a cancel button (↩) next to Finish for accidentally started games
 - Results tab shows leaderboard sorted by wins → win rate → point differential
 - Configurable via Session tab: hide Results tab in player mode (`showResults`), limit leaderboard to top 3/5/10 (`resultsLimit`)
@@ -306,6 +306,6 @@ Session state stored in `localStorage` as `bs_<sessionId>` (e.g. `bs_bf-x7kQ9m`)
 
 **Court:** `{ id, displayNumber, active, occupied, currentMatch, gameStartTime }`
 
-**Match:** `{ id, startTime, endTime, courtId, teamA: [id, ...], teamB: [id, ...], score, winner, status }` — teams have 1-2 players each (supports 1v1, 2v1, 2v2); winner: 'teamA' | 'teamB' | 'draw' | null
+**Match:** `{ id, startTime, endTime, courtId, teamA: [id, ...], teamB: [id, ...], score, winner, status, waitBefore }` — teams have 1-2 players each (supports 1v1, 2v1, 2v2); winner: 'teamA' | 'teamB' | 'draw' | null; `waitBefore` maps player id → wait ms counted at start, given back on cancel
 
 **Schedule entry (shuffle mode):** `{ id, teamA: [id, ...], teamB: [id, ...], round, bench: [id, ...], status, courtId, matchId }` — status: pending → ready → playing → finished; `round` is a 0-based index continuing across batches, `bench` is the ids benched in that round (entries without them are migrated by `App.Storage._ensureScheduleRounds()`)
