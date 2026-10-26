@@ -343,8 +343,9 @@ App.Storage = {
     reader.onload = function(e) {
       try {
         var data = JSON.parse(e.target.result);
-        if (data.version && data.players && data.courts) {
-          App.state = data;
+        if (data && data.version && data.players && data.courts) {
+          // Exports from older versions lack newer fields — migrate like a load (#74)
+          App.state = App.Storage._ensureState(data);
           App.save();
           App.UI.renderAll();
           App.Analytics.track('import_data');
@@ -409,6 +410,13 @@ App.Session = {
       players[id].opponentHistory = {};
       players[id].wishesFulfilled = [];
       players[id].number = 0;
+      // Results and wait stats belong to the day too (#71)
+      players[id].wins = 0;
+      players[id].losses = 0;
+      players[id].pointsScored = 0;
+      players[id].pointsConceded = 0;
+      players[id].totalWaitTime = 0;
+      players[id].waitCount = 0;
     });
     App.state.waitingQueue = [];
     App.state.matches = {};
@@ -820,13 +828,19 @@ App.Courts = {
       }
     }
 
-    // Accumulate wait time before removing from queue
+    // Accumulate wait time before removing from queue. Remember what was
+    // added so a cancel can give it back, and clear the entry time so a
+    // restart or the next shuffle game does not count the same wait again (#73).
     var now = Date.now();
+    var waitBefore = {};
     allPlayers.forEach(function(pid) {
       var p = App.state.players[pid];
       if (p && p.queueEntryTime) {
-        p.totalWaitTime = (p.totalWaitTime || 0) + (now - p.queueEntryTime);
+        var waited = Math.max(0, now - p.queueEntryTime);
+        p.totalWaitTime = (p.totalWaitTime || 0) + waited;
         p.waitCount = (p.waitCount || 0) + 1;
+        waitBefore[pid] = waited;
+        p.queueEntryTime = 0;
       }
     });
 
@@ -845,7 +859,8 @@ App.Courts = {
       teamA: teamA,
       teamB: teamB,
       score: null,
-      status: 'playing'
+      status: 'playing',
+      waitBefore: waitBefore
     };
 
     court.occupied = true;
@@ -893,42 +908,21 @@ App.Courts = {
     });
 
     // Determine winners/losers from score or declared winner
-    var winnersTeam = null, losersTeam = null;
-    var winnerScore = null, loserScore = null;
+    var result = App.Courts._matchResult(match, score, winner);
 
-    if (score) {
-      var parts = score.split('-').map(function(s) { return parseInt(s.trim()); });
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-        var scoreA = parts[0], scoreB = parts[1];
-        if (scoreA !== scoreB) {
-          winnersTeam = scoreA > scoreB ? match.teamA : match.teamB;
-          losersTeam = scoreA > scoreB ? match.teamB : match.teamA;
-        }
-        winnerScore = Math.max(scoreA, scoreB);
-        loserScore = Math.min(scoreA, scoreB);
-      }
-    } else if (winner === 'teamA') {
-      winnersTeam = match.teamA;
-      losersTeam = match.teamB;
-    } else if (winner === 'teamB') {
-      winnersTeam = match.teamB;
-      losersTeam = match.teamA;
+    // Points count whenever a score was entered, draws included (#72)
+    if (result.scoreA !== null) {
+      App.Courts._applyPoints(match.teamA, result.scoreA, result.scoreB, +1);
+      App.Courts._applyPoints(match.teamB, result.scoreB, result.scoreA, +1);
     }
-
-    if (winnersTeam) {
-      winnersTeam.forEach(function(pid) {
+    if (result.winnersTeam) {
+      result.winnersTeam.forEach(function(pid) {
         var p = App.state.players[pid];
-        if (!p) return;
-        p.wins = (p.wins || 0) + 1;
-        if (winnerScore !== null) p.pointsScored = (p.pointsScored || 0) + winnerScore;
-        if (loserScore !== null) p.pointsConceded = (p.pointsConceded || 0) + loserScore;
+        if (p) p.wins = (p.wins || 0) + 1;
       });
-      losersTeam.forEach(function(pid) {
+      result.losersTeam.forEach(function(pid) {
         var p = App.state.players[pid];
-        if (!p) return;
-        p.losses = (p.losses || 0) + 1;
-        if (loserScore !== null) p.pointsScored = (p.pointsScored || 0) + loserScore;
-        if (winnerScore !== null) p.pointsConceded = (p.pointsConceded || 0) + winnerScore;
+        if (p) p.losses = (p.losses || 0) + 1;
       });
     }
 
@@ -955,6 +949,12 @@ App.Courts = {
       // Update schedule entry status
       var schEntry = App.state.schedule.find(function(e) { return e.matchId === match.id; });
       if (schEntry) schEntry.status = 'finished';
+      // Nobody re-enters a queue in shuffle mode: the wait for the next game
+      // starts now, not at arrival (#73)
+      allPlayers.forEach(function(pid) {
+        var p = App.state.players[pid];
+        if (p) p.queueEntryTime = match.endTime;
+      });
       // Auto-assign next game to this court
       App.Shuffle.assignNextToCourt(courtId);
     } else {
@@ -975,6 +975,21 @@ App.Courts = {
 
     match.status = 'cancelled';
     match.endTime = Date.now();
+
+    // The game did not happen: give back the wait that startGame counted and
+    // resume the original wait, so a restart does not count it twice (#73)
+    var waitBefore = match.waitBefore || {};
+    match.teamA.concat(match.teamB).forEach(function(pid) {
+      var p = App.state.players[pid];
+      if (!p) return;
+      if (waitBefore[pid] !== undefined) {
+        p.totalWaitTime = Math.max(0, (p.totalWaitTime || 0) - waitBefore[pid]);
+        p.waitCount = Math.max(0, (p.waitCount || 0) - 1);
+        p.queueEntryTime = match.startTime - waitBefore[pid];
+      } else if (!p.queueEntryTime) {
+        p.queueEntryTime = match.startTime;
+      }
+    });
 
     if (App.Shuffle.isShuffleMode()) {
       // Revert schedule entry to pending
@@ -999,6 +1014,40 @@ App.Courts = {
 
     App.save();
     App.UI.showToast(App.t('gameCancelled'));
+  },
+
+  // Parse a finished match into winners/losers and numeric scores.
+  // A score wins over a declared winner; an equal score is a draw with points.
+  _matchResult: function(match, score, winner) {
+    var r = { winnersTeam: null, losersTeam: null, scoreA: null, scoreB: null };
+    if (score) {
+      var parts = String(score).split('-').map(function(s) { return parseInt(s.trim()); });
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        r.scoreA = parts[0];
+        r.scoreB = parts[1];
+        if (r.scoreA !== r.scoreB) {
+          r.winnersTeam = r.scoreA > r.scoreB ? match.teamA : match.teamB;
+          r.losersTeam = r.scoreA > r.scoreB ? match.teamB : match.teamA;
+        }
+      }
+    } else if (winner === 'teamA') {
+      r.winnersTeam = match.teamA;
+      r.losersTeam = match.teamB;
+    } else if (winner === 'teamB') {
+      r.winnersTeam = match.teamB;
+      r.losersTeam = match.teamA;
+    }
+    return r;
+  },
+
+  // Add (sign +1) or remove (sign -1) a team's points for one match
+  _applyPoints: function(team, scored, conceded, sign) {
+    team.forEach(function(pid) {
+      var p = App.state.players[pid];
+      if (!p) return;
+      p.pointsScored = Math.max(0, (p.pointsScored || 0) + sign * scored);
+      p.pointsConceded = Math.max(0, (p.pointsConceded || 0) + sign * conceded);
+    });
   },
 
   _updatePairStats: function(id1, id2, type) {
@@ -1084,41 +1133,20 @@ App.Matches = {
       if (p.gamesPlayed > 0) p.gamesPlayed--;
     });
 
-    // Revert win/loss/points
-    var winnersTeam = null, losersTeam = null;
-    var winnerScore = null, loserScore = null;
-    if (last.score) {
-      var parts = last.score.split('-').map(function(s) { return parseInt(s.trim()); });
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-        var scoreA = parts[0], scoreB = parts[1];
-        if (scoreA !== scoreB) {
-          winnersTeam = scoreA > scoreB ? last.teamA : last.teamB;
-          losersTeam = scoreA > scoreB ? last.teamB : last.teamA;
-        }
-        winnerScore = Math.max(scoreA, scoreB);
-        loserScore = Math.min(scoreA, scoreB);
-      }
-    } else if (last.winner === 'teamA') {
-      winnersTeam = last.teamA;
-      losersTeam = last.teamB;
-    } else if (last.winner === 'teamB') {
-      winnersTeam = last.teamB;
-      losersTeam = last.teamA;
+    // Revert win/loss/points (mirror of finishGame, draws included)
+    var result = App.Courts._matchResult(last, last.score, last.winner);
+    if (result.scoreA !== null) {
+      App.Courts._applyPoints(last.teamA, result.scoreA, result.scoreB, -1);
+      App.Courts._applyPoints(last.teamB, result.scoreB, result.scoreA, -1);
     }
-    if (winnersTeam) {
-      winnersTeam.forEach(function(pid) {
+    if (result.winnersTeam) {
+      result.winnersTeam.forEach(function(pid) {
         var p = App.state.players[pid];
-        if (!p) return;
-        if (p.wins > 0) p.wins--;
-        if (winnerScore !== null) p.pointsScored = Math.max(0, (p.pointsScored || 0) - winnerScore);
-        if (loserScore !== null) p.pointsConceded = Math.max(0, (p.pointsConceded || 0) - loserScore);
+        if (p && p.wins > 0) p.wins--;
       });
-      losersTeam.forEach(function(pid) {
+      result.losersTeam.forEach(function(pid) {
         var p = App.state.players[pid];
-        if (!p) return;
-        if (p.losses > 0) p.losses--;
-        if (loserScore !== null) p.pointsScored = Math.max(0, (p.pointsScored || 0) - loserScore);
-        if (winnerScore !== null) p.pointsConceded = Math.max(0, (p.pointsConceded || 0) - winnerScore);
+        if (p && p.losses > 0) p.losses--;
       });
     }
 
@@ -1136,21 +1164,50 @@ App.Matches = {
     var lastMatchId = last.id;
     delete App.state.matches[lastMatchId];
 
+    // lastGameEndTime falls back to the player's previous finished game
+    allPlayers.forEach(function(pid) {
+      var p = App.state.players[pid];
+      if (!p) return;
+      var prev = 0;
+      Object.values(App.state.matches).forEach(function(m) {
+        if (m.status !== 'finished' || !(m.endTime > prev)) return;
+        if (m.teamA.indexOf(pid) !== -1 || m.teamB.indexOf(pid) !== -1) prev = m.endTime;
+      });
+      p.lastGameEndTime = prev;
+    });
+
     if (App.Shuffle.isShuffleMode()) {
-      // Find schedule entry by matchId, revert to ready
       var schEntry = App.state.schedule.find(function(e) { return e.matchId === lastMatchId; });
       if (schEntry) {
-        schEntry.status = 'ready';
         schEntry.matchId = null;
+        var court = schEntry.courtId ? App.state.courts[schEntry.courtId] : null;
+        if (court && !court.occupied) {
+          // finishGame already assigned the next game to this court: send it
+          // back to pending so the court holds exactly one ready game (#70)
+          App.state.schedule.forEach(function(e) {
+            if (e !== schEntry && e.status === 'ready' && e.courtId === schEntry.courtId) {
+              e.status = 'pending';
+              e.courtId = null;
+            }
+          });
+          schEntry.status = 'ready';
+        } else {
+          // Court busy or gone: back to the pending pool
+          schEntry.status = 'pending';
+          schEntry.courtId = null;
+        }
       }
     } else {
-      // Remove players from queue (they were added at end on finish)
-      allPlayers.forEach(function(pid) {
+      // Return to the front of the queue — only players who can play now.
+      // Someone already on another court or marked absent must not be queued (#70)
+      var back = allPlayers.filter(function(pid) {
+        var p = App.state.players[pid];
+        return p && p.present && !App.Players.isOnCourt(pid);
+      });
+      back.forEach(function(pid) {
         App.Queue.remove(pid);
       });
-
-      // Return to front of queue
-      allPlayers.reverse().forEach(function(pid) {
+      back.reverse().forEach(function(pid) {
         App.state.waitingQueue.unshift(pid);
       });
     }
